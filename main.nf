@@ -1,11 +1,10 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    nf-core/ipg
+    sanjaysgk/ipg
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/ipg
-    Website: https://nf-co.re/ipg
-    Slack  : https://nfcore.slack.com/channels/ipg
+    Github  : https://github.com/sanjaysgk/ipg
+    Authors : Sanjay SG Krishna, Kate Scull, Chen Li (Monash University)
 ----------------------------------------------------------------------------------------
 */
 

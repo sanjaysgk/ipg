@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/ipg",
-    "homePage": "https://github.com/nf-core/ipg",
+    "name": "sanjaysgk/ipg",
+    "homePage": "https://github.com/sanjaysgk/ipg",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
