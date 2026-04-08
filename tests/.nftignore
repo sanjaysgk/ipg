@@ -1,0 +1,7 @@
+pipeline_info/*.{html,json,txt,yml}
+multiqc/multiqc_data/*
+multiqc/multiqc_report.html
+multiqc/multiqc_plots/**
+.nextflow*
+results/
+work/

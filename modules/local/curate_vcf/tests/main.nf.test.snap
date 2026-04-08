@@ -1,0 +1,73 @@
+{
+    "curate_vcf - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_unmasked.vcf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_indel.vcf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test_curate_indel.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test_curate_unmasked.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,f3e755e99548de0610c3ab93a000e904"
+                ],
+                "indel": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_indel.vcf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test_curate_indel.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test_curate_unmasked.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "unmasked": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_unmasked.vcf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,f3e755e99548de0610c3ab93a000e904"
+                ]
+            }
+        ],
+        "timestamp": "2026-04-08T15:42:00.688592471",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

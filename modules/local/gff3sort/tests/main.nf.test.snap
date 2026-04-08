@@ -1,0 +1,35 @@
+{
+    "gff3sort - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_sorted.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,dca0bb14ba9181e469bc6398edffe13e"
+                ],
+                "gtf": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_sorted.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,dca0bb14ba9181e469bc6398edffe13e"
+                ]
+            }
+        ],
+        "timestamp": "2026-04-08T15:42:32.324822111",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

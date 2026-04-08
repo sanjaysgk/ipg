@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process ALT_LIFTOVER"
+    script "../main.nf"
+    process "ALT_LIFTOVER"
+
+    tag "modules"
+    tag "modules_local"
+    tag "alt_liftover"
+
+    test("alt_liftover - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file('test.vcf'),
+                    file('test.gtf')
+                ]
+                input[1] = '_unmasked'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
