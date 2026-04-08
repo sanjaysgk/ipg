@@ -7,3 +7,7 @@ testing/
 testing*
 *.pyc
 null/
+
+# AI working memory — never commit
+.claude/
+CLAUDE.md
