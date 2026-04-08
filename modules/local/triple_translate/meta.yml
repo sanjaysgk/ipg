@@ -1,0 +1,59 @@
+---
+name: triple_translate
+description: |
+  Translate a transcriptome FASTA in all three forward reading frames,
+  preserving class-code annotations from a cuffcompare/gffcompare .tracking
+  file. Produces peptide sequences used to build the cryptic peptide database.
+  Part of the IPG toolkit.
+keywords:
+  - proteomics
+  - translation
+  - immunopeptidomics
+  - cryptic-peptides
+tools:
+  - triple_translate:
+      description: "Three-frame translation of a transcriptome with tracking metadata"
+      homepage: "https://github.com/kescull/immunopeptidogenomics"
+      tool_dev_url: "https://github.com/sanjaysgk/immunopeptidogenomics"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - transcriptome_fasta:
+        type: file
+        description: Transcriptome FASTA from gffread
+        pattern: "*.{fa,fasta}"
+    - tracking:
+        type: file
+        description: GFFCompare .tracking file providing transcript class codes
+        pattern: "*.tracking"
+
+output:
+  - fasta:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*_3translate.fasta":
+          type: file
+          description: Three-frame translated peptide FASTA
+          pattern: "*_3translate.fasta"
+  - log:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*.log":
+          type: file
+          description: Translation log
+          pattern: "*.log"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing tool version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

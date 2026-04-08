@@ -1,0 +1,53 @@
+---
+name: squish
+description: |
+  Deduplicate and merge multiple protein FASTA databases, producing the final
+  cryptic peptide search database. Threaded. Part of the IPG toolkit.
+keywords:
+  - proteomics
+  - deduplication
+  - database
+  - cryptic-peptides
+tools:
+  - squish:
+      description: "Multi-database protein FASTA deduplicator and merger"
+      homepage: "https://github.com/kescull/immunopeptidogenomics"
+      tool_dev_url: "https://github.com/sanjaysgk/immunopeptidogenomics"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - fastas:
+        type: file
+        description: One or more protein FASTA databases to squish together
+        pattern: "*.{fa,fasta}"
+
+output:
+  - fasta:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*_cryptic.fasta":
+          type: file
+          description: Final deduplicated cryptic peptide FASTA database
+          pattern: "*_cryptic.fasta"
+  - log:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*.log":
+          type: file
+          description: Squish log
+          pattern: "*.log"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing tool version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

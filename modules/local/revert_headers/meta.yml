@@ -1,0 +1,51 @@
+---
+name: revert_headers
+description: |
+  Revert FASTA headers on an alternate-reference genome back to the original
+  reference genome header naming (GATK FastaAlternateReferenceMaker rewrites
+  headers with `>1`, `>2`, etc. — this restores `>chr1`, `>chr2`).
+  Part of the IPG toolkit.
+keywords:
+  - fasta
+  - reference-genome
+  - headers
+  - cryptic-peptides
+tools:
+  - revert_headers:
+      description: "Restore chromosome headers on an alternate-reference FASTA"
+      homepage: "https://github.com/kescull/immunopeptidogenomics"
+      tool_dev_url: "https://github.com/sanjaysgk/immunopeptidogenomics"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata, e.g. `[ id:'sample_1' ]`
+    - alt_fasta:
+        type: file
+        description: Alternate-reference FASTA (from GATK FastaAlternateReferenceMaker)
+        pattern: "*.{fa,fasta}"
+  - reference_fasta:
+      type: file
+      description: Original reference FASTA whose headers will be restored
+      pattern: "*.{fa,fasta}"
+
+output:
+  - fasta:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*_reverted.fasta":
+          type: file
+          description: Alternate FASTA with reference headers restored
+          pattern: "*_reverted.fasta"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing tool version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

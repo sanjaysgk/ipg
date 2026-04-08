@@ -1,0 +1,53 @@
+---
+name: alt_liftover
+description: |
+  Lift over GTF coordinates to match an alternate-reference genome produced
+  by GATK FastaAlternateReferenceMaker, using the curated VCF of substitutions
+  and indels. Part of the IPG toolkit.
+keywords:
+  - gtf
+  - liftover
+  - variant-calling
+  - cryptic-peptides
+tools:
+  - alt_liftover:
+      description: "Lift GTF coordinates to an alternate-reference genome"
+      homepage: "https://github.com/kescull/immunopeptidogenomics"
+      tool_dev_url: "https://github.com/sanjaysgk/immunopeptidogenomics"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - vcf:
+        type: file
+        description: Curated VCF used to build the alternate reference
+        pattern: "*.vcf"
+    - gtf:
+        type: file
+        description: Sorted assembly GTF (from gff3sort)
+        pattern: "*.gtf"
+  - suffix:
+      type: string
+      description: Suffix for output GTF (e.g. `_unmasked`, `_indel`)
+
+output:
+  - gtf:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*.gtf":
+          type: file
+          description: Lifted GTF in alternate-reference coordinates
+          pattern: "*.gtf"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing tool version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

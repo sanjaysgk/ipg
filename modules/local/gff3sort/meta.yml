@@ -1,0 +1,47 @@
+---
+name: gff3sort
+description: |
+  Sort GFF3/GTF files so that they are suitable for tabix indexing and for
+  downstream tools that assume sorted input (e.g. alt_liftover). Thin wrapper
+  around the `gff3sort.pl` perl script from billzt/gff3sort, packaged on bioconda.
+keywords:
+  - gtf
+  - gff3
+  - sort
+  - tabix
+tools:
+  - gff3sort:
+      description: "A Perl script to sort GFF3 files to produce output suitable for tabix"
+      homepage: "https://github.com/billzt/gff3sort"
+      documentation: "https://github.com/billzt/gff3sort"
+      tool_dev_url: "https://github.com/billzt/gff3sort"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata, e.g. `[ id:'sample_1' ]`
+    - gtf:
+        type: file
+        description: Input GTF/GFF3 file
+        pattern: "*.{gtf,gff,gff3}"
+
+output:
+  - gtf:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*_sorted.gtf":
+          type: file
+          description: Sorted GTF
+          pattern: "*_sorted.gtf"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing tool version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

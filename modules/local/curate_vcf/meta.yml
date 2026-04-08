@@ -1,0 +1,65 @@
+---
+name: curate_vcf
+description: |
+  Curate a VCF file to provide unambiguous input for FastaAlternateReferenceMaker.
+  Removes duplicates, complex variants, and optionally deprioritises deletions.
+  Part of the IPG (Immuno-Peptido-Genomics) toolkit by Scull et al. (2020).
+keywords:
+  - vcf
+  - variant-calling
+  - immunopeptidomics
+  - cryptic-peptides
+tools:
+  - curate_vcf:
+      description: "Curates a VCF to remove ambiguity and complex variants"
+      homepage: "https://github.com/kescull/immunopeptidogenomics"
+      documentation: "https://github.com/kescull/immunopeptidogenomics/blob/main/README.md"
+      tool_dev_url: "https://github.com/sanjaysgk/immunopeptidogenomics"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample_1' ]`
+    - vcf:
+        type: file
+        description: Input VCF file (typically from GATK SelectVariants --exclude-filtered)
+        pattern: "*.vcf"
+
+output:
+  - unmasked:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*_curated_unmasked.vcf":
+          type: file
+          description: Curated VCF without deletion deprioritisation
+          pattern: "*_curated_unmasked.vcf"
+  - indel:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*_curated_indel.vcf":
+          type: file
+          description: Curated VCF with deletions deprioritised (-d flag)
+          pattern: "*_curated_indel.vcf"
+  - log:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*.log":
+          type: file
+          description: Per-run curation log
+          pattern: "*.log"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing tool version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

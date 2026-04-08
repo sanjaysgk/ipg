@@ -1,0 +1,73 @@
+---
+name: gatk4_fastaalternatereferencemaker
+description: |
+  Produce an alternate-reference FASTA by applying variants from a VCF to a
+  reference genome, using GATK4 FastaAlternateReferenceMaker. Local module;
+  not yet available in nf-core/modules upstream.
+keywords:
+  - fasta
+  - reference
+  - variant-calling
+  - gatk4
+tools:
+  - gatk4:
+      description: |
+        Genome Analysis Toolkit by the Broad Institute.
+      homepage: https://gatk.broadinstitute.org/hc/en-us
+      documentation: https://gatk.broadinstitute.org/hc/en-us/categories/360002369672s
+      doi: 10.1158/1538-7445.AM2017-3590
+      licence: ["Apache-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - vcf:
+        type: file
+        description: VCF with variants to apply to the reference
+        pattern: "*.vcf{,.gz}"
+    - tbi:
+        type: file
+        description: VCF index (.tbi or .idx)
+        pattern: "*.{tbi,idx}"
+  - - meta2:
+        type: map
+        description: Reference metadata
+    - fasta:
+        type: file
+        description: Reference FASTA
+        pattern: "*.{fa,fasta}"
+  - - meta3:
+        type: map
+        description: Reference metadata
+    - fai:
+        type: file
+        description: Reference FASTA index
+        pattern: "*.fai"
+  - - meta4:
+        type: map
+        description: Reference metadata
+    - dict:
+        type: file
+        description: Reference sequence dictionary
+        pattern: "*.dict"
+
+output:
+  - fasta:
+      - meta:
+          type: map
+          description: Sample metadata
+      - "*.fasta":
+          type: file
+          description: Alternate-reference FASTA with variants applied
+          pattern: "*.fasta"
+  - versions_gatk4:
+      - "versions.yml":
+          type: file
+          description: GATK4 version
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"
