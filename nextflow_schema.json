@@ -60,9 +60,112 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
+                    "pattern": "^\\S+\\.fn?a(sta)?$",
+                    "description": "Path to reference genome FASTA (uncompressed).",
+                    "help_text": "The reference genome FASTA used for alignment, variant calling, and FastaAlternateReferenceMaker. Must be uncompressed because GATK4 tools do not accept gzipped FASTA. GRCh38.primary_assembly.genome.fa is the pipeline default.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.fai$",
+                    "description": "Path to samtools-faidx index (.fai) for --fasta.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "fasta_dict": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.dict$",
+                    "description": "Path to GATK sequence dictionary (.dict) for --fasta.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "star_index": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Path to the STAR index directory built for --fasta + --gtf.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Reference gene annotation GTF (e.g. gencode.v44.primary_assembly.annotation.gtf).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "rseqc_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.bed$",
+                    "description": "BED file for RSeQC infer_experiment.py (gene model used for strand inference).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "dbsnp": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.vcf(\\.gz)?$",
+                    "description": "dbSNP known-variants VCF for BQSR (resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "dbsnp_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.(tbi|idx)$",
+                    "description": "Tabix / idx index for --dbsnp.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "known_indels": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.vcf(\\.gz)?$",
+                    "description": "Known indels VCF for BQSR (resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "known_indels_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.tbi$",
+                    "description": "Tabix index for --known_indels.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "mills": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.vcf(\\.gz)?$",
+                    "description": "Mills gold-standard indels VCF for BQSR (resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "mills_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.tbi$",
+                    "description": "Tabix index for --mills.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "germline_resource": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.vcf(\\.gz)?$",
+                    "description": "Germline resource for Mutect2 / GetPileupSummaries (small_exac_common_3.hg38.vcf.gz).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "germline_resource_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.tbi$",
+                    "description": "Tabix index for --germline_resource.",
                     "fa_icon": "far fa-file-code"
                 },
                 "igenomes_ignore": {

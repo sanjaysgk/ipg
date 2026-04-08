@@ -10,6 +10,16 @@ include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pi
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ipg_pipeline'
 
+//
+// Cryptic peptide discovery subworkflows (steps 1-31 of the legacy bash pipeline)
+//
+include { ALIGN_QC            } from '../subworkflows/local/align_qc/main'
+include { TRANSCRIPT_ASSEMBLY } from '../subworkflows/local/transcript_assembly/main'
+include { BAM_PREP            } from '../subworkflows/local/bam_prep/main'
+include { BQSR                } from '../subworkflows/local/bqsr/main'
+include { MUTECT_CALLING      } from '../subworkflows/local/mutect_calling/main'
+include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -19,19 +29,129 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ipg_
 workflow IPG {
 
     take:
-    ch_samplesheet // channel: samplesheet read in from --input
+    ch_samplesheet      // channel: [ val(meta), [r1, r2] ]   samplesheet rows
+
     main:
 
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    ch_versions      = channel.empty()
+    ch_multiqc_files = channel.empty()
+
     //
-    // MODULE: Run FastQC
+    // Stage reference channels from params. Each is a value-channel
+    // carrying a single [meta, path(s)] tuple so it can be safely
+    // consumed by multiple downstream processes.
     //
-    FASTQC (
-        ch_samplesheet
+    def ref_meta = [ id: 'reference' ]
+    ch_fasta        = channel.value( [ ref_meta, file(params.fasta,            checkIfExists: true) ] )
+    ch_fai          = channel.value( [ ref_meta, file(params.fasta_fai,        checkIfExists: true) ] )
+    ch_dict         = channel.value( [ ref_meta, file(params.fasta_dict,       checkIfExists: true) ] )
+    ch_fasta_fai    = channel.value( [ ref_meta, file(params.fasta, checkIfExists: true), file(params.fasta_fai, checkIfExists: true) ] )
+    ch_star_index   = channel.value( [ ref_meta, file(params.star_index,       checkIfExists: true) ] )
+    ch_gtf          = channel.value( [ ref_meta, file(params.gtf,              checkIfExists: true) ] )
+    ch_rseqc_bed    = channel.value(               file(params.rseqc_bed,      checkIfExists: true)   )
+    ch_known_sites  = channel.value( [ ref_meta, [
+        file(params.dbsnp,         checkIfExists: true),
+        file(params.known_indels,  checkIfExists: true),
+        file(params.mills,         checkIfExists: true),
+    ] ] )
+    ch_known_sites_tbi = channel.value( [ ref_meta, [
+        file(params.dbsnp_tbi,        checkIfExists: true),
+        file(params.known_indels_tbi, checkIfExists: true),
+        file(params.mills_tbi,        checkIfExists: true),
+    ] ] )
+    ch_germline_resource     = channel.value( file(params.germline_resource,     checkIfExists: true) )
+    ch_germline_resource_tbi = channel.value( file(params.germline_resource_tbi, checkIfExists: true) )
+
+    //
+    // MODULE: FastQC — per-sample raw read QC
+    //
+    FASTQC(ch_samplesheet)
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect { row -> row[1] })
+    ch_versions      = ch_versions.mix(FASTQC.out.versions.first())
+
+    //
+    // Build the reads-only channel for the aligners: [ meta, [r1, r2] ]
+    //
+    ch_reads = ch_samplesheet
+
+    //
+    // SUBWORKFLOW: align_qc — steps 1-3
+    //
+    ALIGN_QC(
+        ch_reads,
+        ch_star_index,
+        ch_gtf,
+        ch_fasta_fai,
+        ch_rseqc_bed
     )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    ch_versions = ch_versions.mix(ALIGN_QC.out.versions)
+
+    //
+    // SUBWORKFLOW: transcript_assembly — steps 4-5
+    //
+    // StringTie needs meta.strandedness set. Merge the rseqc result back
+    // into the sorted-bam meta if the user did not hard-code it in the
+    // samplesheet. For Day 2 we trust the samplesheet value — strand
+    // auto-detection from infer_experiment.txt is a Day 3+ enhancement.
+    //
+    TRANSCRIPT_ASSEMBLY(
+        ALIGN_QC.out.sorted_bam,
+        ch_gtf,
+        ch_fasta_fai
+    )
+    ch_versions = ch_versions.mix(TRANSCRIPT_ASSEMBLY.out.versions)
+
+    //
+    // SUBWORKFLOW: bam_prep — steps 6-12
+    //
+    BAM_PREP(
+        ALIGN_QC.out.star_bam_unsorted,
+        ch_reads,
+        ch_fasta,
+        ch_fai,
+        ch_dict
+    )
+    ch_versions = ch_versions.mix(BAM_PREP.out.versions)
+
+    //
+    // SUBWORKFLOW: bqsr — steps 13-16
+    //
+    BQSR(
+        BAM_PREP.out.splitncigar_bam,
+        ch_fasta,
+        ch_fai,
+        ch_dict,
+        ch_known_sites,
+        ch_known_sites_tbi
+    )
+    ch_versions = ch_versions.mix(BQSR.out.versions)
+
+    //
+    // SUBWORKFLOW: mutect_calling — steps 17-23
+    //
+    MUTECT_CALLING(
+        BQSR.out.recal_bam_bai,
+        ch_fasta,
+        ch_fai,
+        ch_dict,
+        ch_germline_resource,
+        ch_germline_resource_tbi
+    )
+    ch_versions = ch_versions.mix(MUTECT_CALLING.out.versions)
+
+    //
+    // SUBWORKFLOW: db_construct — steps 24-31
+    //
+    DB_CONSTRUCT(
+        MUTECT_CALLING.out.unmasked_vcf,
+        MUTECT_CALLING.out.indel_vcf,
+        TRANSCRIPT_ASSEMBLY.out.assembly_gtf,
+        TRANSCRIPT_ASSEMBLY.out.tracking,
+        ch_fasta,
+        ch_fai,
+        ch_dict
+    )
+    ch_versions = ch_versions.mix(DB_CONSTRUCT.out.versions)
 
     //
     // Collate and save software versions
@@ -39,33 +159,31 @@ workflow IPG {
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
-            name: 'nf_core_'  +  'ipg_software_'  + 'mqc_'  + 'versions.yml',
+            name: 'sanjaysgk_ipg_software_mqc_versions.yml',
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
 
-
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config        = Channel.fromPath(
+    ch_multiqc_config = channel.fromPath(
         "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config = params.multiqc_config ?
-        Channel.fromPath(params.multiqc_config, checkIfExists: true) :
-        Channel.empty()
-    ch_multiqc_logo          = params.multiqc_logo ?
-        Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
-        Channel.empty()
+    ch_multiqc_custom_config = params.multiqc_config
+        ? channel.fromPath(params.multiqc_config, checkIfExists: true)
+        : channel.empty()
+    ch_multiqc_logo = params.multiqc_logo
+        ? channel.fromPath(params.multiqc_logo, checkIfExists: true)
+        : channel.empty()
 
-    summary_params      = paramsSummaryMap(
-        workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
+    summary_params      = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
+    ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
-        file(params.multiqc_methods_description, checkIfExists: true) :
-        file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(
+    ch_multiqc_custom_methods_description = params.multiqc_methods_description
+        ? file(params.multiqc_methods_description, checkIfExists: true)
+        : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+    ch_methods_description = channel.value(
         methodsDescriptionText(ch_multiqc_custom_methods_description))
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
@@ -76,7 +194,7 @@ workflow IPG {
         )
     )
 
-    MULTIQC (
+    MULTIQC(
         ch_multiqc_files.collect(),
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
@@ -85,9 +203,10 @@ workflow IPG {
         []
     )
 
-    emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
-
+    emit:
+    multiqc_report = MULTIQC.out.report.toList()
+    cryptic_fasta  = DB_CONSTRUCT.out.cryptic_fasta
+    versions       = ch_versions
 }
 
 /*
