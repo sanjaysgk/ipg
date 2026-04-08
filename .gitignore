@@ -11,3 +11,11 @@ null/
 # AI working memory — never commit
 .claude/
 CLAUDE.md
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# nf-test artifacts
+.nf-test*
+.nf-test/
+
