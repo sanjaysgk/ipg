@@ -21,7 +21,9 @@ workflow TRANSCRIPT_ASSEMBLY {
 
     main:
 
-    ch_versions = Channel.empty()
+    // StringTie + GFFCompare use topic-channel versions — see align_qc
+    // for rationale on why we do not mix them into ch_versions.
+    ch_versions = channel.empty()
 
     //
     // Step 04: StringTie assembly
@@ -30,7 +32,6 @@ workflow TRANSCRIPT_ASSEMBLY {
         ch_sorted_bam,
         ch_reference_gtf.map { _meta, gtf -> gtf }    // StringTie takes a bare path
     )
-    ch_versions = ch_versions.mix(STRINGTIE_STRINGTIE.out.versions_stringtie)
 
     //
     // Step 05: GFFCompare against the reference annotation
@@ -40,7 +41,6 @@ workflow TRANSCRIPT_ASSEMBLY {
         ch_fasta_fai,
         ch_reference_gtf
     )
-    ch_versions = ch_versions.mix(GFFCOMPARE.out.versions_gffcompare)
 
     emit:
     assembly_gtf = STRINGTIE_STRINGTIE.out.transcript_gtf   // [meta, gtf]  — input to gff3sort in DB_CONSTRUCT

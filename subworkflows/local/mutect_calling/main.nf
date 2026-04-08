@@ -62,7 +62,6 @@ workflow MUTECT_CALLING {
     // Step 18: LearnReadOrientationModel from Mutect2 f1r2
     //
     GATK4_LEARNREADORIENTATIONMODEL(GATK4_MUTECT2.out.f1r2)
-    ch_versions = ch_versions.mix(GATK4_LEARNREADORIENTATIONMODEL.out.versions_gatk4)
 
     //
     // Step 19: GetPileupSummaries at common exac sites
@@ -81,7 +80,6 @@ workflow MUTECT_CALLING {
         ch_germline_resource,
         ch_germline_tbi
     )
-    ch_versions = ch_versions.mix(GATK4_GETPILEUPSUMMARIES.out.versions_gatk4)
 
     //
     // Step 20: CalculateContamination — tumour-only (no matched normal)
@@ -90,7 +88,6 @@ workflow MUTECT_CALLING {
         .map { meta, pileup -> [meta, pileup, []] }     // no matched-normal pileup
 
     GATK4_CALCULATECONTAMINATION(ch_contam_input)
-    ch_versions = ch_versions.mix(GATK4_CALCULATECONTAMINATION.out.versions_gatk4)
 
     //
     // Step 21: FilterMutectCalls
@@ -112,7 +109,6 @@ workflow MUTECT_CALLING {
         ch_fai,
         ch_dict
     )
-    ch_versions = ch_versions.mix(GATK4_FILTERMUTECTCALLS.out.versions_gatk4)
 
     //
     // Step 22: SelectVariants — keep PASS-only, emit sites-only VCF
@@ -125,7 +121,6 @@ workflow MUTECT_CALLING {
         .map { meta, vcf, tbi -> [meta, vcf, tbi, []] }
 
     GATK4_SELECTVARIANTS(ch_select_input)
-    ch_versions = ch_versions.mix(GATK4_SELECTVARIANTS.out.versions_gatk4)
 
     //
     // Step 23: curate_vcf (local) — produces unmasked + indel variants

@@ -35,7 +35,10 @@ workflow BAM_PREP {
 
     main:
 
-    ch_versions = Channel.empty()
+    // All modules in this subworkflow use the nf-core topic-channel
+    // version pattern — auto-collected downstream. See align_qc for
+    // rationale on why we do not mix them into ch_versions.
+    ch_versions = channel.empty()
 
     //
     // Step 07: sort aligned BAM by queryname for MergeBamAlignment
@@ -47,13 +50,11 @@ workflow BAM_PREP {
         ch_fasta.combine(ch_fai.map { _meta, fai -> fai }).map { meta, fasta, fai -> [meta, fasta, fai] },
         /* index_format = */ ''
     )
-    ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions_samtools)
 
     //
     // Step 08: FastqToSam -> unmapped BAM with read-group + sample metadata
     //
     GATK4_FASTQTOSAM(ch_reads)
-    ch_versions = ch_versions.mix(GATK4_FASTQTOSAM.out.versions_gatk4)
 
     //
     // Step 09: merge aligned + unmapped BAMs
@@ -64,7 +65,6 @@ workflow BAM_PREP {
         ch_fasta,
         ch_dict
     )
-    ch_versions = ch_versions.mix(GATK4_MERGEBAMALIGNMENT.out.versions_gatk4)
 
     //
     // Step 10: mark duplicates
@@ -75,13 +75,11 @@ workflow BAM_PREP {
         ch_fasta.map { _meta, fasta -> fasta },
         ch_fai.map  { _meta, fai   -> fai   }
     )
-    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES.out.versions_gatk4)
 
     //
     // Index the MarkDuplicates output BAM so SplitNCigarReads has an index
     //
     SAMTOOLS_INDEX(GATK4_MARKDUPLICATES.out.bam)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions_samtools)
 
     //
     // Step 11: SplitNCigarReads — required for RNA-seq variant calling
@@ -96,7 +94,6 @@ workflow BAM_PREP {
         ch_fai,
         ch_dict
     )
-    ch_versions = ch_versions.mix(GATK4_SPLITNCIGARREADS.out.versions_gatk4)
 
     //
     // Step 12: ValidateSamFile (summary) — audit only, no channel output used downstream

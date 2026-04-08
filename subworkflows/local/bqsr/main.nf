@@ -31,13 +31,14 @@ workflow BQSR {
 
     main:
 
-    ch_versions = Channel.empty()
+    // All modules in this subworkflow use topic-channel versions —
+    // auto-collected. See align_qc for rationale.
+    ch_versions = channel.empty()
 
     //
     // Index the SplitNCigar BAM for BaseRecalibrator
     //
     SAMTOOLS_INDEX_INPUT(ch_input_bam)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX_INPUT.out.versions_samtools)
 
     ch_bam_bai_in = ch_input_bam
         .join(SAMTOOLS_INDEX_INPUT.out.index)
@@ -54,7 +55,6 @@ workflow BQSR {
         ch_known_sites,
         ch_known_sites_tbi
     )
-    ch_versions = ch_versions.mix(BASERECALIBRATOR_FIRST.out.versions_gatk4)
 
     //
     // Step 14: ApplyBQSR — module takes bare path fasta / fai / dict
@@ -70,13 +70,11 @@ workflow BQSR {
         ch_fai.map   { _meta, fai   -> fai   },
         ch_dict.map  { _meta, dict  -> dict  }
     )
-    ch_versions = ch_versions.mix(GATK4_APPLYBQSR.out.versions_gatk4)
 
     //
     // Index the recalibrated BAM so BaseRecalibrator (second pass) can read it
     //
     SAMTOOLS_INDEX_RECAL(GATK4_APPLYBQSR.out.bam)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX_RECAL.out.versions_samtools)
 
     //
     // Step 15: second-pass BaseRecalibrator on the corrected BAM
@@ -93,7 +91,6 @@ workflow BQSR {
         ch_known_sites,
         ch_known_sites_tbi
     )
-    ch_versions = ch_versions.mix(BASERECALIBRATOR_SECOND.out.versions_gatk4)
 
     //
     // Step 16: AnalyzeCovariates — plot before vs after tables
@@ -106,7 +103,6 @@ workflow BQSR {
         .map { meta, before, after -> [meta, before, after, []] }
 
     GATK4_ANALYZECOVARIATES(ch_covariates_input)
-    ch_versions = ch_versions.mix(GATK4_ANALYZECOVARIATES.out.versions_gatk4)
 
     //
     // Join the recalibrated BAM with its BAI for downstream consumers

@@ -55,8 +55,6 @@ workflow DB_CONSTRUCT {
     //
     INDEX_UNMASKED(ch_unmasked_vcf)
     INDEX_INDEL(ch_indel_vcf)
-    ch_versions = ch_versions.mix(INDEX_UNMASKED.out.versions_gatk4)
-    ch_versions = ch_versions.mix(INDEX_INDEL.out.versions_gatk4)
 
     //
     // Step 25: FastaAlternateReferenceMaker for each curated VCF
@@ -134,9 +132,6 @@ workflow DB_CONSTRUCT {
         GFF3SORT.out.gtf,
         ch_fasta.map { _meta, fa -> fa }
     )
-    ch_versions = ch_versions.mix(GFFREAD_UNMASKED.out.versions_gffread)
-    ch_versions = ch_versions.mix(GFFREAD_INDEL.out.versions_gffread)
-    ch_versions = ch_versions.mix(GFFREAD_REFERENCE.out.versions_gffread)
 
     //
     // Step 30: triple_translate each transcriptome

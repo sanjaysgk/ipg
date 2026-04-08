@@ -23,7 +23,13 @@ workflow ALIGN_QC {
 
     main:
 
-    ch_versions = Channel.empty()
+    // All modules in this subworkflow use the nf-core topic-channel
+    // version pattern (`eval(...) , topic: versions`). Those are
+    // auto-collected by Nextflow into the 'versions' topic and merged
+    // into the global versions table by `softwareVersionsToYAML`
+    // downstream — we do NOT mix them into a ch_versions file channel
+    // because doing so breaks the YAML loader in utils_nfcore_pipeline.
+    ch_versions = channel.empty()
 
     //
     // Step 01: STAR two-pass alignment
@@ -34,7 +40,6 @@ workflow ALIGN_QC {
         ch_gtf,
         /* star_ignore_sjdbgtf = */ false
     )
-    ch_versions = ch_versions.mix(STAR_ALIGN.out.versions_star)
 
     //
     // Step 03: sort by coordinate and index
@@ -47,10 +52,8 @@ workflow ALIGN_QC {
         ch_fasta,
         /* index_format = */ ''
     )
-    ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions_samtools)
 
     SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions_samtools)
 
     ch_sorted_bam_bai = SAMTOOLS_SORT.out.bam.join(SAMTOOLS_INDEX.out.index)
 
@@ -61,7 +64,6 @@ workflow ALIGN_QC {
         ch_sorted_bam_bai,
         ch_rseqc_bed
     )
-    ch_versions = ch_versions.mix(RSEQC_INFEREXPERIMENT.out.versions_rseqc)
 
     emit:
     star_bam_unsorted = STAR_ALIGN.out.bam              // [meta, bam]  — consumed by BAM_PREP (step 06+)
