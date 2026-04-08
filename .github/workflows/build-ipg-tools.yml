@@ -31,7 +31,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,12 +70,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Verify SHA pin matches Dockerfile
+        run: |
+          dockerfile_sha=$(awk -F= '/^ARG IPG_REPO_SHA=/ {print $2}' containers/ipg-tools/Dockerfile | tr -d '[:space:]')
+          if [ "${dockerfile_sha}" != "${IPG_REPO_SHA}" ]; then
+            echo "::error::IPG_REPO_SHA drift: Dockerfile=${dockerfile_sha} workflow=${IPG_REPO_SHA}"
+            exit 1
+          fi
+          echo "SHA pin OK: ${dockerfile_sha}"
+
       - name: Smoke test built image
         if: github.event_name != 'pull_request'
         run: |
           docker run --rm \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.IPG_REPO_SHA }} \
-              bash -c 'for t in curate_vcf revert_headers alt_liftover triple_translate squish; do
-                        echo "=== $t ===";
-                        "$t" -h 2>&1 | head -3 || true;
-                      done'
+              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.IPG_REPO_SHA }}" \
+              bash -c 'set -eu; for t in curate_vcf revert_headers alt_liftover triple_translate squish; do
+                         test -x "/usr/local/bin/$t" || { echo "missing: $t"; exit 1; };
+                         ldd "/usr/local/bin/$t" | grep -E "not found|undefined" && exit 1 || true;
+                         echo "OK: $t";
+                       done'

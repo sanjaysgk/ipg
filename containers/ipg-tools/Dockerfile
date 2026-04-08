@@ -30,18 +30,26 @@ RUN git clone --no-checkout "${IPG_REPO_URL}" ipg \
  && git log -1 --format='%H %s' > /src/ipg.build-info
 
 WORKDIR /src/ipg
+# Linker flag order matters under ld --as-needed (default on Debian bookworm):
+# libraries MUST appear after the translation units that reference them, or
+# the linker may drop the library resolution. squish.c uses pthread_create
+# and pow() so requires -pthread -lm; the others are plain libc.
 RUN set -eux; \
     mkdir -p /out; \
     gcc -O2 -Wall -o /out/curate_vcf       curate_vcf.c; \
     gcc -O2 -Wall -o /out/revert_headers   revert_headers.c; \
     gcc -O2 -Wall -o /out/alt_liftover     alt_liftover.c; \
     gcc -O2 -Wall -o /out/triple_translate triple_translate.c; \
-    gcc -O2 -Wall -pthread -lm -o /out/squish squish.c
+    gcc -O2 -Wall -o /out/squish           squish.c -pthread -lm; \
+    strip /out/*
 
 # ---- Runtime image ---------------------------------------------------------
 FROM debian:bookworm-slim
 
-# Minimal runtime: the binaries are statically linked except for libc/libm/libpthread
+# Runtime deps: the binaries are dynamically linked against glibc. On Debian
+# bookworm libm and libpthread are folded into libc6 (glibc 2.36+), so libc6
+# alone is sufficient. ca-certificates is not needed at runtime because the
+# git clone happens in the builder stage.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         libc6 \
@@ -59,12 +67,18 @@ LABEL org.opencontainers.image.description="Custom C tools from immunopeptidogen
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.documentation="https://github.com/sanjaysgk/ipg/blob/main/docs/ipg-tools.md"
 
-# Sanity check: each binary should at least print its usage when given -h
-# (non-zero exit on -h is tolerated — these tools usage() then exit(1))
+# Sanity check: each binary must be present, executable, and linkable.
+# We do NOT run `<tool> -h` here because curate_vcf.c and revert_headers.c
+# do not implement -h (curate_vcf getopt string is "d" only; revert_headers
+# uses positional args). Invoking them with -h would exit nonzero and mask
+# real build problems. Instead we verify existence, executability, and that
+# the dynamic linker can resolve every shared library dependency.
 RUN set -eu; \
     for t in curate_vcf revert_headers alt_liftover triple_translate squish; do \
         echo "=== $t ==="; \
-        "$t" -h 2>&1 | head -3 || true; \
+        test -x "/usr/local/bin/$t" || { echo "missing or non-executable: $t"; exit 1; }; \
+        ldd "/usr/local/bin/$t" | grep -E 'not found|undefined' && exit 1 || true; \
+        ldd "/usr/local/bin/$t"; \
     done
 
 CMD ["bash"]
