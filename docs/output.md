@@ -1,4 +1,4 @@
-# nf-core/ipg: Output
+# sanjaysgk/ipg: Output
 
 ## Introduction
 

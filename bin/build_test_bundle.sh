@@ -53,7 +53,7 @@ FASTQ_R2="${FASTQ_R2:-${RAW_DIR}/D100-liver_S2_L001_R2_001.fastq.gz}"
 
 TEST_BUNDLE_DIR="${TEST_BUNDLE_DIR:-/fs04/scratch2/xy86/sanjay/ipg-test-data}"
 CHR="${CHR:-chr22}"
-SUBSAMPLE_READS="${SUBSAMPLE_READS:-2000000}"   # 2M paired; ~40k will land on chr22
+SUBSAMPLE_READS="${SUBSAMPLE_READS:-200000}"    # 200k paired; ~3-5k will land on chr22 — small enough that STAR finishes in ~3 min on Lustre
 THREADS="${THREADS:-4}"
 
 # ---- Helpers ---------------------------------------------------------------
