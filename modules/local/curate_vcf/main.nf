@@ -21,19 +21,37 @@ process CURATE_VCF {
     // curate_vcf writes <stem>_indel.vcf when called without -d and
     // <stem>_unmasked.vcf when called with -d, where <stem> is the input
     // basename with the .vcf extension stripped. See curate_vcf.c:77-79.
-    // Both invocations share the same input stem so their outputs never
-    // collide inside the work directory.
+    //
+    // The C tool reads the VCF as plain text so compressed inputs must be
+    // decompressed first. We handle both .vcf and .vcf.gz transparently —
+    // the pipeline passes in whatever gatk4/selectvariants emitted (.vcf.gz
+    // by default under conf/modules.config).
     """
-    stem=\$(basename ${vcf} .vcf)
+    set -eo pipefail
+    case "${vcf}" in
+        *.vcf.gz)
+            stem=\$(basename ${vcf} .vcf.gz)
+            gunzip -c ${vcf} > "\${stem}.vcf"
+            input_vcf="\${stem}.vcf"
+            ;;
+        *.vcf)
+            stem=\$(basename ${vcf} .vcf)
+            input_vcf="${vcf}"
+            ;;
+        *)
+            echo "curate_vcf: unsupported input extension for ${vcf}" >&2
+            exit 2
+            ;;
+    esac
 
     # Indel-preserving curation (no -d): deletions are KEPT, so downstream
     # indel sites that overlap deletions are still callable.
-    curate_vcf ${vcf} > ${prefix}_curate_indel.log 2>&1
+    curate_vcf "\${input_vcf}" > ${prefix}_curate_indel.log 2>&1
     mv "\${stem}_indel.vcf" ${prefix}_indel.vcf
 
     # Deletion-deprioritised curation (-d flag): deletions that would mask
     # downstream mutation sites are removed, producing an 'unmasked' VCF.
-    curate_vcf -d ${vcf} > ${prefix}_curate_unmasked.log 2>&1
+    curate_vcf -d "\${input_vcf}" > ${prefix}_curate_unmasked.log 2>&1
     mv "\${stem}_unmasked.vcf" ${prefix}_unmasked.vcf
 
     cat <<-END_VERSIONS > versions.yml
