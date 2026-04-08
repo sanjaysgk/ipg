@@ -13,7 +13,7 @@ process ALT_LIFTOVER {
     path "versions.yml",                     emit: versions
 
     when:
-    task.ext.when == null || task.ext.when.every { it }
+    task.ext.when == null || task.ext.when
 
     script:
     """
