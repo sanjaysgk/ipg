@@ -1,35 +1,42 @@
-# ipg-tools: reproducible build of the custom C tools from the
-# immunopeptidogenomics repository (Scull et al. 2020).
+# ipg-tools: reproducible build of the custom C tools used by the
+# sanjaysgk/ipg cryptic peptide pipeline.
+#
+# The five .c sources live alongside this Dockerfile under ./src/. Three of
+# them are unmodified copies from kescull/immunopeptidogenomics; two are
+# locally improved versions maintained by the Li/Purcell labs:
+#
+#   - curate_vcf.c       — locally improved (V2): larger field buffers
+#                          (chrom 200, ref/alt 4096, filter 1024), dynamic
+#                          INFO field allocation, explicit memory cleanup.
+#                          Originally curate_vcfV2.c in IPG_slurm/.
+#   - revert_headers.c   — locally improved: optional 3rd positional
+#                          argument for the output FASTA name (defaults to
+#                          tmpc.fasta when omitted, for backward
+#                          compatibility with the upstream 2-arg form).
+#                          Originally revert_headers.c in IPG_slurm/.
+#   - alt_liftover.c     — unmodified, kescull/immunopeptidogenomics.
+#   - triple_translate.c — unmodified, kescull/immunopeptidogenomics.
+#   - squish.c           — unmodified, kescull/immunopeptidogenomics.
+#
+# Bundling the sources directly in the repository (rather than git-cloning
+# from kescull or sanjaysgk/immunopeptidogenomics at build time) makes the
+# image build hermetic and the source-of-truth for every binary lives in
+# the same git history as the Nextflow modules that consume them.
 #
 # Published as ghcr.io/sanjaysgk/ipg-tools:<tag> via
-# .github/workflows/build-ipg-tools.yml
-#
-# Pin both the source repo and commit SHA so that rebuilding this image
-# at any point in the future produces byte-identical binaries.
+# .github/workflows/build-ipg-tools.yml on every push to main and on every
+# git tag matching ipg-tools-v*.
 
 FROM debian:bookworm-slim AS builder
-
-# ---- Pinned source ---------------------------------------------------------
-# Fork of kescull/immunopeptidogenomics under sanjaysgk control, pinned to
-# commit fef8e68 ("Fix bug when squishing more than 9 fasta files").
-# To bump: update IPG_REPO_SHA, rebuild, verify tests.
-ARG IPG_REPO_URL=https://github.com/sanjaysgk/immunopeptidogenomics.git
-ARG IPG_REPO_SHA=fef8e68ab86dac49070542fe40b477ec76058aaa
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         build-essential \
-        ca-certificates \
-        git \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
-RUN git clone --no-checkout "${IPG_REPO_URL}" ipg \
- && cd ipg \
- && git checkout "${IPG_REPO_SHA}" \
- && git log -1 --format='%H %s' > /src/ipg.build-info
+COPY src/ ./
 
-WORKDIR /src/ipg
 # Linker flag order matters under ld --as-needed (default on Debian bookworm):
 # libraries MUST appear after the translation units that reference them, or
 # the linker may drop the library resolution. squish.c uses pthread_create
@@ -41,15 +48,16 @@ RUN set -eux; \
     gcc -O2 -Wall -o /out/alt_liftover     alt_liftover.c; \
     gcc -O2 -Wall -o /out/triple_translate triple_translate.c; \
     gcc -O2 -Wall -o /out/squish           squish.c -pthread -lm; \
-    strip /out/*
+    strip /out/*; \
+    echo "ipg-tools built from local sources at $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        > /out/ipg.build-info
 
 # ---- Runtime image ---------------------------------------------------------
 FROM debian:bookworm-slim
 
 # Runtime deps: the binaries are dynamically linked against glibc. On Debian
 # bookworm libm and libpthread are folded into libc6 (glibc 2.36+), so libc6
-# alone is sufficient. ca-certificates is not needed at runtime because the
-# git clone happens in the builder stage.
+# alone is sufficient.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         libc6 \
@@ -60,12 +68,11 @@ COPY --from=builder /out/revert_headers   /usr/local/bin/revert_headers
 COPY --from=builder /out/alt_liftover     /usr/local/bin/alt_liftover
 COPY --from=builder /out/triple_translate /usr/local/bin/triple_translate
 COPY --from=builder /out/squish           /usr/local/bin/squish
-COPY --from=builder /src/ipg.build-info   /etc/ipg-tools.build-info
+COPY --from=builder /out/ipg.build-info   /etc/ipg-tools.build-info
 
 LABEL org.opencontainers.image.source="https://github.com/sanjaysgk/ipg"
-LABEL org.opencontainers.image.description="Custom C tools from immunopeptidogenomics (curate_vcf, revert_headers, alt_liftover, triple_translate, squish) used by the sanjaysgk/ipg nf-core pipeline."
+LABEL org.opencontainers.image.description="Custom C tools (curate_vcf [V2], revert_headers [3-arg], alt_liftover, triple_translate, squish) used by the sanjaysgk/ipg cryptic peptide pipeline. Built from sources bundled in the pipeline repo at containers/ipg-tools/src/."
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.documentation="https://github.com/sanjaysgk/ipg/blob/main/docs/ipg-tools.md"
 
 # Sanity check: each binary must be present, executable, and linkable.
 # We do NOT run `<tool> -h` here because curate_vcf.c and revert_headers.c

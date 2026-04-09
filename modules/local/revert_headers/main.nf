@@ -16,14 +16,16 @@ process REVERT_HEADERS {
     task.ext.when == null || task.ext.when
 
     script:
+    def prefix = "${meta.id}_${alt_fasta.baseName}_reverted"
     """
-    # revert_headers writes to tmpc.fasta in cwd
-    revert_headers ${reference_fasta} ${alt_fasta}
-    mv tmpc.fasta ${meta.id}_${alt_fasta.baseName}_reverted.fasta
+    # The improved revert_headers (sanjaysgk/immunopeptidogenomics@a09a74c)
+    # accepts an optional 3rd positional arg for the output file prefix.
+    # Output is written directly to <prefix>.fasta — no mv tmpc.fasta dance.
+    revert_headers ${reference_fasta} ${alt_fasta} ${prefix}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        revert_headers: "kescull/immunopeptidogenomics@fef8e68"
+        revert_headers: "sanjaysgk/immunopeptidogenomics@a09a74c"
     END_VERSIONS
     """
 

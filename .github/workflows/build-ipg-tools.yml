@@ -21,8 +21,6 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/ipg-tools
-  # Keep in sync with ARG IPG_REPO_SHA in containers/ipg-tools/Dockerfile
-  IPG_REPO_SHA: fef8e68ab86dac49070542fe40b477ec76058aaa
 
 jobs:
   build-and-push:
@@ -53,7 +51,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=sha-${{ env.IPG_REPO_SHA }}
             type=sha,format=short
             type=ref,event=tag,pattern=ipg-tools-v(.*),group=1
 
@@ -65,25 +62,14 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            IPG_REPO_SHA=${{ env.IPG_REPO_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Verify SHA pin matches Dockerfile
-        run: |
-          dockerfile_sha=$(awk -F= '/^ARG IPG_REPO_SHA=/ {print $2}' containers/ipg-tools/Dockerfile | tr -d '[:space:]')
-          if [ "${dockerfile_sha}" != "${IPG_REPO_SHA}" ]; then
-            echo "::error::IPG_REPO_SHA drift: Dockerfile=${dockerfile_sha} workflow=${IPG_REPO_SHA}"
-            exit 1
-          fi
-          echo "SHA pin OK: ${dockerfile_sha}"
 
       - name: Smoke test built image
         if: github.event_name != 'pull_request'
         run: |
           docker run --rm \
-              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.IPG_REPO_SHA }}" \
+              "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-$(git rev-parse --short HEAD)" \
               bash -c 'set -eu; for t in curate_vcf revert_headers alt_liftover triple_translate squish; do
                          test -x "/usr/local/bin/$t" || { echo "missing: $t"; exit 1; };
                          ldd "/usr/local/bin/$t" | grep -E "not found|undefined" && exit 1 || true;
