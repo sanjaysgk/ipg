@@ -1,16 +1,16 @@
 # ipg-tools container
 
 Reproducible build of the five C tools from the `immunopeptidogenomics` repository
-(originally written by Scull et al. for their 2020 *Mol Cell Proteomics* paper on
+(originally written by Scull et al. for their 2020 _Mol Cell Proteomics_ paper on
 cryptic peptide discovery from RNA-seq).
 
-| Tool | Used in pipeline step |
-|---|---|
-| `curate_vcf` | 23 — VCF curation before `FastaAlternateReferenceMaker` |
-| `revert_headers` | 26 — restore reference chromosome headers on alt FASTA |
-| `alt_liftover` | 28 — lift GTF coordinates to alternate reference |
-| `triple_translate` | 30 — 3-frame translation with transcript tracking |
-| `squish` | 31 — multi-FASTA deduplication into final cryptic peptide database |
+| Tool               | Used in pipeline step                                              |
+| ------------------ | ------------------------------------------------------------------ |
+| `curate_vcf`       | 23 — VCF curation before `FastaAlternateReferenceMaker`            |
+| `revert_headers`   | 26 — restore reference chromosome headers on alt FASTA             |
+| `alt_liftover`     | 28 — lift GTF coordinates to alternate reference                   |
+| `triple_translate` | 30 — 3-frame translation with transcript tracking                  |
+| `squish`           | 31 — multi-FASTA deduplication into final cryptic peptide database |
 
 ## Source pin
 
