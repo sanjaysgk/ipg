@@ -44,15 +44,31 @@ process CURATE_VCF {
             ;;
     esac
 
-    # Indel-preserving curation (no -d): deletions are KEPT, so downstream
-    # indel sites that overlap deletions are still callable.
-    curate_vcf "\${input_vcf}" > ${prefix}_curate_indel.log 2>&1
-    mv "\${stem}_indel.vcf" ${prefix}_indel.vcf
+    # The kescull curate_vcf binary segfaults on empty VCFs (no variant
+    # records). Guard against that by short-circuiting to empty output
+    # when there are zero non-header lines — this happens routinely on
+    # tiny test data and on real samples that simply have no somatic
+    # variants in the analysed region.
+    n_variants=\$(grep -vc '^#' "\${input_vcf}" || true)
+    echo "curate_vcf: \${n_variants} variant record(s) in input" \\
+        | tee ${prefix}_curate_indel.log ${prefix}_curate_unmasked.log
 
-    # Deletion-deprioritised curation (-d flag): deletions that would mask
-    # downstream mutation sites are removed, producing an 'unmasked' VCF.
-    curate_vcf -d "\${input_vcf}" > ${prefix}_curate_unmasked.log 2>&1
-    mv "\${stem}_unmasked.vcf" ${prefix}_unmasked.vcf
+    if [ "\${n_variants}" -eq 0 ]; then
+        # Pass through the (empty) input to both downstream branches.
+        cp "\${input_vcf}" ${prefix}_indel.vcf
+        cp "\${input_vcf}" ${prefix}_unmasked.vcf
+    else
+        # Indel-preserving curation (no -d): deletions are KEPT, so
+        # downstream indel sites that overlap deletions are still callable.
+        curate_vcf "\${input_vcf}" >> ${prefix}_curate_indel.log 2>&1
+        mv "\${stem}_indel.vcf" ${prefix}_indel.vcf
+
+        # Deletion-deprioritised curation (-d flag): deletions that would
+        # mask downstream mutation sites are removed, producing an
+        # 'unmasked' VCF.
+        curate_vcf -d "\${input_vcf}" >> ${prefix}_curate_unmasked.log 2>&1
+        mv "\${stem}_unmasked.vcf" ${prefix}_unmasked.vcf
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

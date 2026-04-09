@@ -27,9 +27,10 @@ process GATK4_FASTAALTERNATEREFERENCEMAKER {
     """
     gatk --java-options "-Xmx${avail_mem}M -XX:-UsePerfData" \\
         FastaAlternateReferenceMaker \\
-        --REFERENCE ${fasta} \\
-        --VARIANT ${vcf} \\
-        --OUTPUT ${prefix}.fasta \\
+        --reference ${fasta} \\
+        --variant ${vcf} \\
+        --output ${prefix}.fasta \\
+        --tmp-dir . \\
         ${args}
     """
 

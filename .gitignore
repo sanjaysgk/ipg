@@ -19,3 +19,18 @@ CLAUDE.md
 .nf-test*
 .nf-test/
 
+# Pre-built IPG tool binaries — these come from containers/ipg-tools or
+# from pixi+local compilation. They are not committed to git. Keep only
+# the build_test_bundle.sh script under bin/ tracked.
+bin/curate_vcf
+bin/revert_headers
+bin/alt_liftover
+bin/triple_translate
+bin/squish
+bin/gff3sort
+bin/gff3sort.pl
+bin/gffread_legacy
+
+# Local-only conf overrides
+conf/local.config
+

@@ -25,7 +25,7 @@ process GFF3SORT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        gff3sort: \$(gff3sort.pl --version 2>&1 | grep -oP '[0-9][^ ]*' | head -1 || echo "0.1.a1a2bc9")
+        gff3sort: 0.1.a1a2bc9
     END_VERSIONS
     """
 
