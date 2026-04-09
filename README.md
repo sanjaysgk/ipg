@@ -39,10 +39,122 @@ suitable for downstream MS/MS immunopeptidomics searches. Starting from FASTQs, 
 
 The 31 legacy steps are grouped into **six typed nf-core subworkflows**:
 
-```
-ALIGN_QC ─┬─→ TRANSCRIPT_ASSEMBLY ──┐
-          │                          │
-          └─→ BAM_PREP ─→ BQSR ──→ MUTECT_CALLING ──→ DB_CONSTRUCT ──→ cryptic.fasta
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor":         "#e0f2fe",
+    "primaryTextColor":     "#0c4a6e",
+    "primaryBorderColor":   "#0369a1",
+    "lineColor":            "#0369a1",
+    "secondaryColor":       "#fef3c7",
+    "tertiaryColor":        "#dcfce7",
+    "fontFamily":           "ui-sans-serif, system-ui, -apple-system, sans-serif",
+    "fontSize":             "14px"
+  }
+}}%%
+flowchart LR
+    %% ----- nodes -----
+    INPUT(["fa:fa-dna <b>Paired-end FASTQ</b><br/>+ samplesheet.csv"]):::input
+
+    subgraph QC1["1. ALIGN_QC &nbsp; <span style='color:#64748b;font-size:11px'>(steps 1–3)</span>"]
+        direction TB
+        STAR1["STAR 2-pass align"]
+        SORT1["samtools sort + index"]
+        RSEQC["RSeQC infer_experiment"]
+        STAR1 --> SORT1 --> RSEQC
+    end
+
+    subgraph TA["2. TRANSCRIPT_ASSEMBLY &nbsp; <span style='color:#64748b;font-size:11px'>(steps 4–5)</span>"]
+        direction TB
+        STRINGTIE["StringTie"]
+        GFFCOMPARE["gffcompare<br/>(-R -V -C)"]
+        STRINGTIE --> GFFCOMPARE
+    end
+
+    subgraph BP["3. BAM_PREP &nbsp; <span style='color:#64748b;font-size:11px'>(steps 6–12)</span>"]
+        direction TB
+        SORTQN["samtools sort -n"]
+        F2S["GATK4 FastqToSam"]
+        MERGE["GATK4 MergeBamAlignment"]
+        MARKDUP["GATK4 MarkDuplicates"]
+        SPLIT["GATK4 SplitNCigarReads"]
+        VAL["GATK4 ValidateSamFile<br/><span style='color:#64748b;font-size:11px'>(audit only)</span>"]
+        SORTQN --> F2S --> MERGE --> MARKDUP --> SPLIT --> VAL
+    end
+
+    subgraph BQ["4. BQSR &nbsp; <span style='color:#64748b;font-size:11px'>(steps 13–16)</span>"]
+        direction TB
+        BR1["BaseRecalibrator (1st)"]
+        APPLY["ApplyBQSR"]
+        BR2["BaseRecalibrator (2nd)"]
+        AC["AnalyzeCovariates<br/><span style='color:#64748b;font-size:11px'>(QC plot)</span>"]
+        BR1 --> APPLY --> BR2 --> AC
+    end
+
+    subgraph MC["5. MUTECT_CALLING &nbsp; <span style='color:#64748b;font-size:11px'>(steps 17–23)</span>"]
+        direction TB
+        M2["Mutect2 tumour-only"]
+        LOM["LearnReadOrientationModel"]
+        GPS["GetPileupSummaries"]
+        CC["CalculateContamination"]
+        FMC["FilterMutectCalls"]
+        SV["SelectVariants<br/>(PASS, sites-only)"]
+        CV["curate_vcf<br/><span style='color:#64748b;font-size:11px'>(IPG)</span>"]
+        M2 --> LOM
+        M2 --> GPS --> CC
+        LOM --> FMC
+        CC --> FMC
+        M2 --> FMC --> SV --> CV
+    end
+
+    subgraph DC["6. DB_CONSTRUCT &nbsp; <span style='color:#64748b;font-size:11px'>(steps 24–31)</span>"]
+        direction TB
+        GFF3["gff3sort"]
+        GFR["gffread"]
+        TT["triple_translate<br/><span style='color:#64748b;font-size:11px'>(IPG)</span>"]
+        VAR{{"--include_variant_peptides<br/>true?"}}:::flag
+        IFR["IndexFeatureFile + FARM<br/>+ revert_headers + alt_liftover<br/><span style='color:#64748b;font-size:11px'>(unmasked + indel branches)</span>"]
+        SQUISH["squish<br/><span style='color:#64748b;font-size:11px'>(IPG)</span>"]
+        GFF3 --> GFR --> TT --> SQUISH
+        VAR -->|yes| IFR --> SQUISH
+    end
+
+    QC2["FastQC"]:::qc
+    MQC["fa:fa-chart-bar <b>MultiQC report</b>"]:::report
+    OUT(["fa:fa-database <b>cryptic_peptide.fasta</b><br/>(MS/MS-ready DB)"]):::deliverable
+
+    %% ----- edges -----
+    INPUT --> QC2
+    INPUT --> STAR1
+    SORT1 --> STRINGTIE
+    SORT1 --> SORTQN
+    SPLIT --> BR1
+    APPLY --> M2
+    GFFCOMPARE --> GFF3
+    SV --> IFR
+    SQUISH --> OUT
+
+    QC2 --> MQC
+    RSEQC --> MQC
+    MARKDUP --> MQC
+    AC --> MQC
+    GFFCOMPARE --> MQC
+    FMC --> MQC
+
+    %% ----- classes -----
+    classDef input        fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    classDef deliverable  fill:#bbf7d0,stroke:#16a34a,stroke-width:3px,color:#14532d
+    classDef report       fill:#e9d5ff,stroke:#9333ea,stroke-width:2px,color:#581c87
+    classDef qc           fill:#fce7f3,stroke:#db2777,stroke-width:2px,color:#831843
+    classDef flag         fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e
+
+    style QC1 fill:#f0f9ff,stroke:#0284c7,stroke-width:2px
+    style TA  fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style BP  fill:#fef2f2,stroke:#dc2626,stroke-width:2px
+    style BQ  fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style MC  fill:#faf5ff,stroke:#9333ea,stroke-width:2px
+    style DC  fill:#fff7ed,stroke:#ea580c,stroke-width:2px
 ```
 
 ## Quick start
