@@ -39,9 +39,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Pinned to two stable Nextflow LTS releases. We deliberately do
+        # NOT include `latest-everything` (currently 26.3.2-edge) because
+        # it has a strict-parser regression that rejects ${manifest.X}
+        # forward-reference interpolation inside the validation.help
+        # beforeText / afterText strings — the same template the nf-core
+        # template ships verbatim. Will revisit when 26.x stabilises and
+        # the nf-core template catches up.
         NXF_VER:
           - "24.04.2"
-          - "latest-everything"
+          - "25.10.4"
         profile:
           - "docker"
           - "singularity"
