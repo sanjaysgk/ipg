@@ -33,15 +33,18 @@ lint:
   readme:
     - nextflow_config
     - nfcore_template
-  # The pipeline is pre-1.0 (development version 1.0.0dev). Drop the 'dev'
-  # suffix only when tagging a real release.
+  # The `1.0.0dev` manifest.version is the standard nf-core convention
+  # for "in development between releases" — every fresh nf-core pipeline
+  # starts here and stays here until the first numeric release tag is
+  # cut. The `--release` lint flag rejects any version containing 'dev',
+  # so we exclude it until we actually drop the suffix at release time.
   nextflow_config:
     - manifest.version
 
 template:
   org: sanjaysgk
   name: ipg
-  description: Immunopeptidomics cryptic peptide database construction from RNA-seq
+  description: Immunopeptidogenomics cryptic peptide database construction from RNA-seq
   author: Sanjay SG Krishna, Kate Scull, Chen Li
   version: 1.0.0dev
   force: true
