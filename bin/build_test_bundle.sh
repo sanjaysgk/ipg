@@ -132,13 +132,13 @@ if [[ ! -s "${STAR_OUT}/Genome" ]]; then
     # sjdbOverhang = read length - 1 = 150 - 1 = 149 (matches D100 read length)
     # genomeSAindexNbases = min(14, log2(GenomeLength)/2 - 1) = ~11 for chr22 (50 Mb)
     STAR --runMode genomeGenerate \
-         --runThreadN "${THREADS}" \
-         --genomeDir "${STAR_OUT}" \
-         --genomeFastaFiles "${FA_OUT}" \
-         --sjdbGTFfile "${GTF_OUT}" \
-         --sjdbOverhang 149 \
-         --genomeSAindexNbases 11 \
-         --outFileNamePrefix "${STAR_OUT}/"
+        --runThreadN "${THREADS}" \
+        --genomeDir "${STAR_OUT}" \
+        --genomeFastaFiles "${FA_OUT}" \
+        --sjdbGTFfile "${GTF_OUT}" \
+        --sjdbOverhang 149 \
+        --genomeSAindexNbases 11 \
+        --outFileNamePrefix "${STAR_OUT}/"
 else
     log "[skip] STAR index already built at ${STAR_OUT}"
 fi
@@ -170,14 +170,17 @@ subset_vcf_gz() {
     fi
 }
 
-subset_vcf_gz "${VARIANT_DIR}/resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz" \
-              "${TEST_BUNDLE_DIR}/variant_calling/known_indels.${CHR}.vcf.gz"
+subset_vcf_gz \
+    "${VARIANT_DIR}/resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz" \
+    "${TEST_BUNDLE_DIR}/variant_calling/known_indels.${CHR}.vcf.gz"
 
-subset_vcf_gz "${VARIANT_DIR}/resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz" \
-              "${TEST_BUNDLE_DIR}/variant_calling/Mills.${CHR}.vcf.gz"
+subset_vcf_gz \
+    "${VARIANT_DIR}/resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz" \
+    "${TEST_BUNDLE_DIR}/variant_calling/Mills.${CHR}.vcf.gz"
 
-subset_vcf_gz "${VARIANT_DIR}/small_exac_common_3.hg38.vcf.gz" \
-              "${TEST_BUNDLE_DIR}/variant_calling/small_exac_common_3.${CHR}.vcf.gz"
+subset_vcf_gz \
+    "${VARIANT_DIR}/small_exac_common_3.hg38.vcf.gz" \
+    "${TEST_BUNDLE_DIR}/variant_calling/small_exac_common_3.${CHR}.vcf.gz"
 
 # ---- Stage 5: subsampled FASTQ ---------------------------------------------
 # Strategy: seqtk random subsample to SUBSAMPLE_READS paired reads with a

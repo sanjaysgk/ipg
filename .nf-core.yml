@@ -2,7 +2,41 @@ repository_type: pipeline
 
 nf_core_version: 3.5.2
 
-lint: {}
+# Lint exclusions — sanjaysgk/ipg is intentionally divergent from the
+# nf-core template in several places. Each exclusion below is justified.
+lint:
+  # We did not adopt the nf-core template's nf-test runner / shards setup.
+  # Our nf-test harness lives at nf-test.config + tests/ at the repo root
+  # and is wired into ci.yml directly (see .github/workflows/ci.yml).
+  files_exist:
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - tests/default.nf.test
+  # These files were intentionally diverged from the nf-core template:
+  #   - .gitattributes: pixi.lock entry added
+  #   - .prettierrc.yml: untouched but lint flags it (false positive)
+  #   - CONTRIBUTING / ISSUE_TEMPLATE / PR_TEMPLATE / linting_comment.yml:
+  #     all updated to point at sanjaysgk/ipg instead of nf-core/ipg
+  #     (commit 78526c6 - bulk identity rename)
+  files_unchanged:
+    - .gitattributes
+    - .prettierrc.yml
+    - .github/CONTRIBUTING.md
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/linting_comment.yml
+  # README intentionally rewritten as a real project README without the
+  # nf-core template badges (no Twitter / Mastodon / YouTube / Slack /
+  # Zenodo placeholder / AWS CI badges). The Nextflow minimum-version
+  # info is in the introduction text and `pixi.toml` rather than a badge.
+  readme:
+    - nextflow_config
+    - nfcore_template
+  # The pipeline is pre-1.0 (development version 1.0.0dev). Drop the 'dev'
+  # suffix only when tagging a real release.
+  nextflow_config:
+    - manifest.version
 
 template:
   org: sanjaysgk

@@ -149,8 +149,7 @@ pixi run nextflow run . -profile monash,singularity \
     [other reference args]
 ```
 
-> [!IMPORTANT]
-> `--include_variant_peptides` does **not** switch the variant caller to matched
+> [!IMPORTANT] > `--include_variant_peptides` does **not** switch the variant caller to matched
 > tumour-normal mode. Variant calling is **always** performed in tumour-only
 > Mutect2 mode against a gnomAD-style germline allele-frequency database; this
 > pipeline does **not** support matched tumour-normal calling. The flag controls
@@ -246,8 +245,7 @@ sanjaysgk/ipg/
 
 If you use `sanjaysgk/ipg` in your research, please cite the original method paper:
 
-> **Scull KE, Pandey K, Ramarathinam SH, Purcell AW.**
-> _Immunopeptidogenomics: harnessing RNA-seq to illuminate the dark immunopeptidome._
+> **Scull KE, Pandey K, Ramarathinam SH, Purcell AW.** > _Immunopeptidogenomics: harnessing RNA-seq to illuminate the dark immunopeptidome._
 > Mol Cell Proteomics. 2021;20:100143.
 > doi: [10.1016/j.mcpro.2021.100143](https://doi.org/10.1016/j.mcpro.2021.100143)
 

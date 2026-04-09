@@ -29,10 +29,10 @@
 
 FROM debian:bookworm-slim AS builder
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-        build-essential \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
 COPY src/ ./
@@ -58,10 +58,10 @@ FROM debian:bookworm-slim
 # Runtime deps: the binaries are dynamically linked against glibc. On Debian
 # bookworm libm and libpthread are folded into libc6 (glibc 2.36+), so libc6
 # alone is sufficient.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-        libc6 \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libc6 && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /out/curate_vcf       /usr/local/bin/curate_vcf
 COPY --from=builder /out/revert_headers   /usr/local/bin/revert_headers

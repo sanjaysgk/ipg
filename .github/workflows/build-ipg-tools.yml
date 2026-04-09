@@ -71,7 +71,7 @@ jobs:
           docker run --rm \
               "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-$(git rev-parse --short HEAD)" \
               bash -c 'set -eu; for t in curate_vcf revert_headers alt_liftover triple_translate squish; do
-                         test -x "/usr/local/bin/$t" || { echo "missing: $t"; exit 1; };
-                         ldd "/usr/local/bin/$t" | grep -E "not found|undefined" && exit 1 || true;
-                         echo "OK: $t";
-                       done'
+                test -x "/usr/local/bin/$t" || { echo "missing: $t"; exit 1; };
+                ldd "/usr/local/bin/$t" | grep -E "not found|undefined" && exit 1 || true;
+                echo "OK: $t";
+              done'
