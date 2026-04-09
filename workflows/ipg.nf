@@ -142,10 +142,19 @@ workflow IPG {
     //
     // SUBWORKFLOW: db_construct — steps 24-31
     //
+    // Use the gffcompare COMBINED GTF (not the StringTie raw GTF) so that
+    // downstream gff3sort -> alt_liftover -> gffread -> triple_translate
+    // see TCONS_NNNN consensus transcript IDs and the associated
+    // ENSG/ENST annotations from the .tracking file. This matches the
+    // legacy bash pipeline at step 27 (gff3sort prefix.combined.gtf) and
+    // produces FASTA headers like
+    //     >TCONS_00092914_f1p15_1 ENSG00000138722.10|ENST00000264790.7:=
+    // Feeding the StringTie GTF instead would produce STRG.* IDs with
+    // no gene/transcript annotation in the cryptic peptide DB headers.
     DB_CONSTRUCT(
         MUTECT_CALLING.out.unmasked_vcf,
         MUTECT_CALLING.out.indel_vcf,
-        TRANSCRIPT_ASSEMBLY.out.assembly_gtf,
+        TRANSCRIPT_ASSEMBLY.out.combined_gtf,
         TRANSCRIPT_ASSEMBLY.out.tracking,
         ch_fasta,
         ch_fai,

@@ -5,7 +5,7 @@ process SQUISH {
     container "ghcr.io/sanjaysgk/ipg-tools:0.1.0"
 
     input:
-    tuple val(meta), path(fastas, stageAs: 'inputs/*')
+    tuple val(meta), path(fastas)
 
     output:
     tuple val(meta), path("${meta.id}_cryptic.fasta"), emit: fasta
@@ -16,7 +16,12 @@ process SQUISH {
     task.ext.when == null || task.ext.when
 
     script:
-    def db_args = fastas.collect { "-d ${it}" }.join(' ')
+    // `fastas` may be a single Path (when called with one input,
+    // e.g. params.include_variant_peptides == false → reference-only)
+    // or a List<Path> (when called with all three branches). Normalise
+    // so the -d arg construction is uniform.
+    def fasta_list = fastas instanceof List ? fastas : [fastas]
+    def db_args    = fasta_list.collect { f -> "-d ${f}" }.join(' ')
     """
     squish ${db_args} \\
         -t ${task.cpus} \\
