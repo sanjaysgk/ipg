@@ -58,10 +58,20 @@ jobs:
 
       - name: "Parse pipeline config (${{ matrix.profile }})"
         run: |
-          nextflow config ${GITHUB_WORKSPACE} -profile ${{ matrix.profile }} > /dev/null
+          set -euo pipefail
+          nextflow config ${GITHUB_WORKSPACE} -profile ${{ matrix.profile }} > nextflow.config.dump 2>&1 || {
+              echo "::error::nextflow config -profile ${{ matrix.profile }} FAILED — output:"
+              cat nextflow.config.dump
+              exit 1
+          }
           echo "Pipeline config parses cleanly with -profile ${{ matrix.profile }}"
 
       - name: "Parse with test profile chained (${{ matrix.profile }})"
         run: |
-          nextflow config ${GITHUB_WORKSPACE} -profile test,${{ matrix.profile }} > /dev/null
+          set -euo pipefail
+          nextflow config ${GITHUB_WORKSPACE} -profile test,${{ matrix.profile }} > nextflow.testconfig.dump 2>&1 || {
+              echo "::error::nextflow config -profile test,${{ matrix.profile }} FAILED — output:"
+              cat nextflow.testconfig.dump
+              exit 1
+          }
           echo "Pipeline config parses cleanly with -profile test,${{ matrix.profile }}"
