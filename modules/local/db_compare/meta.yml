@@ -1,0 +1,60 @@
+name: "db_compare"
+description: Compare cryptic and UniProt PSM results to identify cryptic-only peptides
+keywords:
+  - immunopeptidogenomics
+  - cryptic peptides
+  - PSM comparison
+tools:
+  - db_compare_v2.R:
+      description: R script that compares PEAKS (or other search engine) PSM results between a cryptic peptide DB and UniProt DB to identify cryptic-only peptides.
+      homepage: https://github.com/kescull/immunopeptidogenomics
+      documentation: https://github.com/kescull/immunopeptidogenomics
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy map with sample metadata. Must include:
+            - id: sample identifier (used as output prefix)
+            - cryptic_decoy_score: -10lgP decoy threshold for cryptic DB
+            - uniprot_decoy_score: -10lgP decoy threshold for UniProt DB
+    - cryptic_psm:
+        type: file
+        description: PSM CSV from search against cryptic peptide DB
+        pattern: "*.csv"
+    - uniprot_psm:
+        type: file
+        description: PSM CSV from search against UniProt DB
+        pattern: "*.csv"
+  - - discard_list:
+        type: file
+        description: |
+          Optional discard peptide list from Phase 1 origins (origins_discard.txt).
+          Pass an empty list [] for Phase 1.
+        pattern: "*.txt"
+  - - unconventional_list:
+        type: file
+        description: |
+          Optional unconventional peptide list from Phase 1 origins (origins_unconventional.txt).
+          Pass an empty list [] for Phase 1.
+        pattern: "*.txt"
+output:
+  - cryptic_only:
+      - meta:
+          type: map
+      - "*.txt":
+          type: file
+          description: Phase 1 cryptic-only peptide list
+          pattern: "*_cryptic_only.txt"
+  - unambiguous_unconventional:
+      - meta:
+          type: map
+      - "*.txt":
+          type: file
+          description: Phase 2 unambiguous unconventional peptide list
+          pattern: "*_unambiguous_unconventional.txt"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

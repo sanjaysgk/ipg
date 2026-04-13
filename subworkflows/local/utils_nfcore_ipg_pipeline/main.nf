@@ -70,27 +70,31 @@ workflow PIPELINE_INITIALISATION {
 
     //
     // Create channel from input file provided through params.input
+    // Skipped when --step post_ms (samplesheet parsing happens in ipg.nf)
     //
-
-    Channel
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map {
-            meta, fastq_1, fastq_2 ->
-                if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
-                } else {
-                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
-                }
-        }
-        .groupTuple()
-        .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
-        }
-        .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
-        }
-        .set { ch_samplesheet }
+    if (params.step == 'post_ms') {
+        ch_samplesheet = Channel.empty()
+    } else {
+        Channel
+            .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+            .map {
+                meta, fastq_1, fastq_2 ->
+                    if (!fastq_2) {
+                        return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
+                    } else {
+                        return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
+                    }
+            }
+            .groupTuple()
+            .map { samplesheet ->
+                validateInputSamplesheet(samplesheet)
+            }
+            .map {
+                meta, fastqs ->
+                    return [ meta, fastqs.flatten() ]
+            }
+            .set { ch_samplesheet }
+    }
 
     emit:
     samplesheet = ch_samplesheet
@@ -155,6 +159,30 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
     genomeExistsError()
+
+    def valid_steps = ['db_construct', 'post_ms']
+    if (!valid_steps.contains(params.step)) {
+        error("Invalid --step '${params.step}'. Must be one of: ${valid_steps.join(', ')}")
+    }
+
+    if (params.step == 'db_construct' && !params.input) {
+        error("--input samplesheet is required when --step db_construct (default)")
+    }
+
+    if (params.step == 'post_ms') {
+        if (!params.post_ms_input) {
+            error("--post_ms_input is required when --step post_ms")
+        }
+        if (!params.uniprot_fasta) {
+            error("--uniprot_fasta is required when --step post_ms")
+        }
+        if (!params.transcriptome_fasta) {
+            error("--transcriptome_fasta is required when --step post_ms")
+        }
+        if (!params.prefix_tracking) {
+            error("--prefix_tracking is required when --step post_ms")
+        }
+    }
 }
 
 //

@@ -37,7 +37,11 @@ suitable for downstream MS/MS immunopeptidomics searches. Starting from FASTQs, 
    [`squish`](https://github.com/sanjaysgk/immunopeptidogenomics)) plus
    `gff3sort` and `gffread` from bioconda.
 
-The 31 legacy steps are grouped into **six typed nf-core subworkflows**:
+Optionally, a **post-MS analysis** step (`--step post_ms`) runs the two-phase
+`db_compare` + `origins` workflow on PEAKS (or other search engine) results to
+identify and annotate cryptic-only peptides.
+
+The 31 legacy steps are grouped into **seven typed nf-core subworkflows**:
 
 ```mermaid
 %%{init: {
@@ -272,6 +276,66 @@ pixi run nextflow run . -profile monash,singularity \
 > sample where variant peptides would mostly add noise. This is a pipeline-level
 > flag — to mix modes for a heterogeneous cohort, run the pipeline twice.
 
+## Post-MS analysis (`--step post_ms`)
+
+After running the DB construction pipeline, the cryptic peptide FASTA is searched
+against MS/MS data using PEAKS Online (or another search engine such as
+MSFragger, Comet, or Sage). The resulting PSM CSVs are then analysed with the
+two-phase `db_compare` + `origins` workflow
+([Scull et al. 2021](https://doi.org/10.1016/j.mcpro.2021.100143)):
+
+```
+Phase 1: db_compare_v2.R  →  cryptic_only.txt
+         origins -s        →  origins_discard.txt + origins_unconventional.txt
+
+Phase 2: db_compare_v2.R (with -j discard -u unconventional)
+         →  unambiguous_unconventional.txt
+         origins (full Ensembl mode)  →  deep origin annotation
+```
+
+### Post-MS samplesheet
+
+Create a CSV with one row per sample:
+
+```csv
+sample,cryptic_psm_csv,uniprot_psm_csv,cryptic_decoy_score,uniprot_decoy_score
+D122_liver,/path/to/D122_Liver_Cryptic_DB.db.psms.csv,/path/to/D122_Liver_Uniprot_DB.db.psms.csv,44.43,36.48
+D101_heart,/path/to/D101_Heart_Cryptic_DB.db.psms.csv,/path/to/D101_Heart_Uniprot_DB.db.psms.csv,3.64,3.25
+```
+
+The `cryptic_decoy_score` and `uniprot_decoy_score` columns are the `-10lgP`
+decoy thresholds from the respective PEAKS searches.
+
+### Running post-MS analysis
+
+```bash
+pixi run nextflow run . -profile pixi,monash \
+    --step post_ms \
+    --post_ms_input       post_ms_samplesheet.csv \
+    --uniprot_fasta       /path/to/uniprotkb_human_canonical_isoform.fasta \
+    --transcriptome_fasta /path/to/D122_liver_transcriptome.fa \
+    --prefix_tracking     /path/to/prefix.tracking \
+    --outdir              results_post_ms
+```
+
+The `--transcriptome_fasta` and `--prefix_tracking` files are outputs from the
+DB construction step (`gffread` and `gffcompare` respectively). You can find them
+in the pipeline output directory from the previous run.
+
+### Post-MS output
+
+```
+results_post_ms/
+├── post_ms/
+│   ├── phase1/
+│   │   ├── db_compare/     Phase 1 cryptic-only peptide lists + plots
+│   │   └── origins/        Phase 1 origins (simple mode) — discard + unconventional lists
+│   └── phase2/
+│       ├── db_compare/     Phase 2 refined unambiguous unconventional peptides
+│       └── origins/        Phase 2 origins (full Ensembl annotation)
+└── pipeline_info/
+```
+
 ## Output
 
 ```
@@ -317,15 +381,18 @@ sanjaysgk/ipg/
 │   ├── bam_prep/                        steps 6-12
 │   ├── bqsr/                            steps 13-16
 │   ├── mutect_calling/                  steps 17-23
-│   └── db_construct/                    steps 24-31 (branches on --include_variant_peptides)
+│   ├── db_construct/                    steps 24-31 (branches on --include_variant_peptides)
+│   └── post_ms_analysis/               --step post_ms: 2-phase db_compare + origins
 ├── modules/
 │   ├── nf-core/                         23 upstream nf-core modules (STAR, samtools, GATK4, etc.)
-│   └── local/                           8 local modules:
+│   └── local/                           10 local modules:
 │       ├── curate_vcf/                  IPG custom C tool (kescull)
 │       ├── revert_headers/              IPG custom C tool (kescull)
 │       ├── alt_liftover/                IPG custom C tool (kescull)
 │       ├── triple_translate/            IPG custom C tool (kescull)
 │       ├── squish/                      IPG custom C tool (kescull)
+│       ├── origins/                     IPG custom C tool — peptide origin annotation (kescull)
+│       ├── db_compare/                  R script — cryptic vs UniProt PSM comparison (kescull)
 │       ├── gff3sort/                    bioconda gff3sort wrapper
 │       ├── gatk4_validatesamfile/       missing-from-upstream wrapper
 │       └── gatk4_fastaalternatereferencemaker/  missing-from-upstream wrapper
