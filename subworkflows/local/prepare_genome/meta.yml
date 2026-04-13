@@ -1,0 +1,42 @@
+name: prepare_genome
+description: |
+  Resolve, decompress, and index reference genome files for the IPG pipeline.
+  Conditionally builds missing derivable indices (fai, dict, STAR index) from
+  the primary reference files (fasta, gtf). Pass-through for files already
+  provided via params or resolved from --genome config.
+keywords:
+  - genome
+  - reference
+  - index
+  - fasta
+  - star
+components:
+  - gunzip
+  - samtools/faidx
+  - gatk4/createsequencedictionary
+  - star/genomegenerate
+output:
+  - fasta:
+      description: Reference genome FASTA (decompressed)
+  - fasta_fai:
+      description: Samtools FAI index
+  - fasta_dict:
+      description: GATK sequence dictionary
+  - star_index:
+      description: STAR genome index directory
+  - gtf:
+      description: Gene annotation GTF (decompressed)
+  - rseqc_bed:
+      description: RSeQC gene model BED file
+  - known_sites:
+      description: BQSR known-sites VCF list (dbSNP, known_indels, Mills)
+  - known_sites_tbi:
+      description: BQSR known-sites TBI index list
+  - germline_resource:
+      description: Germline allele frequency VCF for Mutect2
+  - germline_resource_tbi:
+      description: Germline resource TBI index
+  - versions:
+      description: Software versions
+authors:
+  - "@sanjaysgk"
