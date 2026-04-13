@@ -7,9 +7,9 @@
     that are already provided via params or resolved from --genome config.
 
     Three usage modes:
-      1. --genome GRCh38              resolves all paths from genomes.config
-      2. --fasta /path --gtf /path    explicit paths, builds missing indices
-      3. --genome GRCh38 --star_index /my/star   mix of config + overrides
+        1. --genome GRCh38              resolves all paths from genomes.config
+        2. --fasta /path --gtf /path    explicit paths, builds missing indices
+        3. --genome GRCh38 --star_index /my/star   mix of config + overrides
 ----------------------------------------------------------------------------------------
 */
 
