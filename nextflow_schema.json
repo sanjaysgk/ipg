@@ -10,7 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir"],
+            "required": ["outdir"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -233,6 +233,46 @@
                 }
             }
         },
+        "post_ms_options": {
+            "title": "Post-MS analysis options",
+            "type": "object",
+            "fa_icon": "fas fa-flask",
+            "description": "Parameters for the post-MS database search analysis step (--step post_ms).",
+            "properties": {
+                "step": {
+                    "type": "string",
+                    "default": "db_construct",
+                    "enum": ["db_construct", "post_ms"],
+                    "description": "Pipeline entry point. 'db_construct' runs full DB construction from FASTQ. 'post_ms' runs post-MS search analysis only.",
+                    "fa_icon": "fas fa-play"
+                },
+                "post_ms_input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Samplesheet CSV for post-MS analysis (required when --step post_ms).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "uniprot_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to UniProt FASTA database for origins analysis.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "transcriptome_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the reference transcriptome FASTA from DB construction (gffread output).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "prefix_tracking": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the gffcompare .tracking file from DB construction.",
+                    "fa_icon": "far fa-file-code"
+                }
+            }
+        },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
@@ -340,6 +380,9 @@
         },
         {
             "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/post_ms_options"
         },
         {
             "$ref": "#/$defs/generic_options"

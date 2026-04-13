@@ -1,0 +1,56 @@
+name: "origins"
+description: Annotate the genomic origin of cryptic peptides using Ensembl REST API
+keywords:
+  - immunopeptidogenomics
+  - cryptic peptides
+  - origin annotation
+  - ensembl
+tools:
+  - origins:
+      description: |
+        C tool that traces each cryptic peptide back to its genomic origin
+        (translated in-frame, 5'UTR, 3'UTR, upstream, downstream, frame-shifted)
+        by querying the Ensembl REST API. Classifies peptides as conventional or
+        unconventional. Simple mode (-s) skips Ensembl lookups for conventional
+        peptides and is used in Phase 1.
+      homepage: https://github.com/kescull/immunopeptidogenomics
+      documentation: https://github.com/kescull/immunopeptidogenomics
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptide_list:
+        type: file
+        description: Peptide list from db_compare (cryptic_only.txt or unambiguous_unconventional.txt)
+        pattern: "*.txt"
+  - - tracking:
+        type: file
+        description: Gffcompare .tracking file (prefix.tracking)
+        pattern: "*.tracking"
+  - - uniprot_fasta:
+        type: file
+        description: UniProt canonical+isoform FASTA
+        pattern: "*.{fa,fasta}"
+  - - transcriptome_fasta:
+        type: file
+        description: Transcriptome FASTA from DB construction (gffread output)
+        pattern: "*.{fa,fasta}"
+output:
+  - discard:
+      - meta:
+          type: map
+      - "*_origins_discard.txt":
+          type: file
+          description: List of peptides to discard (artificial junctions etc.)
+  - unconventional:
+      - meta:
+          type: map
+      - "*_origins_unconventional.txt":
+          type: file
+          description: List of unconventional (non-canonical) peptides
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

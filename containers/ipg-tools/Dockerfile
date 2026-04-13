@@ -31,7 +31,8 @@ FROM debian:bookworm-slim AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        build-essential && \
+        build-essential \
+        libcurl4-openssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -48,6 +49,7 @@ RUN set -eux; \
     gcc -O2 -Wall -o /out/alt_liftover     alt_liftover.c; \
     gcc -O2 -Wall -o /out/triple_translate triple_translate.c; \
     gcc -O2 -Wall -o /out/squish           squish.c -pthread -lm; \
+    gcc -O2 -Wall -o /out/origins         origins.c cJSON.c -lcurl -lm; \
     strip /out/*; \
     echo "ipg-tools built from local sources at $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         > /out/ipg.build-info
@@ -60,7 +62,8 @@ FROM debian:bookworm-slim
 # alone is sufficient.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        libc6 && \
+        libc6 \
+        libcurl4 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /out/curate_vcf       /usr/local/bin/curate_vcf
@@ -68,10 +71,11 @@ COPY --from=builder /out/revert_headers   /usr/local/bin/revert_headers
 COPY --from=builder /out/alt_liftover     /usr/local/bin/alt_liftover
 COPY --from=builder /out/triple_translate /usr/local/bin/triple_translate
 COPY --from=builder /out/squish           /usr/local/bin/squish
+COPY --from=builder /out/origins          /usr/local/bin/origins
 COPY --from=builder /out/ipg.build-info   /etc/ipg-tools.build-info
 
 LABEL org.opencontainers.image.source="https://github.com/sanjaysgk/ipg"
-LABEL org.opencontainers.image.description="Custom C tools (curate_vcf [V2], revert_headers [3-arg], alt_liftover, triple_translate, squish) used by the sanjaysgk/ipg cryptic peptide pipeline. Built from sources bundled in the pipeline repo at containers/ipg-tools/src/."
+LABEL org.opencontainers.image.description="Custom C tools (curate_vcf [V2], revert_headers [3-arg], alt_liftover, triple_translate, squish, origins) used by the sanjaysgk/ipg cryptic peptide pipeline. Built from sources bundled in the pipeline repo at containers/ipg-tools/src/."
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Sanity check: each binary must be present, executable, and linkable.
@@ -81,7 +85,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 # real build problems. Instead we verify existence, executability, and that
 # the dynamic linker can resolve every shared library dependency.
 RUN set -eu; \
-    for t in curate_vcf revert_headers alt_liftover triple_translate squish; do \
+    for t in curate_vcf revert_headers alt_liftover triple_translate squish origins; do \
         echo "=== $t ==="; \
         test -x "/usr/local/bin/$t" || { echo "missing or non-executable: $t"; exit 1; }; \
         ldd "/usr/local/bin/$t" | grep -E 'not found|undefined' && exit 1 || true; \
