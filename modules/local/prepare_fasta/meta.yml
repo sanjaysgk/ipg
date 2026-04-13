@@ -1,0 +1,28 @@
+name: "prepare_fasta"
+description: Prepare a target-decoy concatenated FASTA database for MS search
+keywords:
+    - fasta
+    - decoy
+    - target-decoy
+    - database search
+tools:
+    - prepare_fasta.py:
+          description: Checks for decoy sequences and generates reversed decoys if absent.
+          homepage: https://github.com/sanjaysgk/ipg
+          licence: ["MIT"]
+input:
+    - - fasta:
+            type: file
+            description: Input FASTA database (from db_construct or external)
+            pattern: "*.{fa,fasta}"
+output:
+    - fasta:
+          - "*_tda.fasta":
+                type: file
+                description: Target-decoy concatenated FASTA
+                pattern: "*_tda.fasta"
+    - versions:
+          - "versions.yml":
+                type: file
+                description: File containing software versions
+                pattern: "versions.yml"

@@ -22,6 +22,7 @@ include { BQSR                } from '../subworkflows/local/bqsr/main'
 include { MUTECT_CALLING      } from '../subworkflows/local/mutect_calling/main'
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
+include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -70,6 +71,35 @@ workflow IPG {
             ch_transcriptome_fasta
         )
         ch_versions = ch_versions.mix(POST_MS_ANALYSIS.out.versions)
+
+    } else if (params.step == 'ms_search') {
+
+        //
+        // MS SEARCH ENTRY POINT
+        // Runs search engines on MS data against a FASTA database.
+        //
+        Channel
+            .fromList(samplesheetToList(params.ms_input, "${projectDir}/assets/schema_ms_input.json"))
+            .map { meta, ms_file ->
+                [ meta, file(ms_file) ]
+            }
+            .set { ch_ms_data }
+
+        ch_search_fasta = channel.fromPath(params.search_fasta, checkIfExists: true).collect()
+
+        ch_msfragger_jar = params.msfragger_jar
+            ? channel.fromPath(params.msfragger_jar, checkIfExists: true).collect()
+            : channel.empty()
+
+        def engine_list = params.engines.tokenize(',')
+
+        MS_SEARCH(
+            ch_ms_data,
+            ch_search_fasta,
+            channel.value(engine_list),
+            ch_msfragger_jar
+        )
+        ch_versions = ch_versions.mix(MS_SEARCH.out.versions)
 
     } else {
 
