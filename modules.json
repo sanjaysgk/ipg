@@ -30,6 +30,11 @@
                         "git_sha": "86308d628760125908c5c77540517effe0f8880f",
                         "installed_by": ["modules"]
                     },
+                    "gatk4/createsequencedictionary": {
+                        "branch": "master",
+                        "git_sha": "86308d628760125908c5c77540517effe0f8880f",
+                        "installed_by": ["modules"]
+                    },
                     "gatk4/fastqtosam": {
                         "branch": "master",
                         "git_sha": "86308d628760125908c5c77540517effe0f8880f",
@@ -90,6 +95,11 @@
                         "git_sha": "51f2b493a7ff28b40a9f99faca64245521f2bb24",
                         "installed_by": ["modules"]
                     },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "96c57dfd98a0641886a67bd449fe33ee2ec0e374",
+                        "installed_by": ["modules"]
+                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "f0719ae309075ae4a291533883847c3f7c441dad",
@@ -98,6 +108,11 @@
                     "rseqc/inferexperiment": {
                         "branch": "master",
                         "git_sha": "0145202ae8a9f39a4e7c533f667c38989af799b2",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/faidx": {
+                        "branch": "master",
+                        "git_sha": "156feda0cb6589cd29c04902004fa3b53bc00205",
                         "installed_by": ["modules"]
                     },
                     "samtools/index": {
@@ -113,6 +128,11 @@
                     "star/align": {
                         "branch": "master",
                         "git_sha": "cebe21bbd158c15c8fab172e37cfe97a239f4b77",
+                        "installed_by": ["modules"]
+                    },
+                    "star/genomegenerate": {
+                        "branch": "master",
+                        "git_sha": "481efe07277c76e23738b4be0724ba7d99653d7e",
                         "installed_by": ["modules"]
                     },
                     "stringtie/stringtie": {
