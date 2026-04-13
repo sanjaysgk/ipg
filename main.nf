@@ -23,12 +23,16 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_ipg_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     GENOME PARAMETER VALUES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Resolve reference paths from --genome config lookup (iGenomes + genomes.config).
+    The elvis operator (?:) ensures explicit CLI params always win, e.g.
+    --genome GRCh38 --star_index /my/star  uses the override for star_index only.
+    Params that remain null after resolution are either built by PREPARE_GENOME
+    (fasta_fai, fasta_dict, star_index) or cause a validation error (fasta, gtf, etc.).
 */
 
-// TODO nf-core: Remove this line if you don't need a FASTA file
-//   This is an example of how to use getGenomeAttribute() to fetch parameters
-//   from igenomes.config using `--genome`
-params.fasta = getGenomeAttribute('fasta')
+// Genome attribute resolution is handled in nextflow.config (not here)
+// because Nextflow 25.x treats params as immutable after config loading.
+// See the params {} block in nextflow.config for the resolution logic.
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

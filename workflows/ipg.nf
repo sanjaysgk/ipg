@@ -13,6 +13,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ipg_
 //
 // Cryptic peptide discovery subworkflows (steps 1-31 of the legacy bash pipeline)
 //
+include { PREPARE_GENOME      } from '../subworkflows/local/prepare_genome/main'
 include { ALIGN_QC            } from '../subworkflows/local/align_qc/main'
 include { TRANSCRIPT_ASSEMBLY } from '../subworkflows/local/transcript_assembly/main'
 include { BAM_PREP            } from '../subworkflows/local/bam_prep/main'
@@ -37,30 +38,25 @@ workflow IPG {
     ch_multiqc_files = channel.empty()
 
     //
-    // Stage reference channels from params. Each is a value-channel
-    // carrying a single [meta, path(s)] tuple so it can be safely
-    // consumed by multiple downstream processes.
+    // SUBWORKFLOW: Resolve, decompress, and index reference files.
+    // Builds fai/dict/STAR index on-the-fly if not provided via params.
+    // When all paths are explicit (e.g. from a params YAML), this is a
+    // zero-cost pass-through.
     //
-    def ref_meta = [ id: 'reference' ]
-    ch_fasta        = channel.value( [ ref_meta, file(params.fasta,            checkIfExists: true) ] )
-    ch_fai          = channel.value( [ ref_meta, file(params.fasta_fai,        checkIfExists: true) ] )
-    ch_dict         = channel.value( [ ref_meta, file(params.fasta_dict,       checkIfExists: true) ] )
-    ch_fasta_fai    = channel.value( [ ref_meta, file(params.fasta, checkIfExists: true), file(params.fasta_fai, checkIfExists: true) ] )
-    ch_star_index   = channel.value( [ ref_meta, file(params.star_index,       checkIfExists: true) ] )
-    ch_gtf          = channel.value( [ ref_meta, file(params.gtf,              checkIfExists: true) ] )
-    ch_rseqc_bed    = channel.value(               file(params.rseqc_bed,      checkIfExists: true)   )
-    ch_known_sites  = channel.value( [ ref_meta, [
-        file(params.dbsnp,         checkIfExists: true),
-        file(params.known_indels,  checkIfExists: true),
-        file(params.mills,         checkIfExists: true),
-    ] ] )
-    ch_known_sites_tbi = channel.value( [ ref_meta, [
-        file(params.dbsnp_tbi,        checkIfExists: true),
-        file(params.known_indels_tbi, checkIfExists: true),
-        file(params.mills_tbi,        checkIfExists: true),
-    ] ] )
-    ch_germline_resource     = channel.value( file(params.germline_resource,     checkIfExists: true) )
-    ch_germline_resource_tbi = channel.value( file(params.germline_resource_tbi, checkIfExists: true) )
+    PREPARE_GENOME()
+    ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
+
+    ch_fasta                 = PREPARE_GENOME.out.fasta
+    ch_fai                   = PREPARE_GENOME.out.fasta_fai
+    ch_dict                  = PREPARE_GENOME.out.fasta_dict
+    ch_fasta_fai             = PREPARE_GENOME.out.fasta_fai_combo
+    ch_star_index            = PREPARE_GENOME.out.star_index
+    ch_gtf                   = PREPARE_GENOME.out.gtf
+    ch_rseqc_bed             = PREPARE_GENOME.out.rseqc_bed
+    ch_known_sites           = PREPARE_GENOME.out.known_sites
+    ch_known_sites_tbi       = PREPARE_GENOME.out.known_sites_tbi
+    ch_germline_resource     = PREPARE_GENOME.out.germline_resource
+    ch_germline_resource_tbi = PREPARE_GENOME.out.germline_resource_tbi
 
     //
     // MODULE: FastQC — per-sample raw read QC

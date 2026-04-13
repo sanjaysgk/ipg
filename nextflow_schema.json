@@ -58,64 +58,56 @@
                 "fasta": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?$",
-                    "description": "Path to reference genome FASTA (uncompressed).",
-                    "help_text": "The reference genome FASTA used for alignment, variant calling, and FastaAlternateReferenceMaker. Must be uncompressed because GATK4 tools do not accept gzipped FASTA. GRCh38.primary_assembly.genome.fa is the pipeline default.",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to reference genome FASTA (may be .gz; PREPARE_GENOME decompresses automatically).",
+                    "help_text": "The reference genome FASTA used for alignment, variant calling, and FastaAlternateReferenceMaker. If the path ends in .gz the pipeline decompresses it before indexing. Auto-resolved from --genome if set.",
                     "fa_icon": "far fa-file-code"
                 },
                 "fasta_fai": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.fai$",
-                    "description": "Path to samtools-faidx index (.fai) for --fasta.",
+                    "description": "Path to samtools-faidx index (.fai). Built automatically if not provided.",
                     "fa_icon": "far fa-file-code"
                 },
                 "fasta_dict": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.dict$",
-                    "description": "Path to GATK sequence dictionary (.dict) for --fasta.",
+                    "description": "Path to GATK sequence dictionary (.dict). Built automatically if not provided.",
                     "fa_icon": "far fa-file-code"
                 },
                 "star_index": {
                     "type": "string",
                     "format": "directory-path",
-                    "exists": true,
-                    "description": "Path to the STAR index directory built for --fasta + --gtf.",
+                    "description": "Path to the STAR index directory. Built automatically if not provided (~32 GB RAM, 30-60 min).",
                     "fa_icon": "fas fa-folder-open"
                 },
                 "gtf": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.gtf(\\.gz)?$",
-                    "description": "Reference gene annotation GTF (e.g. gencode.v44.primary_assembly.annotation.gtf).",
+                    "description": "Reference gene annotation GTF (may be .gz; decompressed automatically).",
                     "fa_icon": "far fa-file-code"
                 },
                 "rseqc_bed": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
-                    "pattern": "^\\S+\\.bed$",
-                    "description": "BED file for RSeQC infer_experiment.py (gene model used for strand inference).",
+                    "pattern": "^\\S+\\.bed(\\.gz)?$",
+                    "description": "BED file for RSeQC infer_experiment.py. Auto-resolved from --genome if set.",
                     "fa_icon": "far fa-file-code"
                 },
                 "dbsnp": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.vcf(\\.gz)?$",
-                    "description": "dbSNP known-variants VCF for BQSR (resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf).",
+                    "description": "dbSNP known-variants VCF for BQSR. Auto-resolved from --genome if set.",
                     "fa_icon": "far fa-file-code"
                 },
                 "dbsnp_tbi": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.(tbi|idx)$",
                     "description": "Tabix / idx index for --dbsnp.",
                     "fa_icon": "far fa-file-code"
@@ -123,15 +115,13 @@
                 "known_indels": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.vcf(\\.gz)?$",
-                    "description": "Known indels VCF for BQSR (resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz).",
+                    "description": "Known indels VCF for BQSR. Auto-resolved from --genome if set.",
                     "fa_icon": "far fa-file-code"
                 },
                 "known_indels_tbi": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.tbi$",
                     "description": "Tabix index for --known_indels.",
                     "fa_icon": "far fa-file-code"
@@ -139,15 +129,13 @@
                 "mills": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.vcf(\\.gz)?$",
-                    "description": "Mills gold-standard indels VCF for BQSR (resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz).",
+                    "description": "Mills gold-standard indels VCF for BQSR. Auto-resolved from --genome if set.",
                     "fa_icon": "far fa-file-code"
                 },
                 "mills_tbi": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.tbi$",
                     "description": "Tabix index for --mills.",
                     "fa_icon": "far fa-file-code"
@@ -155,15 +143,13 @@
                 "germline_resource": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.vcf(\\.gz)?$",
-                    "description": "Germline resource for Mutect2 / GetPileupSummaries (small_exac_common_3.hg38.vcf.gz).",
+                    "description": "Germline resource for Mutect2. Auto-resolved from --genome if set.",
                     "fa_icon": "far fa-file-code"
                 },
                 "germline_resource_tbi": {
                     "type": "string",
                     "format": "file-path",
-                    "exists": true,
                     "pattern": "^\\S+\\.tbi$",
                     "description": "Tabix index for --germline_resource.",
                     "fa_icon": "far fa-file-code"
@@ -182,6 +168,13 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "default": "s3://ngi-igenomes/igenomes/"
+                },
+                "save_reference": {
+                    "type": "boolean",
+                    "default": false,
+                    "fa_icon": "fas fa-save",
+                    "description": "Save built/downloaded reference files to outdir/reference/ for reuse in future runs.",
+                    "help_text": "When using --genome GRCh38, the pipeline downloads and builds reference files (FASTA, GTF, STAR index, etc.) into the Nextflow work directory, which is temporary. Set --save_reference to copy these files to ${outdir}/reference/ so you can point to them in future runs with explicit --fasta, --star_index, etc. params instead of re-downloading."
                 },
                 "include_variant_peptides": {
                     "type": "boolean",
