@@ -56,10 +56,10 @@ An [example samplesheet](../assets/samplesheet.csv) has been provided with the p
 
 The pipeline supports two entry points via `--step`:
 
-| Step | Description |
-|------|-------------|
-| `db_construct` (default) | Full pipeline from paired-end FASTQ to cryptic peptide FASTA database |
-| `post_ms` | Post-MS search analysis only: two-phase `db_compare` + `origins` on PEAKS/search engine PSM results |
+| Step                     | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `db_construct` (default) | Full pipeline from paired-end FASTQ to cryptic peptide FASTA database                               |
+| `post_ms`                | Post-MS search analysis only: two-phase `db_compare` + `origins` on PEAKS/search engine PSM results |
 
 ## Post-MS samplesheet (`--step post_ms`)
 
@@ -70,22 +70,22 @@ sample,cryptic_psm_csv,uniprot_psm_csv,cryptic_decoy_score,uniprot_decoy_score
 D122_liver,/path/to/D122_Liver_Cryptic_DB.db.psms.csv,/path/to/D122_Liver_Uniprot_DB.db.psms.csv,44.43,36.48
 ```
 
-| Column | Description |
-|--------|-------------|
-| `sample` | Sample identifier (must match across runs) |
-| `cryptic_psm_csv` | Full path to PSM CSV from search against the cryptic peptide database |
-| `uniprot_psm_csv` | Full path to PSM CSV from search against the UniProt database |
-| `cryptic_decoy_score` | -10lgP decoy threshold for the cryptic DB search |
-| `uniprot_decoy_score` | -10lgP decoy threshold for the UniProt DB search |
+| Column                | Description                                                           |
+| --------------------- | --------------------------------------------------------------------- |
+| `sample`              | Sample identifier (must match across runs)                            |
+| `cryptic_psm_csv`     | Full path to PSM CSV from search against the cryptic peptide database |
+| `uniprot_psm_csv`     | Full path to PSM CSV from search against the UniProt database         |
+| `cryptic_decoy_score` | -10lgP decoy threshold for the cryptic DB search                      |
+| `uniprot_decoy_score` | -10lgP decoy threshold for the UniProt DB search                      |
 
 Additional required parameters for `--step post_ms`:
 
-| Parameter | Description |
-|-----------|-------------|
-| `--post_ms_input` | Path to the post-MS samplesheet CSV |
-| `--uniprot_fasta` | Path to the UniProt FASTA database used for origins analysis |
+| Parameter               | Description                                                             |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `--post_ms_input`       | Path to the post-MS samplesheet CSV                                     |
+| `--uniprot_fasta`       | Path to the UniProt FASTA database used for origins analysis            |
 | `--transcriptome_fasta` | Path to the transcriptome FASTA from DB construction (`gffread` output) |
-| `--prefix_tracking` | Path to the gffcompare `.tracking` file from DB construction |
+| `--prefix_tracking`     | Path to the gffcompare `.tracking` file from DB construction            |
 
 Example command:
 

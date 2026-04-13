@@ -13,24 +13,24 @@ input: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/assets/sa
 
 # ---- Reference genome (GENCODE v44, GRCh38 primary assembly) ----
 # Public source: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/
-fasta:      /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/GRCh38.primary_assembly.genome.fa
-fasta_fai:  /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/GRCh38.primary_assembly.genome.fa.fai
+fasta: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/GRCh38.primary_assembly.genome.fa
+fasta_fai: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/GRCh38.primary_assembly.genome.fa.fai
 fasta_dict: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/GRCh38.primary_assembly.genome.dict
-gtf:        /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/gencode.v44.primary_assembly.annotation.gtf
+gtf: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/gencode.v44.primary_assembly.annotation.gtf
 star_index: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/GRCh38/star_index
 
 # RSeQC BED (public: https://sourceforge.net/projects/rseqc/files/BED/Human_Homo_sapiens/)
-rseqc_bed:  /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/gencode_assembly.bed
+rseqc_bed: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/gencode_assembly.bed
 
 # ---- GATK variant calling resources (Broad hg38 bundle) ----
 # Public source: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0
-dbsnp:                 /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/dbsnp138.vcf.gz
-dbsnp_tbi:             /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/dbsnp138.vcf.gz.tbi
-known_indels:          /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz
-known_indels_tbi:      /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz.tbi
-mills:                 /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-mills_tbi:             /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi
-germline_resource:     /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/small_exac_common_3.hg38.vcf.gz
+dbsnp: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/dbsnp138.vcf.gz
+dbsnp_tbi: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/dbsnp138.vcf.gz.tbi
+known_indels: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz
+known_indels_tbi: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Homo_sapiens_assembly38.known_indels.vcf.gz.tbi
+mills: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+mills_tbi: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/resources_broad_hg38_v0_Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi
+germline_resource: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/small_exac_common_3.hg38.vcf.gz
 germline_resource_tbi: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/variant_calling_resources/small_exac_common_3.hg38.vcf.gz.tbi
 
 # Pipeline-level flag — false = Scull 2021 / D122_Lung legacy behaviour (reference only)
