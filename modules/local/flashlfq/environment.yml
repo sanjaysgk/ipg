@@ -1,8 +1,8 @@
 name: flashlfq
 channels:
-    - conda-forge
-    - bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-    - bioconda::flashlfq=2.1.4
-    - conda-forge::python>=3.9
-    - conda-forge::pandas>=1.5
+  - bioconda::flashlfq=2.1.4
+  - conda-forge::python>=3.9
+  - conda-forge::pandas>=1.5

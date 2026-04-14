@@ -73,16 +73,16 @@ sample,ms_file
 D122_liver,/path/to/D122_liver.mzML
 ```
 
-| Parameter            | Description                                                                                           |
-| -------------------- | ----------------------------------------------------------------------------------------------------- |
-| `--ms_input`         | Samplesheet CSV with `sample,ms_file` columns                                                         |
-| `--search_fasta`     | Target-decoy FASTA (or a plain FASTA — `PREPARE_FASTA` will generate decoys automatically)            |
-| `--ms_engines`       | Comma-list drawn from `msfragger,comet,sage,peaks` (default: `msfragger`)                             |
-| `--msfragger_jar`    | Required when `msfragger` is in `--ms_engines` (academic license; download the JAR yourself)          |
-| `--peaks_psm_csv`    | Required when `peaks` is in `--ms_engines` — PEAKS Studio `db.psms.csv` export                        |
-| `--instrument`       | `orbitrap` or `timsTOF` (selects the shipped params templates)                                        |
-| `--mod_type`         | One of `mod`, `nomod`, `TMT10`, `TMT16`, `mhcii`, `lowres`                                            |
-| `--peptide_length`   | Immunopeptide length or range string like `'8-11'`                                                    |
+| Parameter          | Description                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| `--ms_input`       | Samplesheet CSV with `sample,ms_file` columns                                                |
+| `--search_fasta`   | Target-decoy FASTA (or a plain FASTA — `PREPARE_FASTA` will generate decoys automatically)   |
+| `--ms_engines`     | Comma-list drawn from `msfragger,comet,sage,peaks` (default: `msfragger`)                    |
+| `--msfragger_jar`  | Required when `msfragger` is in `--ms_engines` (academic license; download the JAR yourself) |
+| `--peaks_psm_csv`  | Required when `peaks` is in `--ms_engines` — PEAKS Studio `db.psms.csv` export               |
+| `--instrument`     | `orbitrap` or `timsTOF` (selects the shipped params templates)                               |
+| `--mod_type`       | One of `mod`, `nomod`, `TMT10`, `TMT16`, `mhcii`, `lowres`                                   |
+| `--peptide_length` | Immunopeptide length or range string like `'8-11'`                                           |
 
 Example — all four engines:
 
@@ -106,17 +106,16 @@ Any subset of five downstream tools can be appended to `ms_search` by flipping
 the matching `--run_*` flag on. Each tool is independent and requires its own
 inputs:
 
-| Flag                  | Tool                | Extra inputs                                                        |
-| --------------------- | ------------------- | ------------------------------------------------------------------- |
-| `--run_netmhcpan`     | netMHCpan-4.1       | `--netmhcpan_path` (binary), `--hla` (comma-list)                   |
-| `--run_netmhciipan`   | netMHCIIpan-4.3     | `--netmhciipan_path`, `--hla`                                       |
-| `--run_gibbscluster`  | GibbsCluster-2.0    | `--gibbscluster_path` (Perl script), optional `--gibbs_clusters`    |
-| `--run_flashlfq`      | FlashLFQ 2.1.4      | none (bioconda)                                                     |
-| `--run_blastp_host`   | blastp-short        | `--blast_db` (pre-built prefix), `--host_species` (default `HUMAN`) |
+| Flag                 | Tool             | Extra inputs                                                        |
+| -------------------- | ---------------- | ------------------------------------------------------------------- |
+| `--run_netmhcpan`    | netMHCpan-4.1    | `--netmhcpan_path` (binary), `--hla` (comma-list)                   |
+| `--run_netmhciipan`  | netMHCIIpan-4.3  | `--netmhciipan_path`, `--hla`                                       |
+| `--run_gibbscluster` | GibbsCluster-2.0 | `--gibbscluster_path` (Perl script), optional `--gibbs_clusters`    |
+| `--run_flashlfq`     | FlashLFQ 2.1.4   | none (bioconda)                                                     |
+| `--run_blastp_host`  | blastp-short     | `--blast_db` (pre-built prefix), `--host_species` (default `HUMAN`) |
 
 When at least one flag is on, an HTML summary is produced per sample at
 `<outdir>/<sample>_immunoinformatics_report.html`.
-
 
 ## Post-MS samplesheet (`--step post_ms`)
 

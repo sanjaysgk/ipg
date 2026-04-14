@@ -11,3 +11,7 @@ testing*
 *.pyc
 bin/
 ro-crate-metadata.json
+
+# Vendored Comet, Sage, and MS2Rescore parameter templates — upstream
+# formatting must round-trip cleanly to immunopeptidomics/external_tools/.
+assets/ms_search_params/

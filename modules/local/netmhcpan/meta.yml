@@ -1,39 +1,39 @@
 name: "netmhcpan"
 description: Predict MHC class I binding with netMHCpan-4.1 (user-provided binary)
 keywords:
-    - immunoinformatics
-    - netmhcpan
-    - mhc class i
-    - hla
+  - immunoinformatics
+  - netmhcpan
+  - mhc class i
+  - hla
 tools:
-    - netMHCpan:
-          description: |
-              NetMHCpan-4.1 MHC class I binding predictor. Academic license;
-              user must download and point --netmhcpan_path at the binary.
-          homepage: https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/
-          licence: ["Academic"]
+  - netMHCpan:
+      description: |
+        NetMHCpan-4.1 MHC class I binding predictor. Academic license;
+        user must download and point --netmhcpan_path at the binary.
+      homepage: https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/
+      licence: ["Academic"]
 input:
-    - - meta:
-            type: map
-            description: Groovy map with sample metadata (id required)
-      - peptides_tsv:
-            type: file
-            description: Integrated peptides TSV from INTEGRATE_ENGINES
-    - - hla_alleles:
-            type: val
-            description: Comma-separated HLA alleles (e.g. HLA-A01:01,HLA-B07:02)
-    - - netmhcpan_bin:
-            type: file
-            description: Path to the netMHCpan binary
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides_tsv:
+        type: file
+        description: Integrated peptides TSV from INTEGRATE_ENGINES
+  - - hla_alleles:
+        type: val
+        description: Comma-separated HLA alleles (e.g. HLA-A01:01,HLA-B07:02)
+  - - netmhcpan_bin:
+        type: file
+        description: Path to the netMHCpan binary
 output:
-    - raw:
-          - meta: { type: map }
-          - "netmhcpan_output.txt": { type: file, description: "Raw netMHCpan stdout" }
-    - parsed:
-          - meta: { type: map }
-          - "netmhcpan_parsed.tsv": { type: file, description: "All parsed binding rows" }
-    - best:
-          - meta: { type: map }
-          - "netmhcpan_best.tsv": { type: file, description: "Best-ranked MHC per peptide" }
-    - versions:
-          - "versions.yml": { type: file, pattern: "versions.yml" }
+  - raw:
+      - meta: { type: map }
+      - "netmhcpan_output.txt": { type: file, description: "Raw netMHCpan stdout" }
+  - parsed:
+      - meta: { type: map }
+      - "netmhcpan_parsed.tsv": { type: file, description: "All parsed binding rows" }
+  - best:
+      - meta: { type: map }
+      - "netmhcpan_best.tsv": { type: file, description: "Best-ranked MHC per peptide" }
+  - versions:
+      - "versions.yml": { type: file, pattern: "versions.yml" }
