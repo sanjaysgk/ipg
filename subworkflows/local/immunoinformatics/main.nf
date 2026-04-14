@@ -13,11 +13,12 @@
 ----------------------------------------------------------------------------------------
 */
 
-include { NETMHCPAN    } from '../../../modules/local/netmhcpan/main'
-include { NETMHCIIPAN  } from '../../../modules/local/netmhciipan/main'
-include { GIBBSCLUSTER } from '../../../modules/local/gibbscluster/main'
-include { FLASHLFQ     } from '../../../modules/local/flashlfq/main'
-include { BLASTP_HOST  } from '../../../modules/local/blastp_host/main'
+include { NETMHCPAN                } from '../../../modules/local/netmhcpan/main'
+include { NETMHCIIPAN              } from '../../../modules/local/netmhciipan/main'
+include { GIBBSCLUSTER             } from '../../../modules/local/gibbscluster/main'
+include { FLASHLFQ                 } from '../../../modules/local/flashlfq/main'
+include { BLASTP_HOST              } from '../../../modules/local/blastp_host/main'
+include { IMMUNOINFORMATICS_REPORT } from '../../../modules/local/immunoinformatics_report/main'
 
 workflow IMMUNOINFORMATICS {
 
@@ -93,11 +94,33 @@ workflow IMMUNOINFORMATICS {
         ch_blastp   = BLASTP_HOST.out.peptides
     }
 
+    //
+    // Final HTML report per sample. Pads missing inputs with the assets/NO_FILE
+    // sentinel so every branch produces a report even when some tools are off.
+    //
+    def no_file = file("${projectDir}/assets/NO_FILE")
+    ch_report_in = ch_peptides
+        .map { meta, pep -> [meta, pep] }
+        .join(ch_netmhcpan_best.map   { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
+        .map   { meta, pep, nmhc1 -> [meta, pep, nmhc1 ?: no_file] }
+        .join(ch_netmhciipan_best.map { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
+        .map   { meta, pep, nmhc1, nmhc2 -> [meta, pep, nmhc1, nmhc2 ?: no_file] }
+        .join(ch_gibbs.map            { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
+        .map   { meta, pep, nmhc1, nmhc2, gbs -> [meta, pep, nmhc1, nmhc2, gbs ?: no_file] }
+        .join(ch_flashlfq.map         { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
+        .map   { meta, pep, nmhc1, nmhc2, gbs, lfq -> [meta, pep, nmhc1, nmhc2, gbs, lfq ?: no_file] }
+        .join(ch_blastp.map           { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
+        .map   { meta, pep, nmhc1, nmhc2, gbs, lfq, bp -> [meta, pep, nmhc1, nmhc2, gbs, lfq, bp ?: no_file] }
+
+    IMMUNOINFORMATICS_REPORT(ch_report_in)
+    ch_versions = ch_versions.mix(IMMUNOINFORMATICS_REPORT.out.versions)
+
     emit:
     netmhcpan_best    = ch_netmhcpan_best
     netmhciipan_best  = ch_netmhciipan_best
     gibbs_clusters    = ch_gibbs
     flashlfq_peptides = ch_flashlfq
     blastp_peptides   = ch_blastp
+    report            = IMMUNOINFORMATICS_REPORT.out.html
     versions          = ch_versions
 }
