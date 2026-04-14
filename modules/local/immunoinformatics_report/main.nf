@@ -9,12 +9,12 @@ process IMMUNOINFORMATICS_REPORT {
 
     input:
     tuple val(meta),
-          path(peptides),
-          path(netmhcpan,   stageAs: 'netmhcpan.tsv'),
-          path(netmhciipan, stageAs: 'netmhciipan.tsv'),
-          path(gibbs,       stageAs: 'gibbs.tsv'),
-          path(flashlfq,    stageAs: 'flashlfq.tsv'),
-          path(blastp,      stageAs: 'blastp.tsv')
+        path(peptides),
+        path(netmhcpan,   stageAs: 'netmhcpan.tsv'),
+        path(netmhciipan, stageAs: 'netmhciipan.tsv'),
+        path(gibbs,       stageAs: 'gibbs.tsv'),
+        path(flashlfq,    stageAs: 'flashlfq.tsv'),
+        path(blastp,      stageAs: 'blastp.tsv')
 
     output:
     tuple val(meta), path("${meta.id}_immunoinformatics_report.html"), emit: html

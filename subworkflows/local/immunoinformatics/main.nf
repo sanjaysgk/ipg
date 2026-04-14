@@ -3,10 +3,10 @@
     IMMUNOINFORMATICS — downstream analysis of integrated peptides
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Consumes INTEGRATE_ENGINES.out.peptides and runs:
-      - NETMHCPAN / NETMHCIIPAN  HLA class I / II binding (academic tools)
-      - GIBBSCLUSTER             motif discovery
-      - FLASHLFQ                 label-free quantification
-      - BLASTP_HOST              non-host contamination check
+        - NETMHCPAN / NETMHCIIPAN  HLA class I / II binding (academic tools)
+        - GIBBSCLUSTER             motif discovery
+        - FLASHLFQ                 label-free quantification
+        - BLASTP_HOST              non-host contamination check
 
     Each tool is individually gated by a --run_* param so users can pick
     exactly the subset they are licensed or configured for.

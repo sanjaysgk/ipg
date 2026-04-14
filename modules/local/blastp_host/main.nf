@@ -27,7 +27,7 @@ process BLASTP_HOST {
 import pandas as pd
 df = pd.read_csv("${peptides_tsv}", sep="\\t")
 mask = (~df["species"].astype(str).str.contains("${host_species}"))             \\
-       & (~df["peptide"].astype(str).str.contains("contaminant"))
+        & (~df["peptide"].astype(str).str.contains("contaminant"))
 subset = df.loc[mask, "peptide"].dropna().unique()
 with open("blastp_in.fasta", "w") as fh:
     for pep in subset:
@@ -50,7 +50,7 @@ import pandas as pd
 df = pd.read_csv("${peptides_tsv}", sep="\\t")
 try:
     hits = pd.read_csv("blastp_out.tsv", sep="\\t",
-                       names=["peptide", "BLASTP_match", "qlen", "nident", "BLASTP_matchedSeq"])
+                        names=["peptide", "BLASTP_match", "qlen", "nident", "BLASTP_matchedSeq"])
     hits["BLASTP_ident%"] = (hits["nident"] / hits["qlen"] * 100).round(2)
     top = (
         hits[["peptide", "BLASTP_ident%", "BLASTP_match", "BLASTP_matchedSeq"]]
@@ -63,7 +63,7 @@ try:
     merged["BLASTP_matchedSeq"].fillna("NA", inplace=True)
     merged["species"] = merged.apply(
         lambda r: ";".join(sorted(set(str(r["species"]).split(";") +
-                                      (["${host_species}"] if r["BLASTP_ident%"] == 100 else [])))),
+                                        (["${host_species}"] if r["BLASTP_ident%"] == 100 else [])))),
         axis=1,
     )
 except pd.errors.EmptyDataError:
