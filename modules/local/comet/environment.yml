@@ -1,6 +1,6 @@
 name: comet
 channels:
-    - conda-forge
-    - bioconda
+  - conda-forge
+  - bioconda
 dependencies:
-    - bioconda::comet-ms=2024010
+  - bioconda::comet-ms=2024010

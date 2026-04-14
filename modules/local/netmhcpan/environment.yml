@@ -1,6 +1,6 @@
 name: netmhcpan
 channels:
-    - conda-forge
+  - conda-forge
 dependencies:
-    - conda-forge::python>=3.9
-    - conda-forge::pandas>=1.5
+  - conda-forge::python>=3.9
+  - conda-forge::pandas>=1.5

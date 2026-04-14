@@ -1,53 +1,53 @@
 name: "msfragger"
 description: Run MSFragger database search on MS data
 keywords:
-    - proteomics
-    - database search
-    - msfragger
-    - peptide identification
+  - proteomics
+  - database search
+  - msfragger
+  - peptide identification
 tools:
-    - MSFragger:
-          description: |
-              Ultrafast proteomics search engine. Academic license required —
-              user must download the JAR and provide via --msfragger_jar.
-          homepage: https://msfragger.nesvilab.org/
-          documentation: https://github.com/Nesvilab/MSFragger
-          licence: ["Academic"]
+  - MSFragger:
+      description: |
+        Ultrafast proteomics search engine. Academic license required —
+        user must download the JAR and provide via --msfragger_jar.
+      homepage: https://msfragger.nesvilab.org/
+      documentation: https://github.com/Nesvilab/MSFragger
+      licence: ["Academic"]
 input:
-    - - meta:
-            type: map
-            description: Groovy map with sample metadata (id required)
-      - ms_files:
-            type: file
-            description: MS data files (.raw, .mzML, or .d)
-            pattern: "*.{raw,mzML,d}"
-    - - fasta:
-            type: file
-            description: Target-decoy FASTA database
-            pattern: "*.{fa,fasta}"
-    - - msfragger_jar:
-            type: file
-            description: MSFragger JAR file
-            pattern: "*.jar"
-    - - params_file:
-            type: file
-            description: MSFragger parameter file
-            pattern: "*.params"
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - ms_files:
+        type: file
+        description: MS data files (.raw, .mzML, or .d)
+        pattern: "*.{raw,mzML,d}"
+  - - fasta:
+        type: file
+        description: Target-decoy FASTA database
+        pattern: "*.{fa,fasta}"
+  - - msfragger_jar:
+        type: file
+        description: MSFragger JAR file
+        pattern: "*.jar"
+  - - params_file:
+        type: file
+        description: MSFragger parameter file
+        pattern: "*.params"
 output:
-    - pin:
-          - meta:
-                type: map
-          - "*.pin":
-                type: file
-                description: Percolator input (PIN) files for mokapot
-    - mzml:
-          - meta:
-                type: map
-          - "*.mzML":
-                type: file
-                description: Calibrated mzML files for downstream engines
-    - versions:
-          - "versions.yml":
-                type: file
-                description: File containing software versions
-                pattern: "versions.yml"
+  - pin:
+      - meta:
+          type: map
+      - "*.pin":
+          type: file
+          description: Percolator input (PIN) files for mokapot
+  - mzml:
+      - meta:
+          type: map
+      - "*.mzML":
+          type: file
+          description: Calibrated mzML files for downstream engines
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

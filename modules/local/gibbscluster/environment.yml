@@ -1,8 +1,8 @@
 name: gibbscluster
 channels:
-    - conda-forge
+  - conda-forge
 dependencies:
-    - conda-forge::python>=3.9
-    - conda-forge::pandas>=1.5
-    - conda-forge::perl
-    - conda-forge::r-base
+  - conda-forge::python>=3.9
+  - conda-forge::pandas>=1.5
+  - conda-forge::perl
+  - conda-forge::r-base
