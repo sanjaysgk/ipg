@@ -306,6 +306,26 @@
                 }
             }
         },
+        "immunoinformatics_options": {
+            "title": "Immunoinformatics options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Downstream analysis of integrated peptides: HLA binding, motif clustering, quantification, host background check. Each tool is individually gated.",
+            "properties": {
+                "run_netmhcpan":   { "type": "boolean", "default": false, "description": "Run netMHCpan-4.1 (MHC class I)." },
+                "run_netmhciipan": { "type": "boolean", "default": false, "description": "Run netMHCIIpan-4.3 (MHC class II)." },
+                "run_gibbscluster":{ "type": "boolean", "default": false, "description": "Run GibbsCluster-2.0 motif discovery." },
+                "run_flashlfq":    { "type": "boolean", "default": false, "description": "Run FlashLFQ peptide quantification." },
+                "run_blastp_host": { "type": "boolean", "default": false, "description": "Run blastp-short against a host/contaminant BLAST DB." },
+                "hla":               { "type": "string", "description": "Comma-separated HLA alleles (e.g. 'HLA-A01:01,HLA-B07:02')." },
+                "netmhcpan_path":    { "type": "string", "format": "file-path", "description": "Path to netMHCpan-4.1 binary (academic license)." },
+                "netmhciipan_path":  { "type": "string", "format": "file-path", "description": "Path to netMHCIIpan-4.3 binary (academic license)." },
+                "gibbscluster_path": { "type": "string", "format": "file-path", "description": "Path to GibbsCluster-2.0e_SA.pl (academic license)." },
+                "gibbs_clusters":    { "type": "string", "default": "auto", "description": "'auto' for [2-5], or explicit integer/range string like '[2-5]'." },
+                "blast_db":          { "type": "string", "description": "Path prefix to a pre-built blastp database (e.g. /path/human)." },
+                "host_species":      { "type": "string", "default": "HUMAN", "description": "Upper-case host species tag used to filter the species column before blastp." }
+            }
+        },
         "post_ms_options": {
             "title": "Post-MS analysis options",
             "type": "object",
@@ -456,6 +476,9 @@
         },
         {
             "$ref": "#/$defs/ms_search_options"
+        },
+        {
+            "$ref": "#/$defs/immunoinformatics_options"
         },
         {
             "$ref": "#/$defs/post_ms_options"
