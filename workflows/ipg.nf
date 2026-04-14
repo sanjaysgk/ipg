@@ -23,6 +23,7 @@ include { MUTECT_CALLING      } from '../subworkflows/local/mutect_calling/main'
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
+include { IMMUNOINFORMATICS   } from '../subworkflows/local/immunoinformatics/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,6 +101,17 @@ workflow IPG {
             ch_msfragger_jar
         )
         ch_versions = ch_versions.mix(MS_SEARCH.out.versions)
+
+        //
+        // Optional immunoinformatics analysis on integrated peptides.
+        // Only triggers any downstream work if at least one --run_* flag is set.
+        //
+        if (params.run_netmhcpan || params.run_netmhciipan
+                || params.run_gibbscluster || params.run_flashlfq
+                || params.run_blastp_host) {
+            IMMUNOINFORMATICS(MS_SEARCH.out.peptides, ch_ms_data)
+            ch_versions = ch_versions.mix(IMMUNOINFORMATICS.out.versions)
+        }
 
     } else {
 
