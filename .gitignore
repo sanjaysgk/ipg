@@ -34,3 +34,7 @@ bin/gffread_legacy
 # Local-only conf overrides
 conf/local.config
 
+# sbatch driver logs + local stub-run artefacts
+ipg_*.log
+test_stub_results/
+
