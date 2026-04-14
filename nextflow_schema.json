@@ -252,10 +252,11 @@
                     "description": "FASTA database for MS search (output from --step db_construct).",
                     "fa_icon": "far fa-file-code"
                 },
-                "engines": {
+                "ms_engines": {
                     "type": "string",
                     "default": "msfragger",
-                    "description": "Comma-separated list of search engines to use: msfragger, comet, sage.",
+                    "pattern": "^(msfragger|comet|sage)(,(msfragger|comet|sage))*$",
+                    "description": "Comma-separated list of MS search engines to use: msfragger, comet, sage.",
                     "fa_icon": "fas fa-cogs"
                 },
                 "msfragger_jar": {

@@ -91,7 +91,7 @@ workflow IPG {
             ? channel.fromPath(params.msfragger_jar, checkIfExists: true).collect()
             : channel.empty()
 
-        def engine_list = params.engines.tokenize(',')
+        def engine_list = params.ms_engines.tokenize(',')
 
         MS_SEARCH(
             ch_ms_data,

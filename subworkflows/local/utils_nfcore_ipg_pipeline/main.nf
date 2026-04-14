@@ -176,7 +176,7 @@ def validateInputParameters() {
         if (!params.search_fasta) {
             error("--search_fasta is required when --step ms_search")
         }
-        def engines = params.engines.tokenize(',')
+        def engines = params.ms_engines.tokenize(',')
         def valid_engines = ['msfragger', 'comet', 'sage']
         engines.each { eng ->
             if (!valid_engines.contains(eng.trim())) {
@@ -184,7 +184,7 @@ def validateInputParameters() {
             }
         }
         if (engines.contains('msfragger') && !params.msfragger_jar) {
-            error("--msfragger_jar is required when 'msfragger' is in --engines")
+            error("--msfragger_jar is required when 'msfragger' is in --ms_engines")
         }
     }
 
