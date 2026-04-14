@@ -1,0 +1,28 @@
+name: "blastp_host"
+description: Match non-host peptides against a pre-built host/contaminant BLAST db
+keywords:
+    - immunoinformatics
+    - blast
+    - blastp-short
+    - host
+tools:
+    - blast:
+          description: |
+              NCBI BLAST+ suite. Uses blastp-short (short peptide query mode)
+              against a user-supplied host/contaminant protein DB to flag
+              peptides that are likely host-derived contamination.
+          homepage: https://blast.ncbi.nlm.nih.gov
+          licence: ["Public Domain"]
+input:
+    - - meta: { type: map }
+      - peptides_tsv: { type: file, description: "Integrated peptides TSV" }
+    - - blast_db_files:
+            type: file
+            description: All files that share the --blast_db prefix (.phr/.pin/.psq/...)
+      - db_prefix: { type: val, description: "Basename of the db prefix (e.g. human)" }
+    - - host_species: { type: val, description: "Upper-case host tag (e.g. HUMAN)" }
+output:
+    - peptides: [{ meta: { type: map } }, { "peptides.blastp.tsv": { type: file } }]
+    - raw:      [{ meta: { type: map } }, { "blastp_out.tsv":      { type: file } }]
+    - versions:
+          - "versions.yml": { type: file, pattern: "versions.yml" }

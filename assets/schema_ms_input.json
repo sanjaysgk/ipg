@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/sanjaysgk/ipg/main/assets/schema_ms_input.json",
+    "title": "sanjaysgk/ipg MS search samplesheet schema",
+    "description": "Schema for the MS search samplesheet (--ms_input)",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "sample": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "ms_file": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "errorMessage": "Path to MS data file (.raw, .mzML, or .d directory)"
+            },
+            "condition": {
+                "type": "string",
+                "default": "",
+                "errorMessage": "Optional condition label for FlashLFQ grouping"
+            }
+        },
+        "required": ["sample", "ms_file"]
+    }
+}

@@ -1,0 +1,24 @@
+name: "gibbscluster"
+description: Run GibbsCluster-2.0 motif discovery on immunopeptides and extract the winning cluster.
+keywords:
+    - immunoinformatics
+    - gibbscluster
+    - motif
+    - clustering
+tools:
+    - GibbsCluster:
+          description: |
+              Motif discovery / clustering for peptide sets. Academic license;
+              user supplies the Perl script path via --gibbscluster_path.
+          homepage: https://services.healthtech.dtu.dk/services/GibbsCluster-2.0/
+          licence: ["Academic"]
+input:
+    - - meta: { type: map }
+      - peptides_tsv: { type: file, description: "Integrated peptides TSV" }
+    - - gibbscluster_pl: { type: file, description: "Path to GibbsCluster-2.0e_SA.pl" }
+output:
+    - clusters: [{ meta: { type: map } }, { "gibbs_clusters.tsv": { type: file } }]
+    - kld:      [{ meta: { type: map } }, { "gibbs_output/images/gibbs.KLDvsClusters.tab": { type: file } }]
+    - raw:      [{ meta: { type: map } }, { "gibbs_output/**": { type: file } }]
+    - versions:
+          - "versions.yml": { type: file, pattern: "versions.yml" }

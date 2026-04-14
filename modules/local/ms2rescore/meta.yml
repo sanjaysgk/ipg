@@ -1,0 +1,65 @@
+name: "ms2rescore"
+description: Rescore mokapot PSMs with MS2Rescore using engine-specific percolator features + spectrum predictions
+keywords:
+    - proteomics
+    - ms2rescore
+    - rescoring
+    - percolator
+tools:
+    - MS2Rescore:
+          description: |
+              Modular PSM rescoring framework using spectrum prediction + retention time
+              prediction. Wraps DeepLC, MS2PIP, Percolator. Called once per search engine.
+          homepage: https://github.com/compomics/ms2rescore
+          documentation: https://ms2rescore.readthedocs.io/
+          licence: ["Apache-2.0"]
+input:
+    - - meta:
+            type: map
+            description: Groovy map with sample metadata (id required)
+      - mokapot_target:
+            type: file
+            description: mokapot target PSMs TSV (from MOKAPOT process)
+      - mokapot_decoy:
+            type: file
+            description: mokapot decoy PSMs TSV
+      - pin_file:
+            type: file
+            description: Combined Percolator input (PIN) file used by mokapot
+    - - engine:
+            type: val
+            description: Engine name (msfragger, comet, sage, peaks)
+    - - scans_pkls:
+            type: file
+            description: scans.pkl file(s) from CONVERT_MZML
+            pattern: "*.scans.pkl"
+    - - mgf_files:
+            type: file
+            description: MGF spectra files from CONVERT_MZML (consumed by ms2rescore)
+            pattern: "*.mgf"
+    - - config_json:
+            type: file
+            description: MS2Rescore JSON configuration file
+            pattern: "*.json"
+output:
+    - psms:
+          - meta:
+                type: map
+          - "*.psms.tsv":
+                type: file
+                description: Rescored PSMs TSV consumed by INTEGRATE_ENGINES
+    - input_tsv:
+          - meta:
+                type: map
+          - "*_rescore_input.tsv":
+                type: file
+                description: MS2Rescore TSV input (for audit / reruns)
+    - log:
+          - "*_pipeline_log.txt":
+                type: file
+                description: MS2Rescore pipeline log
+    - versions:
+          - "versions.yml":
+                type: file
+                description: File containing software versions
+                pattern: "versions.yml"

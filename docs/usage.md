@@ -54,12 +54,69 @@ An [example samplesheet](../assets/samplesheet.csv) has been provided with the p
 
 ## Pipeline steps
 
-The pipeline supports two entry points via `--step`:
+The pipeline supports three entry points via `--step`:
 
-| Step | Description |
-|------|-------------|
-| `db_construct` (default) | Full pipeline from paired-end FASTQ to cryptic peptide FASTA database |
-| `post_ms` | Post-MS search analysis only: two-phase `db_compare` + `origins` on PEAKS/search engine PSM results |
+| Step                     | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `db_construct` (default) | Full pipeline from paired-end FASTQ to cryptic peptide FASTA database                               |
+| `ms_search`              | Open-source MS database search (MSFragger/Comet/Sage/PEAKS) + mokapot + MS2Rescore + integration    |
+| `post_ms`                | Post-MS search analysis only: two-phase `db_compare` + `origins` on PEAKS/search engine PSM results |
+
+## MS search (`--step ms_search`)
+
+Runs up to four search engines in parallel against a target-decoy FASTA, then
+rescores PSMs with MS2Rescore and merges them at 1% peptide-level FDR. Engine
+selection is a comma-list; each engine is gated independently.
+
+```csv title="ms_samplesheet.csv"
+sample,ms_file
+D122_liver,/path/to/D122_liver.mzML
+```
+
+| Parameter            | Description                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| `--ms_input`         | Samplesheet CSV with `sample,ms_file` columns                                                         |
+| `--search_fasta`     | Target-decoy FASTA (or a plain FASTA — `PREPARE_FASTA` will generate decoys automatically)            |
+| `--ms_engines`       | Comma-list drawn from `msfragger,comet,sage,peaks` (default: `msfragger`)                             |
+| `--msfragger_jar`    | Required when `msfragger` is in `--ms_engines` (academic license; download the JAR yourself)          |
+| `--peaks_psm_csv`    | Required when `peaks` is in `--ms_engines` — PEAKS Studio `db.psms.csv` export                        |
+| `--instrument`       | `orbitrap` or `timsTOF` (selects the shipped params templates)                                        |
+| `--mod_type`         | One of `mod`, `nomod`, `TMT10`, `TMT16`, `mhcii`, `lowres`                                            |
+| `--peptide_length`   | Immunopeptide length or range string like `'8-11'`                                                    |
+
+Example — all four engines:
+
+```bash
+pixi run nextflow run . -profile pixi,monash \
+    --step ms_search \
+    --ms_input        ms_samplesheet.csv \
+    --search_fasta    results/cryptic.fasta \
+    --ms_engines      msfragger,comet,sage,peaks \
+    --msfragger_jar   /path/to/MSFragger-4.1.jar \
+    --peaks_psm_csv   /path/to/db.psms.csv \
+    --instrument      orbitrap \
+    --mod_type        mod \
+    --peptide_length  '8-11' \
+    --outdir          results_ms_search
+```
+
+### Optional immunoinformatics (HLA binding, motifs, quantification)
+
+Any subset of five downstream tools can be appended to `ms_search` by flipping
+the matching `--run_*` flag on. Each tool is independent and requires its own
+inputs:
+
+| Flag                  | Tool                | Extra inputs                                                        |
+| --------------------- | ------------------- | ------------------------------------------------------------------- |
+| `--run_netmhcpan`     | netMHCpan-4.1       | `--netmhcpan_path` (binary), `--hla` (comma-list)                   |
+| `--run_netmhciipan`   | netMHCIIpan-4.3     | `--netmhciipan_path`, `--hla`                                       |
+| `--run_gibbscluster`  | GibbsCluster-2.0    | `--gibbscluster_path` (Perl script), optional `--gibbs_clusters`    |
+| `--run_flashlfq`      | FlashLFQ 2.1.4      | none (bioconda)                                                     |
+| `--run_blastp_host`   | blastp-short        | `--blast_db` (pre-built prefix), `--host_species` (default `HUMAN`) |
+
+When at least one flag is on, an HTML summary is produced per sample at
+`<outdir>/<sample>_immunoinformatics_report.html`.
+
 
 ## Post-MS samplesheet (`--step post_ms`)
 
@@ -70,22 +127,22 @@ sample,cryptic_psm_csv,uniprot_psm_csv,cryptic_decoy_score,uniprot_decoy_score
 D122_liver,/path/to/D122_Liver_Cryptic_DB.db.psms.csv,/path/to/D122_Liver_Uniprot_DB.db.psms.csv,44.43,36.48
 ```
 
-| Column | Description |
-|--------|-------------|
-| `sample` | Sample identifier (must match across runs) |
-| `cryptic_psm_csv` | Full path to PSM CSV from search against the cryptic peptide database |
-| `uniprot_psm_csv` | Full path to PSM CSV from search against the UniProt database |
-| `cryptic_decoy_score` | -10lgP decoy threshold for the cryptic DB search |
-| `uniprot_decoy_score` | -10lgP decoy threshold for the UniProt DB search |
+| Column                | Description                                                           |
+| --------------------- | --------------------------------------------------------------------- |
+| `sample`              | Sample identifier (must match across runs)                            |
+| `cryptic_psm_csv`     | Full path to PSM CSV from search against the cryptic peptide database |
+| `uniprot_psm_csv`     | Full path to PSM CSV from search against the UniProt database         |
+| `cryptic_decoy_score` | -10lgP decoy threshold for the cryptic DB search                      |
+| `uniprot_decoy_score` | -10lgP decoy threshold for the UniProt DB search                      |
 
 Additional required parameters for `--step post_ms`:
 
-| Parameter | Description |
-|-----------|-------------|
-| `--post_ms_input` | Path to the post-MS samplesheet CSV |
-| `--uniprot_fasta` | Path to the UniProt FASTA database used for origins analysis |
+| Parameter               | Description                                                             |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `--post_ms_input`       | Path to the post-MS samplesheet CSV                                     |
+| `--uniprot_fasta`       | Path to the UniProt FASTA database used for origins analysis            |
 | `--transcriptome_fasta` | Path to the transcriptome FASTA from DB construction (`gffread` output) |
-| `--prefix_tracking` | Path to the gffcompare `.tracking` file from DB construction |
+| `--prefix_tracking`     | Path to the gffcompare `.tracking` file from DB construction            |
 
 Example command:
 

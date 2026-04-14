@@ -233,6 +233,99 @@
                 }
             }
         },
+        "ms_search_options": {
+            "title": "MS search options",
+            "type": "object",
+            "fa_icon": "fas fa-search",
+            "description": "Parameters for the MS database search step (--step ms_search).",
+            "properties": {
+                "ms_input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Samplesheet CSV for MS data (required when --step ms_search).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "search_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "FASTA database for MS search (output from --step db_construct).",
+                    "fa_icon": "far fa-file-code"
+                },
+                "ms_engines": {
+                    "type": "string",
+                    "default": "msfragger",
+                    "pattern": "^(msfragger|comet|sage|peaks)(,(msfragger|comet|sage|peaks))*$",
+                    "description": "Comma-separated list of MS search engines to use: msfragger, comet, sage, peaks.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "msfragger_jar": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to MSFragger JAR file (academic license, user must download).",
+                    "fa_icon": "fas fa-file-archive"
+                },
+                "msfragger_mem": {
+                    "type": "integer",
+                    "default": 8,
+                    "description": "Memory in GB for MSFragger JVM heap.",
+                    "fa_icon": "fas fa-memory"
+                },
+                "instrument": {
+                    "type": "string",
+                    "enum": ["orbitrap", "timsTOF"],
+                    "description": "Instrument type. Auto-detected from mzML if not specified.",
+                    "fa_icon": "fas fa-microscope"
+                },
+                "mod_type": {
+                    "type": "string",
+                    "default": "mod",
+                    "enum": ["mod", "nomod", "TMT10", "TMT16", "mhcii", "lowres"],
+                    "description": "Modification search type for MS engines.",
+                    "fa_icon": "fas fa-atom"
+                },
+                "peptide_length": {
+                    "type": "string",
+                    "default": "9",
+                    "description": "Immunopeptide length (e.g. '9' or range '8-11').",
+                    "fa_icon": "fas fa-ruler"
+                },
+                "peaks_psm_csv": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "PEAKS Studio db.psms.csv export. Required when 'peaks' is in --ms_engines; spectrum indices are resolved against CONVERT_MZML's index2scan pickles.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "peaks_min_match_fraction": {
+                    "type": "number",
+                    "default": 0.98,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Minimum fraction of PEAKS rows that must resolve to scan numbers or the run aborts.",
+                    "fa_icon": "fas fa-percentage"
+                }
+            }
+        },
+        "immunoinformatics_options": {
+            "title": "Immunoinformatics options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Downstream analysis of integrated peptides: HLA binding, motif clustering, quantification, host background check. Each tool is individually gated.",
+            "properties": {
+                "run_netmhcpan":   { "type": "boolean", "default": false, "description": "Run netMHCpan-4.1 (MHC class I)." },
+                "run_netmhciipan": { "type": "boolean", "default": false, "description": "Run netMHCIIpan-4.3 (MHC class II)." },
+                "run_gibbscluster":{ "type": "boolean", "default": false, "description": "Run GibbsCluster-2.0 motif discovery." },
+                "run_flashlfq":    { "type": "boolean", "default": false, "description": "Run FlashLFQ peptide quantification." },
+                "run_blastp_host": { "type": "boolean", "default": false, "description": "Run blastp-short against a host/contaminant BLAST DB." },
+                "hla":               { "type": "string", "description": "Comma-separated HLA alleles (e.g. 'HLA-A01:01,HLA-B07:02')." },
+                "netmhcpan_path":    { "type": "string", "format": "file-path", "description": "Path to netMHCpan-4.1 binary (academic license)." },
+                "netmhciipan_path":  { "type": "string", "format": "file-path", "description": "Path to netMHCIIpan-4.3 binary (academic license)." },
+                "gibbscluster_path": { "type": "string", "format": "file-path", "description": "Path to GibbsCluster-2.0e_SA.pl (academic license)." },
+                "gibbs_clusters":    { "type": "string", "default": "auto", "description": "'auto' for [2-5], or explicit integer/range string like '[2-5]'." },
+                "blast_db":          { "type": "string", "description": "Path prefix to a pre-built blastp database (e.g. /path/human)." },
+                "host_species":      { "type": "string", "default": "HUMAN", "description": "Upper-case host species tag used to filter the species column before blastp." }
+            }
+        },
         "post_ms_options": {
             "title": "Post-MS analysis options",
             "type": "object",
@@ -242,8 +335,8 @@
                 "step": {
                     "type": "string",
                     "default": "db_construct",
-                    "enum": ["db_construct", "post_ms"],
-                    "description": "Pipeline entry point. 'db_construct' runs full DB construction from FASTQ. 'post_ms' runs post-MS search analysis only.",
+                    "enum": ["db_construct", "ms_search", "post_ms"],
+                    "description": "Pipeline entry point. 'db_construct' runs full DB construction from FASTQ. 'ms_search' runs MS database search with open-source engines. 'post_ms' runs post-MS search analysis only.",
                     "fa_icon": "fas fa-play"
                 },
                 "post_ms_input": {
@@ -380,6 +473,12 @@
         },
         {
             "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/ms_search_options"
+        },
+        {
+            "$ref": "#/$defs/immunoinformatics_options"
         },
         {
             "$ref": "#/$defs/post_ms_options"
