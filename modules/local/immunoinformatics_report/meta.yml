@@ -1,0 +1,30 @@
+name: "immunoinformatics_report"
+description: Render a self-contained HTML report summarising immunoinformatics outputs.
+keywords:
+    - proteomics
+    - immunoinformatics
+    - report
+    - html
+tools:
+    - matplotlib:
+          description: PNG plot rendering for the HTML report.
+          homepage: https://matplotlib.org
+          licence: ["PSF"]
+    - logomaker:
+          description: Sequence logo rendering for Gibbs motif clusters.
+          homepage: https://logomaker.readthedocs.io
+          licence: ["MIT"]
+input:
+    - - meta: { type: map }
+      - peptides:   { type: file, description: "Integrated peptides TSV" }
+      - netmhcpan:  { type: file, description: "netMHCpan best-binder TSV (pass NO_FILE if absent)" }
+      - netmhciipan:{ type: file, description: "netMHCIIpan best-binder TSV (pass NO_FILE if absent)" }
+      - gibbs:      { type: file, description: "Gibbs clusters TSV (pass NO_FILE if absent)" }
+      - flashlfq:   { type: file, description: "FlashLFQ QuantifiedPeptides TSV (pass NO_FILE if absent)" }
+      - blastp:     { type: file, description: "BLASTP-annotated peptides TSV (pass NO_FILE if absent)" }
+output:
+    - html:
+          - meta: { type: map }
+          - "*.html": { type: file, description: "Single-page HTML report with embedded PNG plots" }
+    - versions:
+          - "versions.yml": { type: file, pattern: "versions.yml" }
