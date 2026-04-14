@@ -255,8 +255,8 @@
                 "ms_engines": {
                     "type": "string",
                     "default": "msfragger",
-                    "pattern": "^(msfragger|comet|sage)(,(msfragger|comet|sage))*$",
-                    "description": "Comma-separated list of MS search engines to use: msfragger, comet, sage.",
+                    "pattern": "^(msfragger|comet|sage|peaks)(,(msfragger|comet|sage|peaks))*$",
+                    "description": "Comma-separated list of MS search engines to use: msfragger, comet, sage, peaks.",
                     "fa_icon": "fas fa-cogs"
                 },
                 "msfragger_jar": {
@@ -293,8 +293,16 @@
                 "peaks_psm_csv": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Optional external PEAKS db.psms.csv for integration with open-source engines.",
+                    "description": "PEAKS Studio db.psms.csv export. Required when 'peaks' is in --ms_engines; spectrum indices are resolved against CONVERT_MZML's index2scan pickles.",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "peaks_min_match_fraction": {
+                    "type": "number",
+                    "default": 0.98,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Minimum fraction of PEAKS rows that must resolve to scan numbers or the run aborts.",
+                    "fa_icon": "fas fa-percentage"
                 }
             }
         },
