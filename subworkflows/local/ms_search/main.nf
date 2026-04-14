@@ -5,10 +5,11 @@
     1. PREPARE_FASTA           target/decoy database
     2. MSFRAGGER               → calibrated mzMLs + PIN
     3. COMET + SAGE            parallel on calibrated mzMLs → PIN
-    4. MOKAPOT (per engine)    FDR control
-    5. CONVERT_MZML            mzML → MGF + scans.pkl (for MS2Rescore / PEAKS)
-    6. MS2RESCORE (per engine) rescore mokapot PSMs with spectrum predictions
-    7. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
+    4. CONVERT_MZML            mzML → MGF + scans.pkl + index2scan.pkl
+    5. CONVERT_PEAKS           PEAKS db.psms.csv → PIN (uses index2scan)
+    6. MOKAPOT (per engine)    FDR control
+    7. MS2RESCORE (per engine) rescore mokapot PSMs with spectrum predictions
+    8. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
 ----------------------------------------------------------------------------------------
 */
 
@@ -20,9 +21,12 @@ include { MOKAPOT as MOKAPOT_MSFRAGGER } from '../../../modules/local/mokapot/ma
 include { MOKAPOT as MOKAPOT_COMET     } from '../../../modules/local/mokapot/main'
 include { MOKAPOT as MOKAPOT_SAGE      } from '../../../modules/local/mokapot/main'
 include { CONVERT_MZML                 } from '../../../modules/local/convert_mzml/main'
+include { CONVERT_PEAKS                } from '../../../modules/local/convert_peaks/main'
+include { MOKAPOT as MOKAPOT_PEAKS     } from '../../../modules/local/mokapot/main'
 include { MS2RESCORE as MS2RESCORE_MSFRAGGER } from '../../../modules/local/ms2rescore/main'
 include { MS2RESCORE as MS2RESCORE_COMET     } from '../../../modules/local/ms2rescore/main'
 include { MS2RESCORE as MS2RESCORE_SAGE      } from '../../../modules/local/ms2rescore/main'
+include { MS2RESCORE as MS2RESCORE_PEAKS     } from '../../../modules/local/ms2rescore/main'
 include { INTEGRATE_ENGINES            } from '../../../modules/local/integrate_engines/main'
 
 workflow MS_SEARCH {
@@ -133,6 +137,33 @@ workflow MS_SEARCH {
     ch_mgf_per_sample = CONVERT_MZML.out.mgf
         .map { meta, f -> [meta, f] }
         .groupTuple(by: 0)
+    ch_idx2scan_per_sample = CONVERT_MZML.out.index2scan
+        .map { meta, f -> [meta, f] }
+        .groupTuple(by: 0)
+
+    //
+    // STEP 3b: PEAKS branch (optional).
+    // User-supplied db.psms.csv is converted to PIN using index2scan.pkl,
+    // then run through its own MOKAPOT instance.
+    //
+    ch_mok_peaks = Channel.empty()
+    if (engines.contains('peaks')) {
+        ch_peaks_csv = ch_ms_data
+            .map { meta, _files -> [meta, file(params.peaks_psm_csv, checkIfExists: true)] }
+        ch_peaks_in = ch_peaks_csv.join(ch_idx2scan_per_sample)
+        CONVERT_PEAKS(
+            ch_peaks_in.map { meta, csv, _pkls -> [meta, csv] },
+            ch_peaks_in.map { meta, _csv, pkls -> pkls }.flatMap { it }.collect()
+        )
+        ch_versions = ch_versions.mix(CONVERT_PEAKS.out.versions)
+
+        MOKAPOT_PEAKS(CONVERT_PEAKS.out.pin, 'peaks')
+        ch_versions  = ch_versions.mix(MOKAPOT_PEAKS.out.versions)
+        ch_mok_peaks = MOKAPOT_PEAKS.out.psms
+            .join(MOKAPOT_PEAKS.out.decoy_psms)
+            .join(MOKAPOT_PEAKS.out.combined_pin)
+    }
+
     ch_ms2rescore_cfg = Channel.fromPath(
         "${projectDir}/assets/ms_search_params/ms2rescore/${instrument}_${mod_type}.json",
         checkIfExists: true
@@ -180,6 +211,19 @@ workflow MS_SEARCH {
         ch_versions = ch_versions.mix(MS2RESCORE_SAGE.out.versions)
         ch_rescored = ch_rescored.mix(
             MS2RESCORE_SAGE.out.psms.map { meta, f -> [meta, 'sage', f] }
+        )
+    }
+    if (engines.contains('peaks')) {
+        MS2RESCORE_PEAKS(
+            ch_mok_peaks,
+            'peaks',
+            ch_scans_per_sample.map { meta, f -> f }.first(),
+            ch_mgf_per_sample.map   { meta, f -> f }.first(),
+            ch_ms2rescore_cfg
+        )
+        ch_versions = ch_versions.mix(MS2RESCORE_PEAKS.out.versions)
+        ch_rescored = ch_rescored.mix(
+            MS2RESCORE_PEAKS.out.psms.map { meta, f -> [meta, 'peaks', f] }
         )
     }
 
