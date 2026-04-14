@@ -1,0 +1,40 @@
+name: "convert_peaks"
+description: Convert a PEAKS Studio db.psms.csv export into a Percolator input (PIN)
+keywords:
+    - proteomics
+    - peaks
+    - percolator
+    - mokapot
+tools:
+    - pandas:
+          description: |
+              Reshapes PEAKS Studio's CSV PSM report into the tab-delimited
+              PIN format mokapot consumes. Spectrum indices in the PEAKS
+              export are resolved to real scan numbers via the
+              index2scan.pkl pickle emitted by CONVERT_MZML.
+          homepage: https://pandas.pydata.org
+          licence: ["BSD-3-Clause"]
+input:
+    - - meta:
+            type: map
+            description: Groovy map with sample metadata (id required)
+      - peaks_csv:
+            type: file
+            description: PEAKS Studio db.psms.csv export (v12 with decoys)
+            pattern: "*.csv"
+    - - index2scan_pkls:
+            type: file
+            description: index2scan.pkl file(s) from CONVERT_MZML
+            pattern: "*.index2scan.pkl"
+output:
+    - pin:
+          - meta:
+                type: map
+          - "peaks.pin":
+                type: file
+                description: PEAKS → mokapot PIN
+    - versions:
+          - "versions.yml":
+                type: file
+                description: File containing software versions
+                pattern: "versions.yml"
