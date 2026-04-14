@@ -1,0 +1,8 @@
+name: ms2rescore
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - bioconda::ms2rescore=3.1.5
+    - conda-forge::python>=3.9
+    - conda-forge::pandas>=1.5
