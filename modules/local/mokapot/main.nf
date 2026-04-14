@@ -9,11 +9,13 @@ process MOKAPOT {
     val(engine)
 
     output:
-    tuple val(meta), path("*.mokapot.psms.txt"),     emit: psms
-    tuple val(meta), path("*.mokapot.peptides.txt"), emit: peptides
-    tuple val(meta), path("*_combined.pin"),         emit: combined_pin
-    path("mokapot_log.txt"),                         emit: log
-    path "versions.yml",                             emit: versions
+    tuple val(meta), path("*.target.psms.txt"),     emit: psms
+    tuple val(meta), path("*.target.peptides.txt"), emit: peptides
+    tuple val(meta), path("*.decoy.psms.txt"),      emit: decoy_psms,     optional: true
+    tuple val(meta), path("*.decoy.peptides.txt"),  emit: decoy_peptides, optional: true
+    tuple val(meta), path("*_combined.pin"),        emit: combined_pin
+    path("mokapot_log.txt"),                        emit: log
+    path "versions.yml",                            emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -52,6 +54,12 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
         ${prefix}_combined.pin \\
         > mokapot_log.txt 2>&1
 
+    # Normalise output file names so target/decoy globs are unambiguous.
+    [ -f ${prefix}.mokapot.psms.txt ]           && mv ${prefix}.mokapot.psms.txt           ${prefix}.target.psms.txt
+    [ -f ${prefix}.mokapot.peptides.txt ]       && mv ${prefix}.mokapot.peptides.txt       ${prefix}.target.peptides.txt
+    [ -f ${prefix}.mokapot.decoy.psms.txt ]     && mv ${prefix}.mokapot.decoy.psms.txt     ${prefix}.decoy.psms.txt
+    [ -f ${prefix}.mokapot.decoy.peptides.txt ] && mv ${prefix}.mokapot.decoy.peptides.txt ${prefix}.decoy.peptides.txt
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         mokapot: \$(mokapot --version 2>&1 | sed 's/mokapot //')
@@ -61,8 +69,8 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
     stub:
     def prefix = "${engine}_search"
     """
-    touch ${prefix}.mokapot.psms.txt
-    touch ${prefix}.mokapot.peptides.txt
+    touch ${prefix}.target.psms.txt ${prefix}.target.peptides.txt
+    touch ${prefix}.decoy.psms.txt  ${prefix}.decoy.peptides.txt
     touch ${prefix}_combined.pin
     touch mokapot_log.txt
 
