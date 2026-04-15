@@ -35,3 +35,22 @@ r-optparse = ">=1.7.5,<2"
 r-venndiagram = ">=1.7.3,<2"
 r-upsetr = ">=1.4.0,<2"
 r-hrbrthemes = ">=0.8.7,<1"
+
+# MS search + immunoinformatics runtime tools (for --step ms_search under
+# -profile pixi). Matches the per-module environment.yml files so the
+# pipeline works without containers.
+pymzml = ">=2.5.2,<3"
+mokapot = ">=0.9.0"
+comet-ms = ">=2023010,<2024000"   # pinned to match vendored 2023.01 params files
+sage-proteomics = ">=0.14.7,<0.15"
+# ms2rescore + flashlfq disabled here — their dotnet/pyopenms/eigen deps
+# conflict with the rest of the pixi env. Run those two modules under
+# `-profile conda,...` so Nextflow resolves their per-module environment.yml
+# at execution time. The rest of ms_search (MSFragger/Comet/Sage/Mokapot
+# /CONVERT_MZML/CONVERT_PEAKS/INTEGRATE_ENGINES/BLASTP_HOST/netMHCpan/
+# netMHCIIpan/GibbsCluster/report) works natively under -profile pixi.
+blast = ">=2.15.0,<3"
+biopython = ">=1.80"
+matplotlib-base = ">=3.6"
+logomaker = ">=0.8"
+pandas = ">=1.5"
