@@ -1,0 +1,2 @@
+sample,cryptic_psm_csv,uniprot_psm_csv,cryptic_decoy_score,uniprot_decoy_score
+test_sample,tests/data/post_ms/cryptic.peptides.csv,tests/data/post_ms/uniprot.peptides.csv,20.0,20.0

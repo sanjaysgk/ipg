@@ -9,8 +9,8 @@ process DB_COMPARE {
 
     input:
     tuple val(meta), path(cryptic_psm), path(uniprot_psm)
-    path(discard_list)
-    path(unconventional_list)
+    path(discard_list,       stageAs: 'discard/*')
+    path(unconventional_list, stageAs: 'unconv/*')
 
     output:
     tuple val(meta), path("*_cryptic_only.txt"),                   emit: cryptic_only,               optional: true
