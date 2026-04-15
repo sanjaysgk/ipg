@@ -21,7 +21,13 @@ process MSFRAGGER {
 
     output:
     tuple val(meta), path("*.pin"),            emit: pin
-    tuple val(meta), path("*.mzML"),           emit: mzml
+    // mzml is optional — MSFragger only produces a *_calibrated.mzML when
+    // mass calibration runs. On small / DIA / already-calibrated inputs
+    // it skips calibration and emits no new mzML. Downstream modules
+    // (CONVERT_MZML, COMET, SAGE) fall back to the original mzML via
+    // `ch_engine_input = engines.contains('msfragger') ? ch_calibrated_mzml : ch_ms_data`
+    // in the subworkflow — left as-is, and COMET/SAGE receive ch_ms_data.
+    tuple val(meta), path("*.mzML"),           emit: mzml, optional: true
     path("search_log.txt"),                    emit: log
     path "versions.yml",                       emit: versions
 
@@ -37,8 +43,12 @@ process MSFRAGGER {
         : "msfragger ${key_arg}"
     def version_cmd = use_jar
         ? "java -jar ${msfragger_jar} --version 2>&1 | head -1 || echo unknown"
-        : "echo 'MSFragger 4.2 (bioconda)'"
+        : "echo 'MSFragger 4.1 (bioconda)'"
     """
+    # bioconda msfragger wrapper hardcodes -Xmx1g which is too small;
+    # _JAVA_OPTIONS overrides it without touching the wrapper script.
+    export _JAVA_OPTIONS="-Xmx${mem}g -Dfile.encoding=UTF-8"
+
     sed 's#your_fasta#${fasta}#g' ${params_file} > used.params
 
     ${run_cmd} \\
@@ -46,15 +56,24 @@ process MSFRAGGER {
         ${ms_files} \\
         > search_log.txt 2>&1
 
-    # Rename calibrated mzMLs to clean names (remove _calibrated suffix)
+    # Rename calibrated mzMLs to clean names (remove _calibrated suffix).
+    # Use nullglob so unmatched globs produce empty list instead of the
+    # literal pattern (bash strict mode -e would kill the script otherwise).
+    shopt -s nullglob
     for f in *_calibrated.mzML; do
-        [ -f "\$f" ] && mv "\$f" "\${f/_calibrated/}" || true
+        mv "\$f" "\${f/_calibrated/}"
     done
     # If calibration failed, use uncalibrated
     for f in *_uncalibrated.mzML; do
         target="\${f/_uncalibrated/}"
-        [ ! -f "\$target" ] && mv "\$f" "\$target" || rm -f "\$f"
+        if [ ! -f "\$target" ]; then
+            mv "\$f" "\$target"
+        else
+            rm -f "\$f"
+        fi
     done
+    shopt -u nullglob
+
 
     # Clean up pepindex files
     rm -f *.pepindex
