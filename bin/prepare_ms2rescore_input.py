@@ -95,16 +95,10 @@ def prepare_tsv(psms: pd.DataFrame, scans: dict) -> pd.DataFrame:
 def build_features(pin_path: Path, engine: str, scans: dict) -> pd.DataFrame:
     f = pd.read_csv(pin_path, sep="\t", dtype=str)
     f = _extract_run_specid(f, engine)
-    # Strip mokapot wrapping + flanking residues from Peptide
-    if engine == "peaks":
-        f["Peptide"] = f["Peptide"].apply(lambda x: re.sub(r"[^A-Z]+", "", x))
-    elif engine == "sage":
-        f["Peptide"] = f["Peptide"].apply(lambda x: re.sub(r"[^A-Z]+", "", x))
-    else:
-        strip = (2, 3) if engine == "msfragger" else (2, 2)
-        f["Peptide"] = f["Peptide"].apply(
-            lambda x: re.sub(r"[^A-Z]+", "", x[strip[0] : -strip[1]])
-        )
+    # _extract_run_specid already stripped flanking residues for
+    # msfragger/comet/peaks — just normalise to A-Z here. Sage leaves
+    # Peptide raw, so the regex is the only stripping it gets.
+    f["Peptide"] = f["Peptide"].apply(lambda x: re.sub(r"[^A-Z]+", "", x))
     f["spectrum_id"] = (
         f["specid"].apply(lambda x: scans[x]["rescore"]) + f["Peptide"]
     )
@@ -131,12 +125,23 @@ def main() -> int:
     p.add_argument("--out", required=True, help="output rescore_input.tsv")
     args = p.parse_args()
 
-    # Merge scans dicts from all runs.
+    # Merge scans dicts from all runs. Accept a mix of *.scans.pkl files
+    # and directories containing such files — Nextflow stageAs sometimes
+    # hands us one of each depending on channel composition.
+    from pathlib import Path as _P
+    pkl_paths: list[str] = []
+    for s in args.scans:
+        p = _P(s)
+        if p.is_dir():
+            pkl_paths.extend(str(x) for x in p.glob("*.scans.pkl"))
+        elif p.is_file():
+            pkl_paths.append(str(p))
     scans: dict = {}
-    for pkl in args.scans:
+    for pkl in pkl_paths:
         with open(pkl, "rb") as fh:
             scans.update(pickle.load(fh))
-    print(f"[prepare_ms2rescore] merged {len(scans)} MS2 scans", file=sys.stderr)
+    print(f"[prepare_ms2rescore] merged {len(scans)} MS2 scans from "
+          f"{len(pkl_paths)} pickle(s)", file=sys.stderr)
 
     target = pd.read_csv(args.target, sep="\t")
     decoy = pd.read_csv(args.decoy, sep="\t")
