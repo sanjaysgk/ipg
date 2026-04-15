@@ -1,0 +1,45 @@
+name: "mokapot"
+description: Run mokapot for FDR-controlled peptide-spectrum match rescoring
+keywords:
+  - proteomics
+  - FDR
+  - mokapot
+  - semi-supervised learning
+tools:
+  - mokapot:
+      description: |
+        Fast and flexible semi-supervised learning for peptide detection
+        in shotgun proteomics. Replaces Percolator with a scikit-learn
+        implementation.
+      homepage: https://github.com/wfondrie/mokapot
+      documentation: https://mokapot.readthedocs.io/
+      licence: ["Apache-2.0"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - pin_files:
+        type: file
+        description: Percolator input (PIN) files from search engine
+        pattern: "*.pin"
+  - - engine:
+        type: string
+        description: Search engine name (msfragger, comet, sage)
+output:
+  - psms:
+      - meta:
+          type: map
+      - "*.mokapot.psms.txt":
+          type: file
+          description: Mokapot PSM results at controlled FDR
+  - peptides:
+      - meta:
+          type: map
+      - "*.mokapot.peptides.txt":
+          type: file
+          description: Mokapot peptide results at controlled FDR
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

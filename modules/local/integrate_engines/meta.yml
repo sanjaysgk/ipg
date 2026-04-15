@@ -1,0 +1,61 @@
+name: "integrate_engines"
+description: Merge rescored PSMs across search engines at 1% peptide-level FDR with chimeric-spectrum resolution
+keywords:
+  - proteomics
+  - fdr
+  - integration
+  - chimeric
+tools:
+  - pandas:
+      description: In-memory join/agg of per-engine MS2Rescore PSM tables.
+      homepage: https://pandas.pydata.org
+      licence: ["BSD-3-Clause"]
+  - biopython:
+      description: FASTA header parsing for protein info (gene, species, description).
+      homepage: https://biopython.org
+      licence: ["Biopython"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - engine_tsvs:
+        type: file
+        description: Rescored PSM TSVs from MS2RESCORE, one per engine
+        pattern: "*.psms.tsv"
+  - - engine_names:
+        type: val
+        description: List of engine names aligned with engine_tsvs
+  - - fasta:
+        type: file
+        description: Search FASTA database (used to resolve protein info)
+        pattern: "*.{fa,fasta}"
+output:
+  - psms:
+      - meta:
+          type: map
+      - "integrated_psms.tsv":
+          type: file
+          description: Integrated unique-peptide PSMs
+  - peptides:
+      - meta:
+          type: map
+      - "integrated_peptides.tsv":
+          type: file
+          description: Integrated peptide-level table with per-run PSM counts
+  - chimeric:
+      - meta:
+          type: map
+      - "chimeric_PSMs.txt":
+          type: file
+          description: Scans with multiple competing peptide assignments
+  - chim_only:
+      - meta:
+          type: map
+      - "chimera_only_peptides.txt":
+          type: file
+          description: Peptides only supported by chimeric PSMs
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

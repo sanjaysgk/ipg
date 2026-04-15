@@ -1,0 +1,25 @@
+name: "netmhciipan"
+description: Predict MHC class II binding with netMHCIIpan-4.3 (user-provided binary)
+keywords:
+  - immunoinformatics
+  - netmhciipan
+  - mhc class ii
+  - hla
+tools:
+  - netMHCIIpan:
+      description: |
+        NetMHCIIpan-4.3 MHC class II binding predictor. Academic license;
+        user must download and point --netmhciipan_path at the binary.
+      homepage: https://services.healthtech.dtu.dk/services/NetMHCIIpan-4.3/
+      licence: ["Academic"]
+input:
+  - - meta: { type: map }
+    - peptides_tsv: { type: file, description: "Integrated peptides TSV" }
+  - - hla_alleles: { type: val, description: "Comma-separated class-II alleles" }
+  - - netmhciipan_bin: { type: file, description: "Path to netMHCIIpan binary" }
+output:
+  - raw: [{ meta: { type: map } }, { "netmhciipan_output.txt": { type: file } }]
+  - parsed: [{ meta: { type: map } }, { "netmhciipan_parsed.tsv": { type: file } }]
+  - best: [{ meta: { type: map } }, { "netmhciipan_best.tsv": { type: file } }]
+  - versions:
+      - "versions.yml": { type: file, pattern: "versions.yml" }

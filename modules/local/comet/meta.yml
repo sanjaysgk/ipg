@@ -1,0 +1,47 @@
+name: "comet"
+description: Run Comet database search on (calibrated) mzML files
+keywords:
+  - proteomics
+  - database search
+  - comet
+  - peptide identification
+tools:
+  - Comet:
+      description: |
+        Open-source MS/MS database search engine maintained by UW Proteomics.
+        Produces per-run Percolator input (PIN) files consumed by mokapot.
+      homepage: https://uwpr.github.io/Comet/
+      documentation: https://uwpr.github.io/Comet/parameters/
+      licence: ["Apache-2.0"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - mzml_files:
+        type: file
+        description: mzML files (calibrated output from MSFragger preferred)
+        pattern: "*.mzML"
+  - - fasta:
+        type: file
+        description: Target-decoy FASTA database
+        pattern: "*.{fa,fasta}"
+  - - params_file:
+        type: file
+        description: Comet parameter file
+        pattern: "*.params"
+output:
+  - pin:
+      - meta:
+          type: map
+      - "*.pin":
+          type: file
+          description: Percolator input (PIN) files for mokapot
+  - log:
+      - "comet_search_log.txt":
+          type: file
+          description: Comet stdout/stderr log
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

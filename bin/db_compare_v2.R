@@ -178,11 +178,11 @@ peptideLists <- lapply(filtered, function(dat) dat[,"Peptide"])
 vennFile <- paste0(c(prefix,"Venn.png"),collapse="_")
 invisible(futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger"))
 
-invisible(venn.diagram(x = peptideLists, 
+invisible(venn.diagram(x = peptideLists,
                        category.names = names(peptideLists),
                        filename = vennFile,
                        imagetype="png",
-                       cat.prompts=TRUE,
+                       cat.prompts=FALSE,   # was TRUE — triggers adjust.venn error in non-interactive R sessions
                        margin=0.1,
                        cat.dist=rep(0.05,length(peptideLists)),
                        output = TRUE))

@@ -41,6 +41,16 @@ Optionally, a **post-MS analysis** step (`--step post_ms`) runs the two-phase
 `db_compare` + `origins` workflow on PEAKS (or other search engine) results to
 identify and annotate cryptic-only peptides.
 
+An **MS search** step (`--step ms_search`) runs up to four open-source search
+engines (**MSFragger**, **Comet**, **Sage**, **PEAKS**) in parallel against the
+cryptic FASTA, applies **mokapot** FDR control per engine, rescores PSMs with
+**MS2Rescore**, and merges results at 1% peptide-level FDR. Optional
+immunoinformatics gates — `--run_netmhcpan`, `--run_netmhciipan`,
+`--run_gibbscluster`, `--run_flashlfq`, `--run_blastp_host` — pick up the
+integrated peptide table and emit a per-sample HTML report summarising HLA
+binding, motif clusters, quantification, and host-background hits. See
+[`docs/usage.md`](docs/usage.md) for the full invocation.
+
 The 31 legacy steps are grouped into **seven typed nf-core subworkflows**:
 
 ```mermaid

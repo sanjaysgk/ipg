@@ -1,0 +1,66 @@
+name: "sage"
+description: Run Sage database search on (calibrated) mzML files
+keywords:
+  - proteomics
+  - database search
+  - sage
+  - peptide identification
+tools:
+  - Sage:
+      description: |
+        Fast, open-source proteomics search engine written in Rust.
+        Emits a single combined Percolator input (PIN) for all input
+        mzMLs; consumed by mokapot downstream.
+      homepage: https://github.com/lazear/sage
+      documentation: https://sage-docs.vercel.app/
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - mzml_files:
+        type: file
+        description: mzML files (calibrated output from MSFragger preferred)
+        pattern: "*.mzML"
+  - - fasta:
+        type: file
+        description: Target-decoy FASTA database
+        pattern: "*.{fa,fasta}"
+  - - config_json:
+        type: file
+        description: Sage JSON configuration file
+        pattern: "*.json"
+  - - msfragger_log:
+        type: file
+        description: |
+          Optional MSFragger search_log.txt. When present, Sage is
+          re-configured with the calibrated fragment tolerance + topN
+          peaks parsed out of the log (matches immunopeptidomics core.py
+          run_Sage behaviour). Pass file('NO_FILE') when absent.
+        pattern: "search_log.txt"
+output:
+  - pin:
+      - meta:
+          type: map
+      - "*.pin":
+          type: file
+          description: Combined Percolator input (PIN) for all mzMLs
+  - tsv:
+      - meta:
+          type: map
+      - "*.sage.tsv":
+          type: file
+          description: Optional Sage TSV results
+  - log:
+      - "sage_search_log.txt":
+          type: file
+          description: Sage stdout/stderr log
+  - params:
+      - "used_params.json":
+          type: file
+          description: Effective Sage JSON config used at runtime
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

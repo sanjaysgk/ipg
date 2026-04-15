@@ -58,3 +58,14 @@ insert_final_newline = unset
 trim_trailing_whitespace = unset
 indent_style = unset
 indent_size = unset
+
+# Vendored Comet, Sage, and MS2Rescore parameter templates — preserve the
+# upstream formatting (CRLF, trailing whitespace, fixed-column padding) so
+# they round-trip cleanly back to immunopeptidomics/external_tools/*/params.
+[/assets/ms_search_params/**]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset

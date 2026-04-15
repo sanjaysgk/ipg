@@ -72,7 +72,7 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     // Skipped when --step post_ms (samplesheet parsing happens in ipg.nf)
     //
-    if (params.step == 'post_ms') {
+    if (params.step in ['post_ms', 'ms_search']) {
         ch_samplesheet = Channel.empty()
     } else {
         Channel
@@ -160,13 +160,35 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
     genomeExistsError()
 
-    def valid_steps = ['db_construct', 'post_ms']
+    def valid_steps = ['db_construct', 'ms_search', 'post_ms']
     if (!valid_steps.contains(params.step)) {
         error("Invalid --step '${params.step}'. Must be one of: ${valid_steps.join(', ')}")
     }
 
     if (params.step == 'db_construct' && !params.input) {
         error("--input samplesheet is required when --step db_construct (default)")
+    }
+
+    if (params.step == 'ms_search') {
+        if (!params.ms_input) {
+            error("--ms_input is required when --step ms_search")
+        }
+        if (!params.search_fasta) {
+            error("--search_fasta is required when --step ms_search")
+        }
+        def engines = params.ms_engines.tokenize(',')
+        def valid_engines = ['msfragger', 'comet', 'sage', 'peaks']
+        engines.each { eng ->
+            if (!valid_engines.contains(eng.trim())) {
+                error("Invalid engine '${eng}'. Must be one of: ${valid_engines.join(', ')}")
+            }
+        }
+        if (engines.contains('msfragger') && !params.msfragger_jar) {
+            error("--msfragger_jar is required when 'msfragger' is in --ms_engines")
+        }
+        if (engines.contains('peaks') && !params.peaks_psm_csv) {
+            error("--peaks_psm_csv is required when 'peaks' is in --ms_engines")
+        }
     }
 
     if (params.step == 'post_ms') {

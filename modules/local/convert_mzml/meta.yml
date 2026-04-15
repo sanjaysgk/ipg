@@ -1,0 +1,50 @@
+name: "convert_mzml"
+description: Convert mzML to MGF and emit scans / index2scan pickles for MS2Rescore + PEAKS
+keywords:
+  - proteomics
+  - mzml
+  - mgf
+  - ms2rescore
+tools:
+  - pymzml:
+      description: |
+        Python library to read mzML spectra. Used to rewrite each mzML
+        as a lightweight MGF and emit two pickles: scans.pkl (per-MS2
+        metadata keyed by "run_scan") and index2scan.pkl (spectrum
+        index → scan, needed by PEAKS). Extracted from
+        immunopeptidomics/core.py read_mzML().
+      homepage: https://pymzml.readthedocs.io/
+      documentation: https://pymzml.readthedocs.io/
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - mzml:
+        type: file
+        description: Single mzML file (calibrated from MSFragger preferred)
+        pattern: "*.mzML"
+output:
+  - mgf:
+      - meta:
+          type: map
+      - "*.mgf":
+          type: file
+          description: MGF rewrite of the mzML spectra
+  - scans:
+      - meta:
+          type: map
+      - "*.scans.pkl":
+          type: file
+          description: Per-MS2 scan metadata pickle keyed by "run_scan"
+  - index2scan:
+      - meta:
+          type: map
+      - "*.index2scan.pkl":
+          type: file
+          description: Spectrum-index → scan-number pickle (for PEAKS)
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

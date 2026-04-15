@@ -1,0 +1,27 @@
+name: "flashlfq"
+description: Quantify integrated peptides across runs with FlashLFQ.
+keywords:
+  - proteomics
+  - flashlfq
+  - quantification
+  - mbr
+tools:
+  - FlashLFQ:
+      description: |
+        Fast label-free quantification with match-between-runs. Open
+        source and available via bioconda. Consumes an idt file plus
+        the original mzML/raw files.
+      homepage: https://github.com/smith-chem-wisc/FlashLFQ
+      licence: ["MIT"]
+input:
+  - - meta: { type: map }
+    - peptides_tsv: { type: file, description: "Integrated peptides TSV" }
+    - ms_files: { type: file, description: "mzML or .raw files for all runs" }
+output:
+  - peptides: [{ meta: { type: map } }, { "quant/QuantifiedPeptides.tsv": { type: file } }]
+  - peaks: [{ meta: { type: map } }, { "quant/QuantifiedPeaks.tsv": { type: file } }]
+  - input: [{ meta: { type: map } }, { "quant/flashlfq_input.tsv": { type: file } }]
+  - log:
+      - "quant/quant_log.txt": { type: file }
+  - versions:
+      - "versions.yml": { type: file, pattern: "versions.yml" }
