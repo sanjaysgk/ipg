@@ -183,9 +183,10 @@ def validateInputParameters() {
                 error("Invalid engine '${eng}'. Must be one of: ${valid_engines.join(', ')}")
             }
         }
-        if (engines.contains('msfragger') && !params.msfragger_jar) {
-            error("--msfragger_jar is required when 'msfragger' is in --ms_engines")
-        }
+        // --msfragger_jar is no longer mandatory — bioconda's `msfragger`
+        // package (added to pixi.toml) provides the binary and handles
+        // licensing via `msfragger --key <license>`. JAR is still accepted
+        // for users who prefer the Nesvilab distribution.
         if (engines.contains('peaks') && !params.peaks_psm_csv) {
             error("--peaks_psm_csv is required when 'peaks' is in --ms_engines")
         }
