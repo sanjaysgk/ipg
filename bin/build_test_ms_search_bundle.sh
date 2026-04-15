@@ -38,6 +38,19 @@ else
         "${BASE_URL}/2025_02_human_swissprot.fasta"
 fi
 
+# Mini FASTA — first 5000 Swiss-Prot entries (~5 MB). Sized so:
+#   - Sage loads in <16 GB RAM (vs. ~120 GB for the full 14 MB proteome)
+#   - MokaPot gets enough PSMs below 5% FDR to train (500 proteins was
+#     too few — mokapot errors "No PSMs found below the 'eval_fdr'")
+# Override --search_fasta on the CLI for a full-proteome realistic run.
+if [[ -s "human_swissprot_mini.fasta" ]]; then
+    echo "[skip] human_swissprot_mini.fasta already present"
+else
+    awk '/^>/ {n++} n>5000 {exit} {print}' human_swissprot.fasta \
+        > human_swissprot_mini.fasta
+    echo "[build_test_ms_search_bundle] wrote mini FASTA with 5000 entries"
+fi
+
 # HepG2 HLA allele sheet + sample sheet
 wget --quiet -O HepG2_allele_sheet.tsv "${BASE_URL}/HepG2_allele_sheet.tsv"
 wget --quiet -O HepG2_sample_sheet.tsv "${BASE_URL}/HepG2_sample_sheet.tsv"
