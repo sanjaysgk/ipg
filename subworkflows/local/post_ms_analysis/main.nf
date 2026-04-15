@@ -28,12 +28,16 @@ workflow POST_MS_ANALYSIS {
     ch_versions = Channel.empty()
 
     //
-    // Phase 1: db_compare (no discard/unconventional lists)
+    // Phase 1: db_compare (no discard/unconventional lists — use NO_FILE
+    // sentinel so the module's `discard_list.name != 'NO_FILE'` gate
+    // evaluates false and the -j / -u flags are omitted. Passing bare `[]`
+    // here makes Nextflow stage a file whose .name is not 'NO_FILE', which
+    // produced `db_compare_v2.R -j  -u  ` and failed optparse.
     //
     DB_COMPARE_PHASE1(
         ch_post_ms,
-        [],     // no discard list
-        []      // no unconventional list
+        file("${projectDir}/assets/NO_FILE"),
+        file("${projectDir}/assets/NO_FILE")
     )
     ch_versions = ch_versions.mix(DB_COMPARE_PHASE1.out.versions)
 
