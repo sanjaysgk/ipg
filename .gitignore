@@ -28,6 +28,7 @@ bin/revert_headers
 bin/alt_liftover
 bin/triple_translate
 bin/squish
+bin/origins
 bin/gff3sort
 bin/gff3sort.pl
 bin/gffread_legacy
