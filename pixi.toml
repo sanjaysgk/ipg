@@ -39,14 +39,19 @@ r-hrbrthemes = ">=0.8.7,<1"
 # MS search + immunoinformatics runtime tools (for --step ms_search under
 # -profile pixi). Matches the per-module environment.yml files so the
 # pipeline works without containers.
+msfragger = "==4.2"    # bioconda wrapper installs JAR + puts `msfragger` on PATH
 pymzml = ">=2.5.2,<3"
 mokapot = "==0.10.0"
 numpy = "<2"   # mokapot 0.10.0 still references np.float_, removed in numpy 2.0
 comet-ms = ">=2023010,<2024000"   # pinned to match vendored 2023.01 params files
 sage-proteomics = ">=0.14.7,<0.15"
-# ms2rescore + flashlfq not in pixi env — their deps (pyopenms/eigen and
-# dotnet-runtime) conflict with the rest. For test profiles that need
-# them, pass --skip_ms2rescore or run the module under -profile conda.
+# ms2rescore + flashlfq not in the default pixi env:
+# - ms2rescore→pyopenms→eigen/icu/qt6 chain has unresolvable conflicts
+#   against the rest of our conda env. Tried pinning eigen 3.4.0 +
+#   pyopenms <3.4 — runs into icu 73.2 mismatch next.
+# - flashlfq→dotnet-runtime similarly conflicts.
+# Bypass both via --skip_ms2rescore (default-true in test profile); for
+# real runs use `-profile conda,...` so each module gets its own env.
 blast = ">=2.15.0,<3"
 biopython = ">=1.80"
 matplotlib-base = ">=3.6"

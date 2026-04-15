@@ -2,14 +2,18 @@ process MSFRAGGER {
     tag "${meta.id}"
     label 'process_high'
 
-    // MSFragger requires Java 11+ and the user-provided JAR.
-    // No conda env needed beyond openjdk — the JAR is self-contained.
-    conda "conda-forge::openjdk=17"
+    // Two paths supported:
+    //   1. Bioconda: `msfragger` wrapper (PATH) — default under -profile pixi
+    //      when pixi.toml includes `msfragger`. Needs a one-time license
+    //      activation: `pixi run msfragger --key <license-key>`.
+    //   2. User-supplied JAR via --msfragger_jar — for containerised runs
+    //      or when the bioconda package isn't wanted.
+    conda "bioconda::msfragger=4.2"
 
     input:
     tuple val(meta), path(ms_files)
     path(fasta)
-    path(msfragger_jar)
+    path(msfragger_jar)    // optional — pass file('NO_FILE') when using bioconda
     path(params_file)
 
     output:
@@ -23,13 +27,18 @@ process MSFRAGGER {
 
     script:
     def mem = task.ext.msfragger_mem ?: params.msfragger_mem ?: 8
-    def prefix = meta.id
-    // Substitute the FASTA path into the params file
+    def use_jar = msfragger_jar && msfragger_jar.size() > 0
+    def key_arg = (!use_jar && params.msfragger_license) ? "--key ${params.msfragger_license}" : ''
+    def run_cmd = use_jar
+        ? "java -Dfile.encoding=UTF-8 -Xmx${mem}g -jar ${msfragger_jar}"
+        : "msfragger ${key_arg}"
+    def version_cmd = use_jar
+        ? "java -jar ${msfragger_jar} --version 2>&1 | head -1 || echo unknown"
+        : "echo 'MSFragger 4.2 (bioconda)'"
     """
     sed 's#your_fasta#${fasta}#g' ${params_file} > used.params
 
-    java -Dfile.encoding=UTF-8 -Xmx${mem}g \\
-        -jar ${msfragger_jar} \\
+    ${run_cmd} \\
         used.params \\
         ${ms_files} \\
         > search_log.txt 2>&1
@@ -47,11 +56,10 @@ process MSFRAGGER {
     # Clean up pepindex files
     rm -f *.pepindex
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        java: \$(java -version 2>&1 | head -1 | sed 's/.*"\\(.*\\)".*/\\1/')
-        msfragger: \$(java -jar ${msfragger_jar} --version 2>&1 | head -1 || echo "unknown")
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    msfragger: \$(${version_cmd})
+END_VERSIONS
     """
 
     stub:
@@ -60,10 +68,9 @@ process MSFRAGGER {
     touch ${meta.id}.mzML
     touch search_log.txt
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        java: \$(java -version 2>&1 | head -1 | sed 's/.*"\\(.*\\)".*/\\1/')
-        msfragger: "stub"
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    msfragger: "stub"
+END_VERSIONS
     """
 }
