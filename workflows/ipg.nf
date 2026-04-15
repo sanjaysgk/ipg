@@ -93,9 +93,13 @@ workflow IPG {
 
         ch_search_fasta = channel.fromPath(params.search_fasta, checkIfExists: true).collect()
 
+        // When --msfragger_jar isn't provided, pass the NO_FILE sentinel
+        // so the MSFRAGGER process still schedules (an empty channel
+        // would starve the input and the task never runs). The module
+        // detects size==0 and falls back to the bioconda wrapper.
         ch_msfragger_jar = params.msfragger_jar
             ? channel.fromPath(params.msfragger_jar, checkIfExists: true).collect()
-            : channel.empty()
+            : channel.value(file("${projectDir}/assets/NO_FILE"))
 
         def engine_list = params.ms_engines.tokenize(',')
 

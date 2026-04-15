@@ -39,7 +39,9 @@ r-hrbrthemes = ">=0.8.7,<1"
 # MS search + immunoinformatics runtime tools (for --step ms_search under
 # -profile pixi). Matches the per-module environment.yml files so the
 # pipeline works without containers.
-msfragger = "==4.2"    # bioconda wrapper installs JAR + puts `msfragger` on PATH
+# msfragger pinned to 4.1 — matches vendored SG_Neopep_fragger.params.
+# Upgrade to 4.2 requires regenerating params (separate sprint).
+msfragger = "==4.1"
 pymzml = ">=2.5.2,<3"
 mokapot = "==0.10.0"
 numpy = "<2"   # mokapot 0.10.0 still references np.float_, removed in numpy 2.0
