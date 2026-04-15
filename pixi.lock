@@ -191,7 +191,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/mokapot-0.10.0-pyhdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/mono-5.14.0.177-he1b5a44_1001.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/more-itertools-11.0.1-pyhcf101f3_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/msfragger-4.2-py311hdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/msfragger-4.1-py313hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/multiqc-1.33-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/narwhals-2.19.0-pyhcf101f3_0.conda
@@ -2635,18 +2635,18 @@ packages:
   license_family: MIT
   size: 71354
   timestamp: 1775153285920
-- conda: https://conda.anaconda.org/bioconda/noarch/msfragger-4.2-py311hdfd78af_0.tar.bz2
+- conda: https://conda.anaconda.org/bioconda/noarch/msfragger-4.1-py313hdfd78af_0.tar.bz2
   noarch: generic
-  sha256: 1046224116d83609953ae41e8c8a737bb967b14ff32d739d7129952b91296eca
-  md5: a994cf79748cbd1d25d735ee341de797
+  sha256: 5fc38280749f991aed08c2aab0cc99d5df06634501999e5108cfd180681efb31
+  md5: ff5921498ffc16297a5df863182661ae
   depends:
   - mono >=5,<6
   - openjdk >=11
-  - python 3.11.*
+  - python >=3.9
   - zlib >=1.2.13
   license: Academic License
-  size: 75474622
-  timestamp: 1748553783692
+  size: 73680728
+  timestamp: 1740598237548
 - conda: https://conda.anaconda.org/bioconda/noarch/multiqc-1.33-pyhdfd78af_0.conda
   sha256: f005760b13093362fc9c997d603dd487de32ab2e821a3cbce52a42bcb8136517
   md5: 698a8a27c2b9d8a542c70cb47099a75e
