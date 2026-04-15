@@ -81,7 +81,12 @@ workflow IPG {
         //
         Channel
             .fromList(samplesheetToList(params.ms_input, "${projectDir}/assets/schema_ms_input.json"))
-            .map { meta, ms_file ->
+            .map { row ->
+                // Schema emits 2-3 elements depending on whether `condition`
+                // is present; accept both and drop condition for now
+                // (reserved for future FlashLFQ grouping support).
+                def meta    = row[0]
+                def ms_file = row[1]
                 [ meta, file(ms_file) ]
             }
             .set { ch_ms_data }
