@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,strandedness
+D122_lung,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Raw_Data/D122-lung_S24_L001_R1_001.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Raw_Data/D122-lung_S24_L001_R2_001.fastq.gz,reverse
