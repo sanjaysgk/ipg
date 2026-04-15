@@ -37,6 +37,10 @@ def convert(mzml_path: str, run: str) -> tuple[dict, dict]:
     with open(f"{run}.mgf", "w") as mgf:
         reader = pymzml.run.Reader(mzml_path)
         for spectrum in reader:
+            # MS1 spectra have no precursor — skip them outright. Only MS2
+            # scans belong in the MGF and the scans/index2scan dicts.
+            if spectrum["ms level"] != 2:
+                continue
             prec_mz, charge = parse_precursor(spectrum)
             scan_id = str(spectrum.id_dict.get("scan", spectrum.ID))
             rt_sec = spectrum.scan_time_in_minutes() * 60
@@ -51,9 +55,6 @@ def convert(mzml_path: str, run: str) -> tuple[dict, dict]:
             for mz, intensity in zip(spectrum.mz, spectrum.i):
                 mgf.write(f"{mz:.6f}\t{intensity}\n")
             mgf.write("END IONS\n")
-
-            if spectrum["ms level"] != 2:
-                continue
             scan = str(spectrum.ID)
             specid = f"{run}_{scan}"
             ion_mobility = spectrum.get("MS:1002815", 0)
