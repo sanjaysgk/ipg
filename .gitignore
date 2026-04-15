@@ -2,6 +2,10 @@
 work/
 data/
 !tests/data/
+# HepG2 mzMLs + Swiss-Prot FASTA are large (~160 MB total) and fetched
+# on demand by bin/build_test_ms_search_bundle.sh; never commit.
+tests/data/ms_search/*.mzML
+tests/data/ms_search/*.fasta
 results/
 .DS_Store
 testing/
