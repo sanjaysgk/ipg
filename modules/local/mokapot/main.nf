@@ -45,9 +45,11 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
         mv tmp.pin ${prefix}_combined.pin
     fi
 
-    # Run mokapot with 5% test FDR (needed for low-ID samples)
+    # Run mokapot with 5% FDR for both training and testing (low-ID
+    # samples / tight test DBs don't give enough 1% FDR targets to train).
     mokapot \\
         --keep_decoys \\
+        --train_fdr 0.05 \\
         --test_fdr 0.05 \\
         -d . \\
         -r ${prefix} \\
@@ -60,10 +62,10 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
     [ -f ${prefix}.mokapot.decoy.psms.txt ]     && mv ${prefix}.mokapot.decoy.psms.txt     ${prefix}.decoy.psms.txt
     [ -f ${prefix}.mokapot.decoy.peptides.txt ] && mv ${prefix}.mokapot.decoy.peptides.txt ${prefix}.decoy.peptides.txt
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        mokapot: \$(mokapot --version 2>&1 | sed 's/mokapot //')
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    mokapot: \$(python3 -c "from importlib.metadata import version; print(version('mokapot'))")
+END_VERSIONS
     """
 
     stub:
