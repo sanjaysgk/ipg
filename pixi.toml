@@ -40,15 +40,13 @@ r-hrbrthemes = ">=0.8.7,<1"
 # -profile pixi). Matches the per-module environment.yml files so the
 # pipeline works without containers.
 pymzml = ">=2.5.2,<3"
-mokapot = ">=0.9.0"
+mokapot = "==0.10.0"
+numpy = "<2"   # mokapot 0.10.0 still references np.float_, removed in numpy 2.0
 comet-ms = ">=2023010,<2024000"   # pinned to match vendored 2023.01 params files
 sage-proteomics = ">=0.14.7,<0.15"
-# ms2rescore + flashlfq disabled here — their dotnet/pyopenms/eigen deps
-# conflict with the rest of the pixi env. Run those two modules under
-# `-profile conda,...` so Nextflow resolves their per-module environment.yml
-# at execution time. The rest of ms_search (MSFragger/Comet/Sage/Mokapot
-# /CONVERT_MZML/CONVERT_PEAKS/INTEGRATE_ENGINES/BLASTP_HOST/netMHCpan/
-# netMHCIIpan/GibbsCluster/report) works natively under -profile pixi.
+# ms2rescore + flashlfq not in pixi env — their deps (pyopenms/eigen and
+# dotnet-runtime) conflict with the rest. For test profiles that need
+# them, pass --skip_ms2rescore or run the module under -profile conda.
 blast = ">=2.15.0,<3"
 biopython = ">=1.80"
 matplotlib-base = ">=3.6"
