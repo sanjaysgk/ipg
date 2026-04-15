@@ -27,11 +27,23 @@ process DB_COMPARE {
     def prefix           = task.ext.prefix ?: "${meta.id}"
     def cryptic_score    = meta.cryptic_decoy_score
     def uniprot_score    = meta.uniprot_decoy_score
-    def phase2_args      = discard_list.name != 'NO_FILE' ? "-j ${discard_list} -u ${unconventional_list}" : ''
+    // Use file size (NO_FILE is the zero-byte sentinel) rather than name —
+    // `stageAs: 'discard/*'` means `.name` returns the staged subpath, not
+    // the basename, which broke the previous string-based check.
+    def phase2_args      = discard_list.size() > 0 ? "-j ${discard_list} -u ${unconventional_list}" : ''
     """
+    # Normalise the score column header so db_compare_v2.R's hard-coded
+    # `X.10lgP` (lowercase l) selector matches. Newer PEAKS exports use
+    # `-10LgP` (capital L), which R's check.names mangles to `X.10LgP`
+    # and breaks the dplyr select. Operate on copies so we don't touch
+    # the staged input files in place.
+    cp ${cryptic_psm} cryptic_in.csv
+    cp ${uniprot_psm} uniprot_in.csv
+    sed -i '1s/-10LgP/-10lgP/g' cryptic_in.csv uniprot_in.csv
+
     db_compare_v2.R \\
-        -c ${cryptic_psm} \\
-        -n ${uniprot_psm} \\
+        -c cryptic_in.csv \\
+        -n uniprot_in.csv \\
         -d ${cryptic_score} \\
         -m ${uniprot_score} \\
         -p ${prefix} \\
