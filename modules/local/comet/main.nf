@@ -32,7 +32,7 @@ process COMET {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        comet: \$(comet 2>&1 | grep -oE 'Comet version [^ ]+' | head -1 | sed 's/Comet version //')
+        comet: \$(comet 2>&1 | grep -oE 'Comet version "[^"]+"' | head -1 | sed 's/Comet version //;s/"//g')
     END_VERSIONS
     """
 

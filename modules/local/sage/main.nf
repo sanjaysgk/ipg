@@ -64,10 +64,10 @@ PY
         mv results.sage.pin ${meta.id}.sage.pin
     fi
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sage: \$(sage --version 2>&1 | awk '{print \$NF}' | head -1)
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    sage: \$(sage --version 2>&1 | awk '{print \$NF}' | head -1)
+END_VERSIONS
     """
 
     stub:
