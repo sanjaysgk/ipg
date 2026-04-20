@@ -75,8 +75,9 @@ workflow MS_SEARCH {
             .join(MOKAPOT_MSFRAGGER.out.combined_pin)
     }
 
-    // mzMLs fed to Comet/Sage: calibrated if MSFragger ran, else raw input.
-    ch_engine_input = engines.contains('msfragger') ? ch_calibrated_mzml : ch_ms_data
+    // Always feed raw input to Comet/Sage — they handle their own calibration.
+    // MSFragger's calibrated mzML output is reserved for CONVERT_MZML downstream.
+    ch_engine_input = ch_ms_data
 
     //
     // STEP 2b: Comet
@@ -120,26 +121,31 @@ workflow MS_SEARCH {
     }
 
     //
-    // STEP 3: CONVERT_MZML — fan out over calibrated mzMLs, emit MGF + scans pkl.
+    // STEP 3: CONVERT_MZML — fan out over mzMLs, emit MGF + scans pkl.
+    //         Only needed for MS2Rescore and PEAKS branch; skip otherwise.
     //
-    // Take one mzML at a time through CONVERT_MZML.
-    ch_one_mzml = ch_engine_input
-        .flatMap { meta, files ->
-            files instanceof List ? files.collect { [meta, it] } : [[meta, files]]
-        }
-    CONVERT_MZML(ch_one_mzml)
-    ch_versions = ch_versions.mix(CONVERT_MZML.out.versions.first())
+    ch_scans_per_sample    = Channel.empty()
+    ch_mgf_per_sample      = Channel.empty()
+    ch_idx2scan_per_sample = Channel.empty()
 
-    // Collect MGFs + pickles per sample (meta.id).
-    ch_scans_per_sample = CONVERT_MZML.out.scans
-        .map { meta, f -> [meta, f] }
-        .groupTuple(by: 0)
-    ch_mgf_per_sample = CONVERT_MZML.out.mgf
-        .map { meta, f -> [meta, f] }
-        .groupTuple(by: 0)
-    ch_idx2scan_per_sample = CONVERT_MZML.out.index2scan
-        .map { meta, f -> [meta, f] }
-        .groupTuple(by: 0)
+    if (!params.skip_ms2rescore) {
+        ch_one_mzml = ch_engine_input
+            .flatMap { meta, files ->
+                files instanceof List ? files.collect { [meta, it] } : [[meta, files]]
+            }
+        CONVERT_MZML(ch_one_mzml)
+        ch_versions = ch_versions.mix(CONVERT_MZML.out.versions.first())
+
+        ch_scans_per_sample = CONVERT_MZML.out.scans
+            .map { meta, f -> [meta, f] }
+            .groupTuple(by: 0)
+        ch_mgf_per_sample = CONVERT_MZML.out.mgf
+            .map { meta, f -> [meta, f] }
+            .groupTuple(by: 0)
+        ch_idx2scan_per_sample = CONVERT_MZML.out.index2scan
+            .map { meta, f -> [meta, f] }
+            .groupTuple(by: 0)
+    }
 
     //
     // STEP 3b: PEAKS branch (optional).
