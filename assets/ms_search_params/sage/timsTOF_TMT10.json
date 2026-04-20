@@ -50,7 +50,5 @@
   "max_fragment_charge": 1,
   "report_psms": 1,
   "output_directory": "out",
-  "mzml_paths": [
-    "C:T03547_EvoAurEl3_20SPDDDAPASEF-IMP-CMB-1378_1_S2-A1_1_3816_uncalibrated.mzML"
-  ]       
+  "mzml_paths": []       
 }

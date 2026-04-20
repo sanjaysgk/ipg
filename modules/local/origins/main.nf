@@ -14,7 +14,7 @@ process ORIGINS {
     output:
     tuple val(meta), path("*_origins_discard.txt"),        emit: discard,        optional: true
     tuple val(meta), path("*_origins_unconventional.txt"), emit: unconventional, optional: true
-    tuple val(meta), path("*_origins.csv"),                emit: origins_csv,    optional: true
+    tuple val(meta), path("*_origins_*.csv"),              emit: origins_csv,    optional: true
     tuple val(meta), path("*.txt"),                        emit: all_txt
     path "versions.yml",                                   emit: versions
 
@@ -41,7 +41,7 @@ process ORIGINS {
     """
     touch ${prefix}_origins_discard.txt
     touch ${prefix}_origins_unconventional.txt
-    touch ${prefix}_origins.csv
+    touch ${prefix}_origins_prot.csv ${prefix}_origins_rna.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

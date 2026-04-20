@@ -16,8 +16,8 @@ pareDown <- function(dat) {
 
 find.contam.scans <- function(dat) {
   scans <- dat %>%
-    filter(grepl("*#CONTAM#*", dat$Accession) | 
-             grepl("*iRT-pep*", dat$Accession)) %>%
+    filter(grepl("#CONTAM#", dat$Accession) |
+             grepl("iRT-pep", dat$Accession)) %>%
     pull(Scan) %>%
     droplevels()
 }
@@ -189,9 +189,9 @@ invisible(venn.diagram(x = peptideLists,
 partitions <- get.venn.partitions(peptideLists)
 
 #for each list of values in 'partitions', write a txt file named appropriately and containing the list of peptides found in that row
-partitionNames <- c("overlap",
+partitionNames <- c("cryptic_only",
                     "standard_only",
-                    "cryptic_only")
+                    "overlap")
 
 partitionFn <- unlist(lapply(partitionNames, makePartitionFn))
 

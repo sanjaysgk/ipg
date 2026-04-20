@@ -239,7 +239,7 @@ def main() -> int:
     sections.append(section("Identifications per run",
                             plot_psms_per_run(peptides)))
 
-    mhc_i = read_tsv(args.netmhcpan)
+    mhc_i = netmhcpan
     if not mhc_i.empty:
         sections.append(section("MHC class I binding (netMHCpan)",
                                 plot_netmhcpan_overview(mhc_i, "netMHCpan overview")))
