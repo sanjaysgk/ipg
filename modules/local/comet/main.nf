@@ -39,7 +39,7 @@ process COMET {
     stub:
     """
     for f in ${mzml_files}; do
-        base=\$(basename "\$f" .mzML)
+        base=\$(basename "\$f"); base="\${base%.*}"
         touch "\${base}.pin"
     done
     touch comet_search_log.txt

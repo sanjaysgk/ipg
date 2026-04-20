@@ -31,7 +31,7 @@ def load_index2scan(paths: list[Path]) -> dict:
 def convert(csv_path: Path, index2scan: dict, out_path: Path,
             min_match_fraction: float = 0.98) -> None:
     df = pd.read_csv(csv_path)
-    df["Run"] = df["Source File"].str.replace(".mzML", "", regex=False)
+    df["Run"] = df["Source File"].apply(lambda x: Path(x).stem)
     df["scan_id"] = df["Run"] + "_" + df["Scan"].astype(str)
     df["ScanNr"] = df["scan_id"].map(index2scan)
 

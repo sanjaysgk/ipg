@@ -45,12 +45,13 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
         mv tmp.pin ${prefix}_combined.pin
     fi
 
-    # Run mokapot with 5% FDR for both training and testing (low-ID
-    # samples / tight test DBs don't give enough 1% FDR targets to train).
+    # Run mokapot with relaxed FDR for both training and testing.
+    # Mini test databases / low-ID immunopeptidomics samples often need
+    # looser thresholds; downstream filtering can tighten.
     mokapot \\
         --keep_decoys \\
-        --train_fdr 0.05 \\
-        --test_fdr 0.05 \\
+        --train_fdr 0.10 \\
+        --test_fdr 0.10 \\
         -d . \\
         -r ${prefix} \\
         ${prefix}_combined.pin \\

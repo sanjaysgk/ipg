@@ -59,7 +59,7 @@ def _extract_run_specid(df: pd.DataFrame, engine: str) -> pd.DataFrame:
         df["specid"] = df["run"] + "_" + df["ScanNr"].astype(str)
         df["Peptide"] = df["Peptide"].apply(lambda x: x[2:-2])
     elif engine == "sage":
-        df["run"] = df["FileName"].apply(lambda x: x.replace(".mzML", ""))
+        df["run"] = df["FileName"].apply(lambda x: Path(x).stem)
         df["specid"] = df["run"] + "_" + df["ScanNr"].astype(str)
     elif engine == "peaks":
         df["run"] = df["SpecId"].apply(lambda x: "_".join(x.split("_")[:-1]))
