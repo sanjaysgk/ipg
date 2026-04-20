@@ -35,7 +35,7 @@ process PREPARE_FASTA {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        python: \$(python --version | sed 's/Python //')
+        python: "stub"
         prepare_fasta: "sanjaysgk/ipg"
     END_VERSIONS
     """

@@ -50,6 +50,7 @@ def convert(csv_path: Path, index2scan: dict, out_path: Path,
     df = df[df["ScanNr"].notna()].copy()
 
     df["SpecId"] = df["Run"] + "_" + df["ScanNr"].astype(str)
+    df["decoy"] = df["decoy"].astype(str).str.lower().map({"true": True, "false": False}).fillna(False)
     df["Label"] = df["decoy"].map({True: -1, False: 1})
     df["Proteins"] = df["Accession"].str.replace("#DECOY#", "rev_", regex=False)
 

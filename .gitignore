@@ -44,3 +44,21 @@ conf/local.config
 ipg_*.log
 test_stub_results/
 
+# All test run output directories
+test_*/
+
+# Test data — large files fetched on demand, never commit
+tests/data/ms_search/*.mzXML
+tests/data/ms_search/*.pepindex
+tests/data/ms_search/*.pin
+tests/data/ms_search/*.pepXML
+tests/data/ipg-db-constructions/reference/
+tests/data/ipg-db-constructions/fastq/
+tests/data/ipg-db-constructions/variant_calling/
+tests/data/ipg-db-constructions/_prefilter/
+tests/data/ipg-db-constructions/samplesheet_test.csv
+tests/data/e2e_hepg2_chr22/fastq/
+*.bak
+
+# IDE settings
+.vscode/

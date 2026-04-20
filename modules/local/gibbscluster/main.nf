@@ -44,7 +44,7 @@ PY
     fi
 
     perl ${gibbscluster_pl} \\
-        -H /usr/bin/R -T -j 2 -l 9 -k 32 -S 5 \\
+        -H \$(which R) -T -j 2 -l 9 -k 32 -S 5 \\
         -P GibbsCluster2 \\
         -g '${clusters}' \\
         -f peptide_input.txt \\
