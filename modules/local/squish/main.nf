@@ -2,7 +2,7 @@ process SQUISH {
     tag "${meta.id}"
     label 'process_high'
 
-    container "ghcr.io/sanjaysgk/ipg-tools:0.1.0"
+    container "ghcr.io/sanjaysgk/ipg-tools:sha-97c9c7e"
 
     input:
     tuple val(meta), path(fastas)

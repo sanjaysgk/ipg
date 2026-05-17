@@ -2,7 +2,7 @@ process CURATE_VCF {
     tag "${meta.id}"
     label 'process_single'
 
-    container "ghcr.io/sanjaysgk/ipg-tools:0.1.0"
+    container "ghcr.io/sanjaysgk/ipg-tools:sha-97c9c7e"
 
     input:
     tuple val(meta), path(vcf)
