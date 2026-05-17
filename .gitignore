@@ -9,13 +9,18 @@ tests/data/ms_search/*.fasta
 results/
 .DS_Store
 testing/
-testing*
+testing*/
 *.pyc
 null/
 
 # AI working memory — never commit
 .claude/
 CLAUDE.md
+
+# Test bundle (downloaded by bin/fetch_test_bundle.sh; never tracked).
+# No trailing slash so the pattern matches both real dirs and symlinks.
+.test-bundle
+ipg-test-bundle-chr22.tar.gz
 # pixi environments
 .pixi/*
 !.pixi/config.toml
