@@ -1,59 +1,45 @@
 #!/usr/bin/env bash
 #
-# build_test_bundle.sh — build a tiny chr22-subset test data bundle for
-# sanjaysgk/ipg integration tests.
+# build_test_bundle.sh — MAINTAINER-ONLY script. Builds the chr22 test bundle
+# that ships as the v0.1.0-test-data GitHub Release asset.
 #
-# Derives the bundle from the full Monash M3 reference bundle and a real
-# D100-liver FASTQ sample by subsetting to chromosome 22. Writes everything
-# to $TEST_BUNDLE_DIR (default /fs04/scratch2/xy86/sanjay/ipg-test-data).
+# End users should NOT run this. They run `bin/fetch_test_bundle.sh` instead,
+# which downloads the prebuilt tarball.
 #
-# The bundle contains:
+# Required env vars (no defaults; this script fails fast if missing):
+#   REFERENCE_DIR   dir containing GRCh38.primary_assembly.genome.fa + gencode.v44 GTF
+#   VARIANT_DIR     dir containing GATK bundle VCFs + gencode_assembly.bed
+#   FASTQ_R1        R1 FASTQ.gz from a real human RNAseq sample
+#   FASTQ_R2        matching R2
+#   TEST_BUNDLE_DIR output bundle dir
 #
-#     $TEST_BUNDLE_DIR/
-#     ├── samplesheet_test.csv
-#     ├── fastq/
-#     │   ├── test_R1.fastq.gz             subsampled from D100-liver R1
-#     │   └── test_R2.fastq.gz             subsampled from D100-liver R2
-#     ├── reference/
-#     │   ├── GRCh38.chr22.fa              samtools faidx chr22
-#     │   ├── GRCh38.chr22.fa.fai
-#     │   ├── GRCh38.chr22.dict            samtools dict
-#     │   ├── gencode.v44.chr22.gtf        awk '$1 == "chr22"'
-#     │   ├── gencode_assembly.chr22.bed   awk '$1 == "chr22"' (for RSeQC)
-#     │   └── star_index_chr22/            STAR --runMode genomeGenerate
-#     └── variant_calling/
-#         ├── dbsnp138.chr22.vcf.gz   + .tbi   bcftools view -r chr22
-#         ├── known_indels.chr22.vcf.gz + .tbi
-#         ├── Mills.chr22.vcf.gz + .tbi
-#         └── small_exac_common_3.chr22.vcf.gz + .tbi
+# Optional:
+#   CHR=chr22        target chromosome
+#   SUBSAMPLE_READS=200000  paired reads to keep (seqtk -s 42)
+#   THREADS=4
 #
-# Usage (from the repo root, inside the pixi env):
-#     pixi run bash bin/build_test_bundle.sh
+# Public download hints (in case you don't have these on hand):
+#   GENCODE GRCh38 + v44 GTF: https://www.gencodegenes.org/human/release_44.html
+#   GATK bundle:              gs://gcp-public-data--broad-references/hg38/v0/
 #
-# Or override locations with env vars:
-#     TEST_BUNDLE_DIR=/some/path \
-#     REFERENCE_DIR=/some/ref \
-#     FASTQ_R1=/some/r1.fq.gz \
-#     FASTQ_R2=/some/r2.fq.gz \
-#     pixi run bash bin/build_test_bundle.sh
+# Output: $TEST_BUNDLE_DIR/{fastq,reference,variant_calling,samplesheet_test.csv}
+#         + $(dirname $TEST_BUNDLE_DIR)/ipg-test-bundle-chr22.tar.gz
 #
-# Re-running is idempotent: completed stages are skipped on subsequent
-# invocations. Delete a sub-directory of $TEST_BUNDLE_DIR to force a re-run
-# of just that stage.
+# Re-runs are idempotent; delete a sub-dir to force re-build of that stage.
 
 set -euo pipefail
 
 # ---- Configuration ---------------------------------------------------------
-SOURCE_ROOT="${SOURCE_ROOT:-/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic}"
-REFERENCE_DIR="${REFERENCE_DIR:-${SOURCE_ROOT}/GRCh38}"
-VARIANT_DIR="${VARIANT_DIR:-${SOURCE_ROOT}/variant_calling_resources}"
-RAW_DIR="${RAW_DIR:-/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Raw_Data}"
-FASTQ_R1="${FASTQ_R1:-${RAW_DIR}/D100-liver_S2_L001_R1_001.fastq.gz}"
-FASTQ_R2="${FASTQ_R2:-${RAW_DIR}/D100-liver_S2_L001_R2_001.fastq.gz}"
+# All paths are REQUIRED env vars. No Monash defaults — this script must
+# fail loudly on someone else's HPC, not silently use Sanjay's paths.
+: "${REFERENCE_DIR:?REFERENCE_DIR must be set — directory containing GRCh38.primary_assembly.genome.fa + gencode.v44.primary_assembly.annotation.gtf}"
+: "${VARIANT_DIR:?VARIANT_DIR must be set — directory containing GATK bundle VCFs (dbsnp138, known_indels, Mills, small_exac_common_3) + gencode_assembly.bed}"
+: "${FASTQ_R1:?FASTQ_R1 must be set — path to a real R1 FASTQ.gz from a human RNAseq sample}"
+: "${FASTQ_R2:?FASTQ_R2 must be set — path to matching R2 FASTQ.gz}"
+: "${TEST_BUNDLE_DIR:?TEST_BUNDLE_DIR must be set — output directory for the bundle}"
 
-TEST_BUNDLE_DIR="${TEST_BUNDLE_DIR:-/fs04/scratch2/xy86/sanjay/ipg-test-data}"
 CHR="${CHR:-chr22}"
-SUBSAMPLE_READS="${SUBSAMPLE_READS:-200000}"    # 200k paired; ~3-5k will land on chr22 — small enough that STAR finishes in ~3 min on Lustre
+SUBSAMPLE_READS="${SUBSAMPLE_READS:-200000}"
 THREADS="${THREADS:-4}"
 
 # ---- Helpers ---------------------------------------------------------------
@@ -198,12 +184,27 @@ else
 fi
 
 # ---- Stage 6: samplesheet --------------------------------------------------
+# nf-validation requires ABSOLUTE paths in the samplesheet — relative paths
+# fail with "the file or directory '<rel>' does not exist". The bundle is
+# portable across machines, so we can't hardcode the absolute path here.
+# Use __BUNDLE_DIR__ placeholder; bin/fetch_test_bundle.sh substitutes the
+# actual extraction dir on first run.
 SHEET_OUT="${TEST_BUNDLE_DIR}/samplesheet_test.csv"
 cat > "${SHEET_OUT}" <<EOF
 sample,fastq_1,fastq_2,strandedness
-D100_liver_chr22,${FQ1_OUT},${FQ2_OUT},reverse
+D100_liver_chr22,__BUNDLE_DIR__/fastq/test_R1.fastq.gz,__BUNDLE_DIR__/fastq/test_R2.fastq.gz,reverse
 EOF
-log "Wrote samplesheet: ${SHEET_OUT}"
+log "Wrote samplesheet (with __BUNDLE_DIR__ placeholder): ${SHEET_OUT}"
+
+# ---- Stage 7: tarball for GitHub Release upload ---------------------------
+TARBALL="$(dirname "${TEST_BUNDLE_DIR}")/ipg-test-bundle-chr22.tar.gz"
+if [[ ! -s "${TARBALL}" || "${TEST_BUNDLE_DIR}" -nt "${TARBALL}" ]]; then
+    log "Creating release tarball: ${TARBALL}"
+    tar -czf "${TARBALL}" -C "$(dirname "${TEST_BUNDLE_DIR}")" "$(basename "${TEST_BUNDLE_DIR}")"
+    log "Tarball size: $(du -h "${TARBALL}" | cut -f1)"
+else
+    log "[skip] Tarball already up to date at ${TARBALL}"
+fi
 
 # ---- Summary ---------------------------------------------------------------
 log "Bundle build complete. Contents:"
@@ -211,6 +212,7 @@ du -sh "${TEST_BUNDLE_DIR}"/* 2>&1 | awk '{print "    " $0}'
 log "Total size:"
 du -sh "${TEST_BUNDLE_DIR}" | awk '{print "    " $1}'
 log ""
-log "Run the pipeline against this bundle with:"
-log "    pixi run nextflow run . -profile test,monash,singularity \\"
-log "        --outdir /fs04/scratch2/xy86/sanjay/ipg-test-results"
+log "Upload to GitHub Release with:"
+log "    gh release create v0.1.0-test-data ${TARBALL} \\"
+log "        --title 'Test data bundle v0.1.0 (chr22)' \\"
+log "        --notes 'chr22-subset reference + 200k-pair FASTQ for -profile test'"
