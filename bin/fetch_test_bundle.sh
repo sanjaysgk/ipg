@@ -19,30 +19,42 @@ DEST="${IPG_TEST_BUNDLE_DIR:-${REPO_ROOT}/.test-bundle}"
 log()  { printf '\033[1;34m[fetch_test_bundle]\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31m[fetch_test_bundle] ERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
-# Skip if already extracted.
+# Download only if not already extracted; patch step below is idempotent
+# and always runs so re-runs heal half-patched / re-cloned trees.
 if [[ -f "${DEST}/samplesheet_test.csv" ]]; then
     log "Bundle already present at ${DEST} — skipping download."
     log "To force re-download: rm -rf ${DEST}"
-    exit 0
+else
+    mkdir -p "${DEST}"
+    log "Downloading bundle from ${URL}"
+    log "Destination: ${DEST}"
+    if ! curl -fL --retry 3 --retry-delay 2 "${URL}" | tar -xzf - -C "${DEST}" --strip-components=1; then
+        fail "download failed from ${URL} — check network / URL"
+    fi
+    [[ -f "${DEST}/samplesheet_test.csv" ]] || fail "extraction completed but samplesheet_test.csv not found — bundle layout unexpected"
 fi
 
-mkdir -p "${DEST}"
-log "Downloading bundle from ${URL}"
-log "Destination: ${DEST}"
-
-# Stream tarball straight into tar — no intermediate file, no /tmp pressure.
-if ! curl -fL --retry 3 --retry-delay 2 "${URL}" | tar -xzf - -C "${DEST}" --strip-components=1; then
-    fail "download failed from ${URL} — check network / URL"
-fi
-
-[[ -f "${DEST}/samplesheet_test.csv" ]] || fail "extraction completed but samplesheet_test.csv not found — bundle layout unexpected"
-
-# Substitute __BUNDLE_DIR__ placeholder in the samplesheet with the actual
-# extraction dir. nf-validation requires absolute paths in samplesheets, but
-# the bundle is portable so we can't bake them in at build time.
+# Absolutise fastq paths in the samplesheet. nf-validation requires
+# absolute paths, but the bundle is portable so paths are shipped
+# relative to the bundle root (e.g. `fastq/test_R1.fastq.gz`). Rewrite
+# any non-absolute fastq_1 / fastq_2 entry to point under ABS_DEST.
 ABS_DEST="$(readlink -f "${DEST}")"
-sed -i.bak "s|__BUNDLE_DIR__|${ABS_DEST}|g" "${DEST}/samplesheet_test.csv"
-rm -f "${DEST}/samplesheet_test.csv.bak"
+python3 - "${DEST}/samplesheet_test.csv" "${ABS_DEST}" <<'PY'
+import csv, os, sys
+path, root = sys.argv[1], sys.argv[2]
+with open(path, newline='') as f:
+    rows = list(csv.DictReader(f))
+fields = list(rows[0].keys()) if rows else []
+for r in rows:
+    for col in ('fastq_1', 'fastq_2'):
+        v = r.get(col, '')
+        if v and not os.path.isabs(v):
+            r[col] = os.path.join(root, v)
+with open(path, 'w', newline='') as f:
+    w = csv.DictWriter(f, fieldnames=fields)
+    w.writeheader()
+    w.writerows(rows)
+PY
 log "Patched samplesheet paths -> ${ABS_DEST}"
 
 log "Bundle ready at ${DEST}"
