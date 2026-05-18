@@ -62,7 +62,7 @@ def parse_fasta_prot_info(fasta: Path) -> dict:
             m = re.search(r"GN=(\S+)", header)
             gene = m.group(1) if m else ""
         if "OS=" in header:
-            m = re.search(r"OS=([^=]+?)(?=\s+[A-Z]{2}=|$)", header)
+            m = re.search(r"OS=([^=]+?)(?=\\s+[A-Z]{2}=|\$)", header)
             species = m.group(1).strip() if m else ""
         info[rec.id] = {
             "gene": gene,
@@ -75,7 +75,7 @@ def parse_fasta_prot_info(fasta: Path) -> dict:
 def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
                      immuno_lengths: list[int],
                      fdr: float = 0.01) -> tuple[pd.DataFrame, pd.DataFrame]:
-    df = pd.read_csv(tsv, sep="\t")
+    df = pd.read_csv(tsv, sep="\\t")
     # PSM- and peptide-level FDR, target only.
     df = df[
         (df["qvalue"] <= fdr)
@@ -158,8 +158,8 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     if psms_all.empty:
         print(f"[integrate_engines] no PSMs passed {fdr*100:.0f}% FDR in any engine",
               file=sys.stderr)
-        psms_all.to_csv(outdir / "integrated_psms.tsv", sep="\t", index=False)
-        peptides_all.to_csv(outdir / "integrated_peptides.tsv", sep="\t",
+        psms_all.to_csv(outdir / "integrated_psms.tsv", sep="\\t", index=False)
+        peptides_all.to_csv(outdir / "integrated_peptides.tsv", sep="\\t",
                             index=False)
         return
 
@@ -185,7 +185,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
 
     chimera = psm_agg[psm_agg["peptide"].str.contains(";")]
     chimera_count, chimera_pep = count_chimera(chimera)
-    chimera.to_csv(outdir / "chimeric_PSMs.txt", sep="\t", index=False)
+    chimera.to_csv(outdir / "chimeric_PSMs.txt", sep="\\t", index=False)
     psms = psm_agg[~psm_agg["peptide"].str.contains(";")].copy()
     print(f"[integrate_engines] unique PSMs: {len(psms)}  chimeric: {len(chimera)}",
           file=sys.stderr)
@@ -228,13 +228,13 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     chim_only = peptides[
         (peptides["PSMs_total"] <= 0) | (peptides["PSMs_total"].isna())
     ]
-    chim_only.to_csv(outdir / "chimera_only_peptides.txt", sep="\t", index=False)
+    chim_only.to_csv(outdir / "chimera_only_peptides.txt", sep="\\t", index=False)
     peptides = peptides[peptides["PSMs_total"] > 0]
     print(f"[integrate_engines] unique peptides: {len(peptides)}",
           file=sys.stderr)
 
-    psms.to_csv(outdir / "integrated_psms.tsv", sep="\t", index=False)
-    peptides.to_csv(outdir / "integrated_peptides.tsv", sep="\t", index=False)
+    psms.to_csv(outdir / "integrated_psms.tsv", sep="\\t", index=False)
+    peptides.to_csv(outdir / "integrated_peptides.tsv", sep="\\t", index=False)
 
 
 def parse_engine_tsv_arg(values: list[str]) -> dict[str, Path]:
@@ -268,7 +268,7 @@ engine_tsvs = parse_engine_tsv_arg(ENGINE_TSV_PAIRS.split())
 integrate(engine_tsvs, Path(FASTA), immuno_lengths, Path("."), fdr=FDR)
 
 with open("versions.yml", "w") as _f:
-    _f.write(f'"{PROCESS_NAME}":\n')
-    _f.write(f"    python: {sys.version.split()[0]}\n")
-    _f.write(f"    pandas: {pd.__version__}\n")
-    _f.write(f"    biopython: {Bio.__version__}\n")
+    _f.write(f'"{PROCESS_NAME}":\\n')
+    _f.write(f"    python: {sys.version.split()[0]}\\n")
+    _f.write(f"    pandas: {pd.__version__}\\n")
+    _f.write(f"    biopython: {Bio.__version__}\\n")

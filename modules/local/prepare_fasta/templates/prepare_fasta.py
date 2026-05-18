@@ -59,8 +59,8 @@ def prepare_fasta(input_fasta, output_fasta, contaminant_prefix):
         with open(output_fasta, "w") as out:
             for prot_id, seq in target_seq.items():
                 rev_seq = seq[::-1]
-                out.write(f">{headers[prot_id]}\n{seq}\n")
-                out.write(f">rev_{prot_id} decoy_{prot_id}\n{rev_seq}\n")
+                out.write(f">{headers[prot_id]}\\n{seq}\\n")
+                out.write(f">rev_{prot_id} decoy_{prot_id}\\n{rev_seq}\\n")
         print(
             f"Wrote {len(target_seq)} targets + {len(target_seq)} decoys "
             f"to {os.path.basename(output_fasta)}",
@@ -71,7 +71,7 @@ def prepare_fasta(input_fasta, output_fasta, contaminant_prefix):
 prepare_fasta(INPUT_FASTA, OUTPUT_FASTA, CONTAMINANT)
 
 with open("versions.yml", "w") as f:
-    f.write(f'"{PROCESS_NAME}":\n')
-    f.write(f"    python: {platform.python_version()}\n")
-    f.write('    prepare_fasta: "sanjaysgk/ipg"\n')
+    f.write(f'"{PROCESS_NAME}":\\n')
+    f.write(f"    python: {platform.python_version()}\\n")
+    f.write('    prepare_fasta: "sanjaysgk/ipg"\\n')
 
