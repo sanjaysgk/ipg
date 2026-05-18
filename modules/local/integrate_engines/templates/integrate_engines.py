@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integrate rescored PSMs across MS search engines at 1% peptide-level FDR.
+'''Integrate rescored PSMs across MS search engines at 1% peptide-level FDR.
 
 Extracted from immunopeptidomics/core.py:
   - read_psms() (L1313)
@@ -12,7 +12,7 @@ Emits:
   integrated_peptides.tsv  per-peptide aggregated identifications
   chimeric_PSMs.txt        scans with multiple peptide assignments
   chimera_only_peptides.txt peptides only seen in chimeric PSMs
-"""
+'''
 from __future__ import annotations
 
 import argparse
@@ -52,7 +52,7 @@ def sort_protein_list(protein_list: str) -> str:
 
 
 def parse_fasta_prot_info(fasta: Path) -> dict:
-    """Extract per-protein gene/species/description from FASTA headers."""
+    '''Extract per-protein gene/species/description from FASTA headers.'''
     info: dict = {}
     for rec in SeqIO.parse(str(fasta), "fasta"):
         header = rec.description
