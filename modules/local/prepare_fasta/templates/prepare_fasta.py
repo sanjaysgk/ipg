@@ -8,32 +8,23 @@ input unchanged.
 
 Adapted from the prepare_fasta() function in Patrick Willems'
 immunopeptidomics pipeline (core.py).
+
+Invoked as a Nextflow `template` from modules/local/prepare_fasta/main.nf.
+INPUT_FASTA / OUTPUT_FASTA / CONTAMINANT are interpolated by Nextflow.
 """
 
-import argparse
 import os
+import platform
+import shutil
 import sys
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "-i", "--input", required=True,
-        help="Input FASTA file"
-    )
-    parser.add_argument(
-        "-o", "--output", required=True,
-        help="Output target-decoy FASTA file"
-    )
-    parser.add_argument(
-        "--contaminant", default="CON__",
-        help="Contaminant prefix pattern (default: CON__)"
-    )
-    return parser.parse_args()
+INPUT_FASTA = "${fasta}"
+OUTPUT_FASTA = "${prefix}_tda.fasta"
+CONTAMINANT = "CON__"
+PROCESS_NAME = "${task.process}"
 
 
 def prepare_fasta(input_fasta, output_fasta, contaminant_prefix):
-    """Read FASTA, append reversed decoys if none present."""
     target_count = 0
     decoy_count = 0
     target_seq = {}
@@ -62,7 +53,6 @@ def prepare_fasta(input_fasta, output_fasta, contaminant_prefix):
 
     if decoy_count > 0:
         print("Decoys already present, copying input.", file=sys.stderr)
-        import shutil
         shutil.copy2(input_fasta, output_fasta)
     else:
         print("No decoys found, generating reverse target-decoy database.", file=sys.stderr)
@@ -78,6 +68,10 @@ def prepare_fasta(input_fasta, output_fasta, contaminant_prefix):
         )
 
 
-if __name__ == "__main__":
-    args = parse_args()
-    prepare_fasta(args.input, args.output, args.contaminant)
+prepare_fasta(INPUT_FASTA, OUTPUT_FASTA, CONTAMINANT)
+
+with open("versions.yml", "w") as f:
+    f.write(f'"{PROCESS_NAME}":\n')
+    f.write(f"    python: {platform.python_version()}\n")
+    f.write('    prepare_fasta: "sanjaysgk/ipg"\n')
+

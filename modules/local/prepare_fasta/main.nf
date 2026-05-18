@@ -3,6 +3,9 @@ process PREPARE_FASTA {
     label 'process_single'
 
     conda "conda-forge::python=3.12"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/python:3.12' :
+        'biocontainers/python:3.12' }"
 
     input:
     path(fasta)
@@ -15,18 +18,8 @@ process PREPARE_FASTA {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix = fasta.baseName
-    """
-    prepare_fasta.py \\
-        -i ${fasta} \\
-        -o ${prefix}_tda.fasta
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version | sed 's/Python //')
-        prepare_fasta: "sanjaysgk/ipg"
-    END_VERSIONS
-    """
+    prefix = fasta.baseName
+    template 'prepare_fasta.py'
 
     stub:
     def prefix = fasta.baseName
