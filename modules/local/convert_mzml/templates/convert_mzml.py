@@ -28,8 +28,8 @@ def parse_precursor(spectrum) -> Tuple[float, str]:
         return prec["mz"], prec["charge"]
     except Exception:
         s = spectrum.to_string().decode("utf-8")
-        mz_m = re.search(r'name="selected ion m/z" value="([\d.]+)"', s)
-        z_m = re.search(r'name="charge state" value="(\d+)"', s)
+        mz_m = re.search(r'name="selected ion m/z" value="([\\d.]+)"', s)
+        z_m = re.search(r'name="charge state" value="(\\d+)"', s)
         if not (mz_m and z_m):
             raise RuntimeError(f"Unparseable precursor in spectrum {spectrum.ID}")
         return float(mz_m.group(1)), z_m.group(1)
@@ -51,15 +51,15 @@ def convert(mzml_path: str, run: str) -> tuple[dict, dict]:
             rt_sec = spectrum.scan_time_in_minutes() * 60
 
             mgf.write(
-                "BEGIN IONS\n"
-                f"TITLE={run}_scan={scan_id}_z={charge}\n"
-                f"RTINSECONDS={rt_sec:.6f}\n"
-                f"PEPMASS={prec_mz:.4f}\n"
-                f"CHARGE={charge}+\n"
+                "BEGIN IONS\\n"
+                f"TITLE={run}_scan={scan_id}_z={charge}\\n"
+                f"RTINSECONDS={rt_sec:.6f}\\n"
+                f"PEPMASS={prec_mz:.4f}\\n"
+                f"CHARGE={charge}+\\n"
             )
             for mz, intensity in zip(spectrum.mz, spectrum.i):
-                mgf.write(f"{mz:.6f}\t{intensity}\n")
-            mgf.write("END IONS\n")
+                mgf.write(f"{mz:.6f}\\t{intensity}\\n")
+            mgf.write("END IONS\\n")
             scan = str(spectrum.ID)
             specid = f"{run}_{scan}"
             ion_mobility = spectrum.get("MS:1002815", 0)
@@ -88,5 +88,5 @@ with open(f"{RUN}.index2scan.pkl", "wb") as f:
 print(f"[convert_mzml] {RUN}: {len(scans)} MS2 scans -> {RUN}.mgf", file=sys.stderr)
 
 with open("versions.yml", "w") as f:
-    f.write(f'"{PROCESS_NAME}":\n')
-    f.write(f"    pymzml: {pymzml.__version__}\n")
+    f.write(f'"{PROCESS_NAME}":\\n')
+    f.write(f"    pymzml: {pymzml.__version__}\\n")

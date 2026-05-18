@@ -170,7 +170,7 @@ def read_tsv(path: Optional[Path]) -> pd.DataFrame:
     if path is None or not path.exists() or path.stat().st_size == 0:
         return pd.DataFrame()
     try:
-        return pd.read_csv(path, sep="\t")
+        return pd.read_csv(path, sep="\\t")
     except Exception as e:
         print(f"[report] failed to parse {path}: {e}", file=sys.stderr)
         return pd.DataFrame()
@@ -260,17 +260,17 @@ if not flashlfq.empty:
 
 html = HTML_TEMPLATE.format(
     sample=SAMPLE, summary=summary,
-    sections="\n".join(sections),
+    sections="\\n".join(sections),
 )
 Path(OUT).write_text(html)
 print(f"[report] wrote {OUT}", file=sys.stderr)
 
 with open("versions.yml", "w") as _vf:
-    _vf.write(f'"{PROCESS_NAME}":\n')
-    _vf.write(f"    python: {sys.version.split()[0]}\n")
-    _vf.write(f"    pandas: {pd.__version__}\n")
-    _vf.write(f"    matplotlib: {matplotlib.__version__}\n")
+    _vf.write(f'"{PROCESS_NAME}":\\n')
+    _vf.write(f"    python: {sys.version.split()[0]}\\n")
+    _vf.write(f"    pandas: {pd.__version__}\\n")
+    _vf.write(f"    matplotlib: {matplotlib.__version__}\\n")
     try:
-        _vf.write(f"    logomaker: {lm.__version__}\n")
+        _vf.write(f"    logomaker: {lm.__version__}\\n")
     except (NameError, AttributeError):
-        _vf.write('    logomaker: "not installed"\n')
+        _vf.write('    logomaker: "not installed"\\n')

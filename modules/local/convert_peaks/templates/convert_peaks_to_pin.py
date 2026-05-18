@@ -61,7 +61,7 @@ def convert(csv_path: Path, index2scan: dict, out_path: Path,
             "MS2 Correlation", "ppm", "Peptide", "Proteins"]
     if "Delta 1/k0" in df.columns:
         cols.insert(-2, "Delta 1/k0")
-    df[cols].to_csv(out_path, sep="\t", index=False)
+    df[cols].to_csv(out_path, sep="\\t", index=False)
     print(f"[convert_peaks] wrote {len(df)} rows -> {out_path}", file=sys.stderr)
 
 
@@ -71,6 +71,6 @@ print(f"[convert_peaks] loaded {len(index2scan)} index->scan entries", file=sys.
 convert(Path(PEAKS_CSV), index2scan, Path("peaks.pin"), MIN_MATCH)
 
 with open("versions.yml", "w") as f:
-    f.write(f'"{PROCESS_NAME}":\n')
-    f.write(f"    python: {sys.version.split()[0]}\n")
-    f.write(f"    pandas: {pd.__version__}\n")
+    f.write(f'"{PROCESS_NAME}":\\n')
+    f.write(f"    python: {sys.version.split()[0]}\\n")
+    f.write(f"    pandas: {pd.__version__}\\n")
