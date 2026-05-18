@@ -19,20 +19,8 @@ process CONVERT_PEAKS {
     task.ext.when == null || task.ext.when
 
     script:
-    def min_match = params.peaks_min_match_fraction ?: 0.98
-    """
-    convert_peaks_to_pin.py \\
-        --csv ${peaks_csv} \\
-        --index2scan ${index2scan_pkls.join(' ')} \\
-        --min-match ${min_match} \\
-        --out peaks.pin
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python3 --version | awk '{print \$2}')
-        pandas: \$(python3 -c "import pandas; print(pandas.__version__)")
-    END_VERSIONS
-    """
+    min_match = params.peaks_min_match_fraction ?: 0.98
+    template 'convert_peaks_to_pin.py'
 
     stub:
     """
