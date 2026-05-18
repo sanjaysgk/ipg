@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a self-contained immunoinformatics HTML report.
+'''Generate a self-contained immunoinformatics HTML report.
 
 Consumes per-sample outputs from the IMMUNOINFORMATICS subworkflow and
 produces a single HTML page with embedded PNG plots. Inputs are all
@@ -8,7 +8,7 @@ optional — missing tables degrade gracefully to "section skipped".
 Plot code is condensed from core.py histogram_plotter L1615,
 id_per_run L1718, netMHCpan_overview L1881, netMHCpan_logos L1925,
 gibbs_plot L2084. Sequence logos use logomaker when available.
-"""
+'''
 from __future__ import annotations
 
 import argparse
@@ -176,7 +176,7 @@ def read_tsv(path: Optional[Path]) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-HTML_TEMPLATE = """<!doctype html>
+HTML_TEMPLATE = '''<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -200,7 +200,7 @@ HTML_TEMPLATE = """<!doctype html>
 {sections}
 </body>
 </html>
-"""
+'''
 
 
 # --- Nextflow template entry point ---------------------------------
