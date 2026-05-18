@@ -11,6 +11,7 @@ results/
 testing/
 testing*/
 *.pyc
+__pycache__/
 null/
 
 # AI working memory — never commit
