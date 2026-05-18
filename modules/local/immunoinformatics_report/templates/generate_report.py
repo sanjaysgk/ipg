@@ -203,70 +203,74 @@ HTML_TEMPLATE = """<!doctype html>
 """
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--sample", required=True)
-    p.add_argument("--peptides", required=True, type=Path)
-    p.add_argument("--netmhcpan", type=Path, default=None)
-    p.add_argument("--netmhciipan", type=Path, default=None)
-    p.add_argument("--gibbs", type=Path, default=None)
-    p.add_argument("--flashlfq", type=Path, default=None)
-    p.add_argument("--blastp", type=Path, default=None,
-                   help="blastp-annotated peptides (overrides --peptides for plots)")
-    p.add_argument("--out", required=True, type=Path)
-    args = p.parse_args()
+# --- Nextflow template entry point ---------------------------------
+# Optional inputs come in as 'NO_FILE' sentinel paths when the upstream
+# module didn't run. _opt() converts those into None.
+SAMPLE = "${meta.id}"
+PEPTIDES = "${peptides}"
+NETMHCPAN_RAW = "${netmhcpan}"
+NETMHCIIPAN_RAW = "${netmhciipan}"
+GIBBS_RAW = "${gibbs}"
+FLASHLFQ_RAW = "${flashlfq}"
+BLASTP_RAW = "${blastp}"
+OUT = "${meta.id}_immunoinformatics_report.html"
+PROCESS_NAME = "${task.process}"
 
-    peptides = read_tsv(args.blastp) if args.blastp else read_tsv(args.peptides)
-    if peptides.empty:
-        peptides = read_tsv(args.peptides)
 
-    # Join netMHCpan best allele/level into peptides for per-run binding plots.
-    netmhcpan = read_tsv(args.netmhcpan)
-    if not netmhcpan.empty and "peptide" in netmhcpan.columns:
-        peptides = peptides.merge(
-            netmhcpan[["peptide", "mhc", "rank", "bind_level"]],
-            on="peptide", how="left",
-        )
+def _opt(p: str) -> Optional[Path]:
+    return None if Path(p).name == "NO_FILE" else Path(p)
 
-    sections = []
-    n = len(peptides)
-    n_immuno = int(peptides.get("immuno", pd.Series(dtype=bool)).astype(bool).sum())
-    summary = f'<p>Identified <strong>{n}</strong> peptides ' \
-              f'(<strong>{n_immuno}</strong> immunopeptides).</p>'
 
-    sections.append(section("Length distribution",
-                            plot_length_histogram(peptides)))
-    sections.append(section("Identifications per run",
-                            plot_psms_per_run(peptides)))
+peptides = read_tsv(_opt(BLASTP_RAW)) if _opt(BLASTP_RAW) else read_tsv(Path(PEPTIDES))
+if peptides.empty:
+    peptides = read_tsv(Path(PEPTIDES))
 
-    mhc_i = netmhcpan
-    if not mhc_i.empty:
-        sections.append(section("MHC class I binding (netMHCpan)",
-                                plot_netmhcpan_overview(mhc_i, "netMHCpan overview")))
-
-    mhc_ii = read_tsv(args.netmhciipan)
-    if not mhc_ii.empty:
-        sections.append(section("MHC class II binding (netMHCIIpan)",
-                                plot_netmhcpan_overview(mhc_ii, "netMHCIIpan overview")))
-
-    gibbs = read_tsv(args.gibbs)
-    if not gibbs.empty:
-        sections.append(section("GibbsCluster motifs",
-                                plot_gibbs_logos(gibbs)))
-
-    flashlfq = read_tsv(args.flashlfq)
-    if not flashlfq.empty:
-        sections.append(section("FlashLFQ quantification",
-                                quant_summary(flashlfq)))
-
-    html = HTML_TEMPLATE.format(
-        sample=args.sample, summary=summary,
-        sections="\n".join(sections),
+netmhcpan = read_tsv(_opt(NETMHCPAN_RAW))
+if not netmhcpan.empty and "peptide" in netmhcpan.columns:
+    peptides = peptides.merge(
+        netmhcpan[["peptide", "mhc", "rank", "bind_level"]],
+        on="peptide", how="left",
     )
-    args.out.write_text(html)
-    print(f"[report] wrote {args.out}", file=sys.stderr)
-    return 0
 
+sections = []
+n = len(peptides)
+n_immuno = int(peptides.get("immuno", pd.Series(dtype=bool)).astype(bool).sum())
+summary = f'<p>Identified <strong>{n}</strong> peptides ' \
+          f'(<strong>{n_immuno}</strong> immunopeptides).</p>'
 
-if __name__ == "__main__":
-    sys.exit(main())
+sections.append(section("Length distribution", plot_length_histogram(peptides)))
+sections.append(section("Identifications per run", plot_psms_per_run(peptides)))
+
+if not netmhcpan.empty:
+    sections.append(section("MHC class I binding (netMHCpan)",
+                            plot_netmhcpan_overview(netmhcpan, "netMHCpan overview")))
+
+mhc_ii = read_tsv(_opt(NETMHCIIPAN_RAW))
+if not mhc_ii.empty:
+    sections.append(section("MHC class II binding (netMHCIIpan)",
+                            plot_netmhcpan_overview(mhc_ii, "netMHCIIpan overview")))
+
+gibbs = read_tsv(_opt(GIBBS_RAW))
+if not gibbs.empty:
+    sections.append(section("GibbsCluster motifs", plot_gibbs_logos(gibbs)))
+
+flashlfq = read_tsv(_opt(FLASHLFQ_RAW))
+if not flashlfq.empty:
+    sections.append(section("FlashLFQ quantification", quant_summary(flashlfq)))
+
+html = HTML_TEMPLATE.format(
+    sample=SAMPLE, summary=summary,
+    sections="\n".join(sections),
+)
+Path(OUT).write_text(html)
+print(f"[report] wrote {OUT}", file=sys.stderr)
+
+with open("versions.yml", "w") as _vf:
+    _vf.write(f'"{PROCESS_NAME}":\n')
+    _vf.write(f"    python: {sys.version.split()[0]}\n")
+    _vf.write(f"    pandas: {pd.__version__}\n")
+    _vf.write(f"    matplotlib: {matplotlib.__version__}\n")
+    try:
+        _vf.write(f"    logomaker: {lm.__version__}\n")
+    except (NameError, AttributeError):
+        _vf.write('    logomaker: "not installed"\n')

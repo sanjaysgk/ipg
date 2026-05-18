@@ -24,26 +24,9 @@ process IMMUNOINFORMATICS_REPORT {
     task.ext.when == null || task.ext.when
 
     script:
-    def netmhcpan_arg   = netmhcpan.name   == 'NO_FILE' ? ''  : "--netmhcpan ${netmhcpan}"
-    def netmhciipan_arg = netmhciipan.name == 'NO_FILE' ? ''  : "--netmhciipan ${netmhciipan}"
-    def gibbs_arg       = gibbs.name       == 'NO_FILE' ? ''  : "--gibbs ${gibbs}"
-    def flashlfq_arg    = flashlfq.name    == 'NO_FILE' ? ''  : "--flashlfq ${flashlfq}"
-    def blastp_arg      = blastp.name      == 'NO_FILE' ? ''  : "--blastp ${blastp}"
-    """
-    generate_report.py \\
-        --sample ${meta.id} \\
-        --peptides ${peptides} \\
-        ${netmhcpan_arg} ${netmhciipan_arg} ${gibbs_arg} ${flashlfq_arg} ${blastp_arg} \\
-        --out ${meta.id}_immunoinformatics_report.html
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python3 --version | awk '{print \$2}')
-        pandas: \$(python3 -c "import pandas; print(pandas.__version__)")
-        matplotlib: \$(python3 -c "import matplotlib; print(matplotlib.__version__)")
-        logomaker: \$(python3 -c "import logomaker; print(logomaker.__version__)" 2>/dev/null || echo "not installed")
-    END_VERSIONS
-    """
+    // Optional inputs arrive as the NO_FILE sentinel when the upstream
+    // module did not run. The template handles that check internally.
+    template 'generate_report.py'
 
     stub:
     """
