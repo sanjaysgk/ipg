@@ -247,31 +247,28 @@ def parse_engine_tsv_arg(values: list[str]) -> dict[str, Path]:
     return out
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--engine-tsv", nargs="+", required=True,
-                   help="one or more name=path pairs, e.g. msfragger=...tsv")
-    p.add_argument("--fasta", required=True, type=Path,
-                   help="search FASTA database (for protein info)")
-    p.add_argument("--peptide-length", default="9",
-                   help="single length or range like 8-11")
-    p.add_argument("--fdr", type=float, default=0.01,
-                   help="PSM and peptide FDR threshold (default: 0.01)")
-    p.add_argument("--outdir", default=".", type=Path)
-    args = p.parse_args()
+# --- Nextflow template entry point ---------------------------------
+# Variables interpolated by Nextflow at process execution time.
+import pandas as pd  # already imported above; ensures versions block has it
+import Bio
 
-    args.outdir.mkdir(parents=True, exist_ok=True)
+ENGINE_TSV_PAIRS = "${pairs}"   # space-separated "name=path" tokens
+FASTA = "${fasta}"
+PEPTIDE_LENGTH = "${len_arg}"
+FDR = float("${fdr_arg}")
+PROCESS_NAME = "${task.process}"
 
-    if "-" in args.peptide_length:
-        a, b = args.peptide_length.split("-")
-        immuno_lengths = list(range(int(a), int(b) + 1))
-    else:
-        immuno_lengths = [int(args.peptide_length)]
+if "-" in PEPTIDE_LENGTH:
+    _a, _b = PEPTIDE_LENGTH.split("-")
+    immuno_lengths = list(range(int(_a), int(_b) + 1))
+else:
+    immuno_lengths = [int(PEPTIDE_LENGTH)]
 
-    engine_tsvs = parse_engine_tsv_arg(args.engine_tsv)
-    integrate(engine_tsvs, args.fasta, immuno_lengths, args.outdir, fdr=args.fdr)
-    return 0
+engine_tsvs = parse_engine_tsv_arg(ENGINE_TSV_PAIRS.split())
+integrate(engine_tsvs, Path(FASTA), immuno_lengths, Path("."), fdr=FDR)
 
-
-if __name__ == "__main__":
-    sys.exit(main())
+with open("versions.yml", "w") as _f:
+    _f.write(f'"{PROCESS_NAME}":\n')
+    _f.write(f"    python: {sys.version.split()[0]}\n")
+    _f.write(f"    pandas: {pd.__version__}\n")
+    _f.write(f"    biopython: {Bio.__version__}\n")

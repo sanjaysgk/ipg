@@ -23,25 +23,11 @@ process INTEGRATE_ENGINES {
     task.ext.when == null || task.ext.when
 
     script:
-    def len_arg = params.peptide_length ?: '9'
-    def fdr_arg = params.integrate_fdr ?: '0.01'
+    len_arg = params.peptide_length ?: '9'
+    fdr_arg = params.integrate_fdr ?: '0.01'
     // Pair staged files with engine names; order is preserved.
-    def pairs = [engine_names, engine_tsvs].transpose().collect { name, f -> "${name}=${f}" }.join(' ')
-    """
-    integrate_engines.py \\
-        --engine-tsv ${pairs} \\
-        --fasta ${fasta} \\
-        --peptide-length ${len_arg} \\
-        --fdr ${fdr_arg} \\
-        --outdir .
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python3 --version | awk '{print \$2}')
-        pandas: \$(python3 -c "import pandas; print(pandas.__version__)")
-        biopython: \$(python3 -c "import Bio; print(Bio.__version__)")
-    END_VERSIONS
-    """
+    pairs = [engine_names, engine_tsvs].transpose().collect { name, f -> "${name}=${f}" }.join(' ')
+    template 'integrate_engines.py'
 
     stub:
     """
