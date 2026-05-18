@@ -31,7 +31,7 @@ def load_index2scan(paths: list[Path]) -> dict:
 def convert(csv_path: Path, index2scan: dict, out_path: Path,
             min_match_fraction: float = 0.98) -> None:
     df = pd.read_csv(csv_path)
-    df["Run"] = df["Source File"].str.replace(".mzML", "", regex=False)
+    df["Run"] = df["Source File"].apply(lambda x: Path(x).stem)
     df["scan_id"] = df["Run"] + "_" + df["Scan"].astype(str)
     df["ScanNr"] = df["scan_id"].map(index2scan)
 
@@ -50,6 +50,7 @@ def convert(csv_path: Path, index2scan: dict, out_path: Path,
     df = df[df["ScanNr"].notna()].copy()
 
     df["SpecId"] = df["Run"] + "_" + df["ScanNr"].astype(str)
+    df["decoy"] = df["decoy"].astype(str).str.lower().map({"true": True, "false": False}).fillna(False)
     df["Label"] = df["decoy"].map({True: -1, False: 1})
     df["Proteins"] = df["Accession"].str.replace("#DECOY#", "rev_", regex=False)
 

@@ -2,7 +2,7 @@ process TRIPLE_TRANSLATE {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "ghcr.io/sanjaysgk/ipg-tools:0.1.0"
+    container "ghcr.io/sanjaysgk/ipg-tools:sha-97c9c7e"
 
     input:
     tuple val(meta), path(transcriptome_fasta), path(tracking)
@@ -18,7 +18,14 @@ process TRIPLE_TRANSLATE {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}_${transcriptome_fasta.baseName}"
     """
-    triple_translate -c ${tracking} ${transcriptome_fasta} > ${prefix}_tt.log 2>&1
+    # triple_translate writes <input_basename>_3translate.fasta to the
+    # directory of the input file. Nextflow stages inputs as symlinks
+    # pointing at upstream work dirs, so we must materialise the input
+    # locally to make the output land here (where the *_3translate.fasta
+    # glob can find it).
+    cp -L ${transcriptome_fasta} ${prefix}.fasta
+    triple_translate -c ${tracking} ${prefix}.fasta > ${prefix}_tt.log 2>&1
+    rm ${prefix}.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

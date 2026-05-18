@@ -17,7 +17,7 @@ process SAGE {
     tuple val(meta), path("*.pin"),     emit: pin
     tuple val(meta), path("*.sage.tsv"), emit: tsv, optional: true
     path("sage_search_log.txt"),        emit: log
-    path("used_params.json"),           emit: params
+    path("used_params.json"),           emit: used_params
     path "versions.yml",                emit: versions
 
     when:
@@ -64,17 +64,17 @@ PY
         mv results.sage.pin ${meta.id}.sage.pin
     fi
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sage: \$(sage --version 2>&1 | awk '{print \$NF}' | head -1)
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    sage: \$(sage --version 2>&1 | awk '{print \$NF}' | head -1)
+END_VERSIONS
     """
 
     stub:
     """
     touch ${meta.id}.sage.pin
     touch sage_search_log.txt
-    cp ${config_json} used_params.json
+    echo '{}' > used_params.json
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

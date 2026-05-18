@@ -63,7 +63,8 @@ FROM debian:bookworm-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libc6 \
-        libcurl4 && \
+        libcurl4 \
+        procps && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /out/curate_vcf       /usr/local/bin/curate_vcf

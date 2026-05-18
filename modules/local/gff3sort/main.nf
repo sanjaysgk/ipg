@@ -4,8 +4,8 @@ process GFF3SORT {
 
     conda "bioconda::gff3sort=0.1.a1a2bc9"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/gff3sort:0.1.a1a2bc9--pl5321hdfd78af_1' :
-        'biocontainers/gff3sort:0.1.a1a2bc9--pl5321hdfd78af_1' }"
+        'https://depot.galaxyproject.org/singularity/gff3sort:0.1.a1a2bc9--hdfd78af_2' :
+        'biocontainers/gff3sort:0.1.a1a2bc9--hdfd78af_2' }"
 
     input:
     tuple val(meta), path(gtf)

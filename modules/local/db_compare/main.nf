@@ -64,7 +64,7 @@ process DB_COMPARE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        R: \$(R --version | head -1 | sed 's/R version //' | sed 's/ .*//')
+        R: "stub"
         db_compare: "kescull/immunopeptidogenomics"
     END_VERSIONS
     """

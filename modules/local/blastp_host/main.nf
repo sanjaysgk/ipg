@@ -4,8 +4,8 @@ process BLASTP_HOST {
 
     conda "bioconda::blast=2.15.0 conda-forge::python>=3.9 conda-forge::pandas>=1.5"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/blast:2.15.0--pl5321h6f7f691_1' :
-        'biocontainers/blast:2.15.0--pl5321h6f7f691_1' }"
+        'https://depot.galaxyproject.org/singularity/mulled-v2-bd0ce31f08f73d42bb0edebd8f5c7dcd9b1eefb0:1a671ad7f1b9f7bae925b3fe7baf49e06e59e70e-0' :
+        'biocontainers/mulled-v2-bd0ce31f08f73d42bb0edebd8f5c7dcd9b1eefb0:1a671ad7f1b9f7bae925b3fe7baf49e06e59e70e-0' }"
 
     input:
     tuple val(meta), path(peptides_tsv)

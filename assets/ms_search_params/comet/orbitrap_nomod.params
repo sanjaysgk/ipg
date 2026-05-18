@@ -2,7 +2,7 @@
 # Comet MS/MS search engine parameters file.
 # Everything following the '#' symbol is treated as a comment.
 
-database_name = FASTA/2023-10-12-decoys-Listeria_EGD_Mouse_Cont.fasta.fas
+database_name = database.fasta
 decoy_search = 0                       # 0=no (default), 1=internal decoy concatenated, 2=internal decoy separate
 peff_format = 0                        # 0=no (normal fasta, default), 1=PEFF PSI-MOD, 2=PEFF Unimod
 peff_obo =                             # path to PSI Mod or Unimod OBO file
@@ -68,7 +68,7 @@ use_NL_ions = 0                        # 0=no, 1=yes to consider NH3/H2O neutral
 #
 output_sqtfile = 0                     # 0=no, 1=yes  write sqt file
 output_txtfile = 0                     # 0=no, 1=yes  write tab-delimited txt file
-output_pepxmlfile = 1                  # 0=no, 1=yes  write pepXML file
+output_pepxmlfile = 0                  # 0=no, 1=yes  write pepXML file
 output_mzidentmlfile = 0              # 0=no, 1=yes  write mzIdentML file
 output_percolatorfile = 1              # 0=no, 1=yes  write Percolator pin file
 print_expect_score = 1                 # 0=no, 1=yes to replace Sp with expect in out & sqt

@@ -32,14 +32,14 @@ process COMET {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        comet: \$(comet 2>&1 | grep -oE 'Comet version [^ ]+' | head -1 | sed 's/Comet version //')
+        comet: \$(comet 2>&1 | grep -oE 'Comet version "[^"]+"' | head -1 | sed 's/Comet version //;s/"//g')
     END_VERSIONS
     """
 
     stub:
     """
     for f in ${mzml_files}; do
-        base=\$(basename "\$f" .mzML)
+        base=\$(basename "\$f"); base="\${base%.*}"
         touch "\${base}.pin"
     done
     touch comet_search_log.txt

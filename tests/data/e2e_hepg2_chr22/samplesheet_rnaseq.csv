@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,strandedness
+HepG2_chr22,/home/sson0030/xy86_scratch2/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/e2e_hepg2_chr22/fastq/HepG2_chr22_R1.fastq.gz,/home/sson0030/xy86_scratch2/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/e2e_hepg2_chr22/fastq/HepG2_chr22_R2.fastq.gz,auto

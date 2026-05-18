@@ -2,7 +2,7 @@
 # Comet MS/MS search engine parameters file.
 # Everything following the '#' symbol is treated as a comment.
 
-database_name = FASTA/2023-10-12-decoys-Listeria_EGD_Mouse_Cont.fasta.fas
+database_name = database.fasta
 decoy_search = 0                       # 0=no (default), 1=internal decoy concatenated, 2=internal decoy separate
 peff_format = 0                        # 0=no (normal fasta, default), 1=PEFF PSI-MOD, 2=PEFF Unimod
 peff_obo =                             # path to PSI Mod or Unimod OBO file
@@ -118,7 +118,7 @@ clear_mz_range = 126.1 131.2           # for iTRAQ/TMT type data; will clear out
 #
 
 add_Cterm_peptide = 0.0
-add_Nterm_peptide = 0.0
+add_Nterm_peptide = 229.162932
 add_Cterm_protein = 0.0
 add_Nterm_protein = 0.0
 
@@ -134,7 +134,7 @@ add_I_isoleucine = 0.0000              # added to I - avg. 113.1576, mono. 113.0
 add_N_asparagine = 0.0000              # added to N - avg. 114.1026, mono. 114.04293
 add_D_aspartic_acid = 0.0000           # added to D - avg. 115.0874, mono. 115.02694
 add_Q_glutamine = 0.0000               # added to Q - avg. 128.1292, mono. 128.05858
-add_K_lysine = 0.0000                  # added to K - avg. 128.1723, mono. 128.09496
+add_K_lysine = 229.162932              # added to K - avg. 128.1723, mono. 128.09496
 add_E_glutamic_acid = 0.0000           # added to E - avg. 129.1140, mono. 129.04259
 add_M_methionine = 0.0000              # added to M - avg. 131.1961, mono. 131.04048
 add_H_histidine = 0.0000               # added to H - avg. 137.1393, mono. 137.05891

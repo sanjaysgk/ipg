@@ -73,12 +73,13 @@ def parse_fasta_prot_info(fasta: Path) -> dict:
 
 
 def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
-                     immuno_lengths: list[int]) -> tuple[pd.DataFrame, pd.DataFrame]:
+                     immuno_lengths: list[int],
+                     fdr: float = 0.01) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(tsv, sep="\t")
-    # 1% PSM- and peptide-level FDR, target only.
+    # PSM- and peptide-level FDR, target only.
     df = df[
-        (df["qvalue"] <= 0.01)
-        & (df["meta:peptide_qvalue"] <= 0.01)
+        (df["qvalue"] <= fdr)
+        & (df["meta:peptide_qvalue"] <= fdr)
         & (~df["is_decoy"].astype(bool))
     ].copy()
     if df.empty:
@@ -143,18 +144,19 @@ def count_chimera(chimera_psms: pd.DataFrame) -> tuple[dict, dict]:
 
 
 def integrate(engine_tsvs: dict[str, Path], fasta: Path,
-              immuno_lengths: list[int], outdir: Path) -> None:
+              immuno_lengths: list[int], outdir: Path,
+              fdr: float = 0.01) -> None:
     prot_info = parse_fasta_prot_info(fasta)
     psms_all = pd.DataFrame(columns=OUT_COLUMNS)
     peptides_all = pd.DataFrame(columns=PEP_COLUMNS)
 
     for engine, tsv in engine_tsvs.items():
-        psms, peps = read_engine_psms(tsv, engine, prot_info, immuno_lengths)
+        psms, peps = read_engine_psms(tsv, engine, prot_info, immuno_lengths, fdr=fdr)
         psms_all = pd.concat([psms_all, psms], ignore_index=True)
         peptides_all = pd.concat([peptides_all, peps], ignore_index=True)
 
     if psms_all.empty:
-        print("[integrate_engines] no PSMs passed 1% FDR in any engine",
+        print(f"[integrate_engines] no PSMs passed {fdr*100:.0f}% FDR in any engine",
               file=sys.stderr)
         psms_all.to_csv(outdir / "integrated_psms.tsv", sep="\t", index=False)
         peptides_all.to_csv(outdir / "integrated_peptides.tsv", sep="\t",
@@ -253,6 +255,8 @@ def main() -> int:
                    help="search FASTA database (for protein info)")
     p.add_argument("--peptide-length", default="9",
                    help="single length or range like 8-11")
+    p.add_argument("--fdr", type=float, default=0.01,
+                   help="PSM and peptide FDR threshold (default: 0.01)")
     p.add_argument("--outdir", default=".", type=Path)
     args = p.parse_args()
 
@@ -265,7 +269,7 @@ def main() -> int:
         immuno_lengths = [int(args.peptide_length)]
 
     engine_tsvs = parse_engine_tsv_arg(args.engine_tsv)
-    integrate(engine_tsvs, args.fasta, immuno_lengths, args.outdir)
+    integrate(engine_tsvs, args.fasta, immuno_lengths, args.outdir, fdr=args.fdr)
     return 0
 
 

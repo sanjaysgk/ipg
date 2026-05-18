@@ -24,6 +24,7 @@ process INTEGRATE_ENGINES {
 
     script:
     def len_arg = params.peptide_length ?: '9'
+    def fdr_arg = params.integrate_fdr ?: '0.01'
     // Pair staged files with engine names; order is preserved.
     def pairs = [engine_names, engine_tsvs].transpose().collect { name, f -> "${name}=${f}" }.join(' ')
     """
@@ -31,6 +32,7 @@ process INTEGRATE_ENGINES {
         --engine-tsv ${pairs} \\
         --fasta ${fasta} \\
         --peptide-length ${len_arg} \\
+        --fdr ${fdr_arg} \\
         --outdir .
 
     cat <<-END_VERSIONS > versions.yml

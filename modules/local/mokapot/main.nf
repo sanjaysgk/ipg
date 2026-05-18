@@ -45,10 +45,13 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
         mv tmp.pin ${prefix}_combined.pin
     fi
 
-    # Run mokapot with 5% test FDR (needed for low-ID samples)
+    # Run mokapot with relaxed FDR for both training and testing.
+    # Mini test databases / low-ID immunopeptidomics samples often need
+    # looser thresholds; downstream filtering can tighten.
     mokapot \\
         --keep_decoys \\
-        --test_fdr 0.05 \\
+        --train_fdr 0.10 \\
+        --test_fdr 0.10 \\
         -d . \\
         -r ${prefix} \\
         ${prefix}_combined.pin \\
@@ -60,10 +63,10 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
     [ -f ${prefix}.mokapot.decoy.psms.txt ]     && mv ${prefix}.mokapot.decoy.psms.txt     ${prefix}.decoy.psms.txt
     [ -f ${prefix}.mokapot.decoy.peptides.txt ] && mv ${prefix}.mokapot.decoy.peptides.txt ${prefix}.decoy.peptides.txt
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        mokapot: \$(mokapot --version 2>&1 | sed 's/mokapot //')
-    END_VERSIONS
+cat <<-END_VERSIONS > versions.yml
+"${task.process}":
+    mokapot: \$(python3 -c "from importlib.metadata import version; print(version('mokapot'))")
+END_VERSIONS
     """
 
     stub:

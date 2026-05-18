@@ -22,13 +22,11 @@
             }
         },
         "config_file": null,
-        "psm_file": [
-            "C:/Users/Installer/Documents/SOFTWARE/fragpipe_ms2rescore/mtb/rescoring/combined.tsv"
-        ],
+        "psm_file": null,
         "psm_file_type": "tsv",
         "psm_reader_kwargs": {},
-        "spectrum_path": "C:/Users/Installer/Documents/SOFTWARE/fragpipe_ms2rescore/mtb",
-        "output_path": "C:/Users/Installer/Documents/SOFTWARE/fragpipe_ms2rescore/mtb/rescoring/combined.ms2rescore",
+        "spectrum_path": null,
+        "output_path": null,
         "log_level": "info",
         "id_decoy_pattern": null,
         "psm_id_pattern": "scan=(\\d+)_",

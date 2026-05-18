@@ -75,8 +75,9 @@ workflow MS_SEARCH {
             .join(MOKAPOT_MSFRAGGER.out.combined_pin)
     }
 
-    // mzMLs fed to Comet/Sage: calibrated if MSFragger ran, else raw input.
-    ch_engine_input = engines.contains('msfragger') ? ch_calibrated_mzml : ch_ms_data
+    // Always feed raw input to Comet/Sage — they handle their own calibration.
+    // MSFragger's calibrated mzML output is reserved for CONVERT_MZML downstream.
+    ch_engine_input = ch_ms_data
 
     //
     // STEP 2b: Comet
@@ -120,26 +121,31 @@ workflow MS_SEARCH {
     }
 
     //
-    // STEP 3: CONVERT_MZML — fan out over calibrated mzMLs, emit MGF + scans pkl.
+    // STEP 3: CONVERT_MZML — fan out over mzMLs, emit MGF + scans pkl.
+    //         Only needed for MS2Rescore and PEAKS branch; skip otherwise.
     //
-    // Take one mzML at a time through CONVERT_MZML.
-    ch_one_mzml = ch_engine_input
-        .flatMap { meta, files ->
-            files instanceof List ? files.collect { [meta, it] } : [[meta, files]]
-        }
-    CONVERT_MZML(ch_one_mzml)
-    ch_versions = ch_versions.mix(CONVERT_MZML.out.versions.first())
+    ch_scans_per_sample    = Channel.empty()
+    ch_mgf_per_sample      = Channel.empty()
+    ch_idx2scan_per_sample = Channel.empty()
 
-    // Collect MGFs + pickles per sample (meta.id).
-    ch_scans_per_sample = CONVERT_MZML.out.scans
-        .map { meta, f -> [meta, f] }
-        .groupTuple(by: 0)
-    ch_mgf_per_sample = CONVERT_MZML.out.mgf
-        .map { meta, f -> [meta, f] }
-        .groupTuple(by: 0)
-    ch_idx2scan_per_sample = CONVERT_MZML.out.index2scan
-        .map { meta, f -> [meta, f] }
-        .groupTuple(by: 0)
+    if (!params.skip_ms2rescore) {
+        ch_one_mzml = ch_engine_input
+            .flatMap { meta, files ->
+                files instanceof List ? files.collect { [meta, it] } : [[meta, files]]
+            }
+        CONVERT_MZML(ch_one_mzml)
+        ch_versions = ch_versions.mix(CONVERT_MZML.out.versions.first())
+
+        ch_scans_per_sample = CONVERT_MZML.out.scans
+            .map { meta, f -> [meta, f] }
+            .groupTuple(by: 0)
+        ch_mgf_per_sample = CONVERT_MZML.out.mgf
+            .map { meta, f -> [meta, f] }
+            .groupTuple(by: 0)
+        ch_idx2scan_per_sample = CONVERT_MZML.out.index2scan
+            .map { meta, f -> [meta, f] }
+            .groupTuple(by: 0)
+    }
 
     //
     // STEP 3b: PEAKS branch (optional).
@@ -174,77 +180,66 @@ workflow MS_SEARCH {
     //
     ch_rescored = Channel.empty()
 
-    if (engines.contains('msfragger')) {
-        MS2RESCORE_MSFRAGGER(
-            ch_mok_msfragger,
-            'msfragger',
-            ch_scans_per_sample.map { meta, f -> f }.first(),
-            ch_mgf_per_sample.map   { meta, f -> f }.first(),
-            ch_ms2rescore_cfg
-        )
-        ch_versions = ch_versions.mix(MS2RESCORE_MSFRAGGER.out.versions)
-        ch_rescored = ch_rescored.mix(
-            MS2RESCORE_MSFRAGGER.out.psms.map { meta, f -> [meta, 'msfragger', f] }
-        )
-    }
-    if (engines.contains('comet')) {
-        MS2RESCORE_COMET(
-            ch_mok_comet,
-            'comet',
-            ch_scans_per_sample.map { meta, f -> f }.first(),
-            ch_mgf_per_sample.map   { meta, f -> f }.first(),
-            ch_ms2rescore_cfg
-        )
-        ch_versions = ch_versions.mix(MS2RESCORE_COMET.out.versions)
-        ch_rescored = ch_rescored.mix(
-            MS2RESCORE_COMET.out.psms.map { meta, f -> [meta, 'comet', f] }
-        )
-    }
-    if (engines.contains('sage')) {
-        MS2RESCORE_SAGE(
-            ch_mok_sage,
-            'sage',
-            ch_scans_per_sample.map { meta, f -> f }.first(),
-            ch_mgf_per_sample.map   { meta, f -> f }.first(),
-            ch_ms2rescore_cfg
-        )
-        ch_versions = ch_versions.mix(MS2RESCORE_SAGE.out.versions)
-        ch_rescored = ch_rescored.mix(
-            MS2RESCORE_SAGE.out.psms.map { meta, f -> [meta, 'sage', f] }
-        )
-    }
-    if (engines.contains('peaks')) {
-        MS2RESCORE_PEAKS(
-            ch_mok_peaks,
-            'peaks',
-            ch_scans_per_sample.map { meta, f -> f }.first(),
-            ch_mgf_per_sample.map   { meta, f -> f }.first(),
-            ch_ms2rescore_cfg
-        )
-        ch_versions = ch_versions.mix(MS2RESCORE_PEAKS.out.versions)
-        ch_rescored = ch_rescored.mix(
-            MS2RESCORE_PEAKS.out.psms.map { meta, f -> [meta, 'peaks', f] }
-        )
+    // Rescoring needs scans covering every PSM in the mokapot output.
+    // Rather than trust per-sample meta.join (which is flaky when
+    // groupTuple + stageAs interact), broadcast the ENTIRE set of
+    // per-sample scans + MGFs to every MS2Rescore invocation. The prep
+    // script merges all scans into one dict and looks up by run_scan
+    // key, so a superset is safe.
+    ch_all_scans = ch_scans_per_sample.map { meta, f -> f }.flatMap { it }.collect()
+    ch_all_mgfs  = ch_mgf_per_sample.map   { meta, f -> f }.flatMap { it }.collect()
+
+    if (!params.skip_ms2rescore) {
+        if (engines.contains('msfragger')) {
+            MS2RESCORE_MSFRAGGER(ch_mok_msfragger, 'msfragger', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            ch_versions = ch_versions.mix(MS2RESCORE_MSFRAGGER.out.versions)
+            ch_rescored = ch_rescored.mix(MS2RESCORE_MSFRAGGER.out.psms.map { meta, f -> [meta, 'msfragger', f] })
+        }
+        if (engines.contains('comet')) {
+            MS2RESCORE_COMET(ch_mok_comet, 'comet', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            ch_versions = ch_versions.mix(MS2RESCORE_COMET.out.versions)
+            ch_rescored = ch_rescored.mix(MS2RESCORE_COMET.out.psms.map { meta, f -> [meta, 'comet', f] })
+        }
+        if (engines.contains('sage')) {
+            MS2RESCORE_SAGE(ch_mok_sage, 'sage', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            ch_versions = ch_versions.mix(MS2RESCORE_SAGE.out.versions)
+            ch_rescored = ch_rescored.mix(MS2RESCORE_SAGE.out.psms.map { meta, f -> [meta, 'sage', f] })
+        }
+        if (engines.contains('peaks')) {
+            MS2RESCORE_PEAKS(ch_mok_peaks, 'peaks', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            ch_versions = ch_versions.mix(MS2RESCORE_PEAKS.out.versions)
+            ch_rescored = ch_rescored.mix(MS2RESCORE_PEAKS.out.psms.map { meta, f -> [meta, 'peaks', f] })
+        }
     }
 
     //
     // STEP 5: INTEGRATE_ENGINES — merge per-engine MS2Rescore TSVs into one.
+    // Skipped when --skip_ms2rescore is set (no rescored TSVs to merge).
     //
-    ch_integrate_in = ch_rescored
-        .groupTuple(by: 0)   // [meta, [engines...], [tsvs...]]
-        .map { meta, eng_list, tsv_list -> [meta, tsv_list, eng_list] }
+    ch_integrated_psms     = Channel.empty()
+    ch_integrated_peptides = Channel.empty()
+    ch_integrated_chimeric = Channel.empty()
 
-    INTEGRATE_ENGINES(
-        ch_integrate_in.map { meta, tsvs, engs -> [meta, tsvs] },
-        ch_integrate_in.map { meta, tsvs, engs -> engs },
-        ch_tda_fasta
-    )
-    ch_versions = ch_versions.mix(INTEGRATE_ENGINES.out.versions)
+    if (!params.skip_ms2rescore && !params.skip_integrate_engines) {
+        ch_integrate_in = ch_rescored
+            .groupTuple(by: 0)   // [meta, [engines...], [tsvs...]]
+            .map { meta, eng_list, tsv_list -> [meta, tsv_list, eng_list] }
+
+        INTEGRATE_ENGINES(
+            ch_integrate_in.map { meta, tsvs, engs -> [meta, tsvs] },
+            ch_integrate_in.map { meta, tsvs, engs -> engs },
+            ch_tda_fasta
+        )
+        ch_versions            = ch_versions.mix(INTEGRATE_ENGINES.out.versions)
+        ch_integrated_psms     = INTEGRATE_ENGINES.out.psms
+        ch_integrated_peptides = INTEGRATE_ENGINES.out.peptides
+        ch_integrated_chimeric = INTEGRATE_ENGINES.out.chimeric
+    }
 
     emit:
-    psms              = INTEGRATE_ENGINES.out.psms
-    peptides          = INTEGRATE_ENGINES.out.peptides
-    chimeric          = INTEGRATE_ENGINES.out.chimeric
+    psms              = ch_integrated_psms
+    peptides          = ch_integrated_peptides
+    chimeric          = ch_integrated_chimeric
     calibrated_mzml   = ch_calibrated_mzml
     rescored_per_eng  = ch_rescored
     versions          = ch_versions
