@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """Convert a PEAKS Studio db.psms.csv export into a Percolator input (PIN).
 
-Extracted from immunopeptidomics/core.py run_PEAKS() (L555). PEAKS reports
+Extracted from immunopeptidomics/core.py run_PEAKS(). PEAKS reports
 spectrum *indices*, not raw scan numbers — so one or more index2scan.pkl
 pickles from CONVERT_MZML are required to resolve true ScanNr values.
 
-The emitted PIN is directly consumable by mokapot via the existing MOKAPOT
-module (engine == 'peaks' triggers no extra PIN cleanup there).
-
-Only validated against PEAKS 12 exports with decoys present.
+Invoked as a Nextflow template from modules/local/convert_peaks/main.nf.
+PEAKS_CSV / INDEX2SCAN_PKLS / MIN_MATCH / PROCESS_NAME are interpolated by Nextflow.
 """
 from __future__ import annotations
 
-import argparse
 import pickle
+import shlex
 import sys
 from pathlib import Path
 
 import pandas as pd
+
+PEAKS_CSV = "${peaks_csv}"
+INDEX2SCAN_PKLS_STR = "${index2scan_pkls.join(' ')}"
+MIN_MATCH = float("${min_match}")
+PROCESS_NAME = "${task.process}"
 
 
 def load_index2scan(paths: list[Path]) -> dict:
@@ -56,29 +59,18 @@ def convert(csv_path: Path, index2scan: dict, out_path: Path,
 
     cols = ["SpecId", "Label", "ScanNr", "-10LgP", "Tag Length", "Delta RT",
             "MS2 Correlation", "ppm", "Peptide", "Proteins"]
-    if "Delta 1/k0" in df.columns:          # timsTOF ion-mobility feature
+    if "Delta 1/k0" in df.columns:
         cols.insert(-2, "Delta 1/k0")
     df[cols].to_csv(out_path, sep="\t", index=False)
-    print(f"[convert_peaks] wrote {len(df)} rows → {out_path}", file=sys.stderr)
+    print(f"[convert_peaks] wrote {len(df)} rows -> {out_path}", file=sys.stderr)
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--csv", required=True, type=Path,
-                   help="PEAKS db.psms.csv export")
-    p.add_argument("--index2scan", required=True, nargs="+", type=Path,
-                   help="index2scan.pkl file(s) from CONVERT_MZML")
-    p.add_argument("--out", required=True, type=Path,
-                   help="output PIN file")
-    p.add_argument("--min-match", type=float, default=0.98,
-                   help="minimum fraction of PEAKS rows that must resolve (default: 0.98)")
-    args = p.parse_args()
-    index2scan = load_index2scan(args.index2scan)
-    print(f"[convert_peaks] loaded {len(index2scan)} index→scan entries",
-          file=sys.stderr)
-    convert(args.csv, index2scan, args.out, args.min_match)
-    return 0
+index2scan_paths = [Path(p) for p in shlex.split(INDEX2SCAN_PKLS_STR)]
+index2scan = load_index2scan(index2scan_paths)
+print(f"[convert_peaks] loaded {len(index2scan)} index->scan entries", file=sys.stderr)
+convert(Path(PEAKS_CSV), index2scan, Path("peaks.pin"), MIN_MATCH)
 
-
-if __name__ == "__main__":
-    sys.exit(main())
+with open("versions.yml", "w") as f:
+    f.write(f'"{PROCESS_NAME}":\n')
+    f.write(f"    python: {sys.version.split()[0]}\n")
+    f.write(f"    pandas: {pd.__version__}\n")
