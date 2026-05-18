@@ -20,15 +20,8 @@ process CONVERT_MZML {
     task.ext.when == null || task.ext.when
 
     script:
-    def run = mzml.baseName
-    """
-    convert_mzml.py --run ${run} ${mzml}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        pymzml: \$(python3 -c "import pymzml; print(pymzml.__version__)")
-    END_VERSIONS
-    """
+    run = mzml.baseName
+    template 'convert_mzml.py'
 
     stub:
     def run = mzml.baseName

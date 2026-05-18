@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
 """Convert mzML file(s) to MGF + build scans / index2scan pickles.
 
-Extracted from immunopeptidomics/core.py read_mzML() + write_MGF() (Scull 2021).
-Run one mzML per invocation; the MS_SEARCH subworkflow fans out over files and
+Extracted from immunopeptidomics/core.py read_mzML() + write_MGF().
+One mzML per invocation; the MS_SEARCH subworkflow fans out over files and
 merges pickles downstream.
+
+Invoked as a Nextflow template from modules/local/convert_mzml/main.nf.
+INPUT_MZML / RUN / PROCESS_NAME are interpolated by Nextflow.
 """
 from __future__ import annotations
 
-import argparse
-import os
 import pickle
 import re
 import sys
 from typing import Tuple
 
 import pymzml
+
+INPUT_MZML = "${mzml}"
+RUN = "${run}"
+PROCESS_NAME = "${task.process}"
 
 
 def parse_precursor(spectrum) -> Tuple[float, str]:
@@ -37,8 +42,8 @@ def convert(mzml_path: str, run: str) -> tuple[dict, dict]:
     with open(f"{run}.mgf", "w") as mgf:
         reader = pymzml.run.Reader(mzml_path)
         for spectrum in reader:
-            # MS1 spectra have no precursor — skip them outright. Only MS2
-            # scans belong in the MGF and the scans/index2scan dicts.
+            # MS1 spectra have no precursor — skip outright; only MS2 scans
+            # belong in the MGF + scans/index2scan dicts.
             if spectrum["ms level"] != 2:
                 continue
             prec_mz, charge = parse_precursor(spectrum)
@@ -73,23 +78,15 @@ def convert(mzml_path: str, run: str) -> tuple[dict, dict]:
     return scans, index2scan
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("mzml", help="input mzML file")
-    p.add_argument("--run", default=None, help="run basename (default: stem of mzML)")
-    args = p.parse_args()
+scans, index2scan = convert(INPUT_MZML, RUN)
 
-    run = args.run or os.path.splitext(os.path.basename(args.mzml))[0]
-    scans, index2scan = convert(args.mzml, run)
+with open(f"{RUN}.scans.pkl", "wb") as f:
+    pickle.dump(scans, f)
+with open(f"{RUN}.index2scan.pkl", "wb") as f:
+    pickle.dump(index2scan, f)
 
-    with open(f"{run}.scans.pkl", "wb") as f:
-        pickle.dump(scans, f)
-    with open(f"{run}.index2scan.pkl", "wb") as f:
-        pickle.dump(index2scan, f)
+print(f"[convert_mzml] {RUN}: {len(scans)} MS2 scans -> {RUN}.mgf", file=sys.stderr)
 
-    print(f"[convert_mzml] {run}: {len(scans)} MS2 scans -> {run}.mgf", file=sys.stderr)
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+with open("versions.yml", "w") as f:
+    f.write(f'"{PROCESS_NAME}":\n')
+    f.write(f"    pymzml: {pymzml.__version__}\n")
