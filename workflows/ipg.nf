@@ -6,7 +6,6 @@
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
-include { samplesheetToList     } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ipg_pipeline'
@@ -14,6 +13,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ipg_
 //
 // Cryptic peptide discovery subworkflows (steps 1-31 of the legacy bash pipeline)
 //
+include { SAMPLESHEET_TO_CHANNEL } from '../subworkflows/local/samplesheet_to_channel/main'
 include { PREPARE_GENOME      } from '../subworkflows/local/prepare_genome/main'
 include { ALIGN_QC            } from '../subworkflows/local/align_qc/main'
 include { TRANSCRIPT_ASSEMBLY } from '../subworkflows/local/transcript_assembly/main'
@@ -44,22 +44,31 @@ workflow IPG {
     // Placeholder for emit — may or may not be produced depending on step
     ch_cryptic_fasta = channel.empty()
 
+    //
+    // Single samplesheet parser: validates --step / --*_input combo and
+    // emits typed channels (rnaseq / ms / post_ms) — only the one matching
+    // params.step is populated.
+    //
+    SAMPLESHEET_TO_CHANNEL(
+        params.step,
+        params.input,
+        params.ms_input,
+        params.post_ms_input,
+        "${projectDir}/assets/schema_input.json",
+        "${projectDir}/assets/schema_ms_input.json",
+        "${projectDir}/assets/schema_post_ms_input.json"
+    )
+    ch_rnaseq_input  = SAMPLESHEET_TO_CHANNEL.out.rnaseq
+    ch_ms_input      = SAMPLESHEET_TO_CHANNEL.out.ms
+    ch_post_ms_input = SAMPLESHEET_TO_CHANNEL.out.post_ms
+
     if (params.step == 'post_ms') {
 
         //
         // POST-MS ANALYSIS ENTRY POINT
         // Skips all upstream processing; only runs db_compare + origins.
         //
-        Channel
-            .fromList(samplesheetToList(params.post_ms_input, "${projectDir}/assets/schema_post_ms_input.json"))
-            .map { meta, cryptic_psm, uniprot_psm, cryptic_decoy_score, uniprot_decoy_score ->
-                def new_meta = meta + [
-                    cryptic_decoy_score: cryptic_decoy_score,
-                    uniprot_decoy_score: uniprot_decoy_score
-                ]
-                [ new_meta, file(cryptic_psm), file(uniprot_psm) ]
-            }
-            .set { ch_post_ms }
+        ch_post_ms = ch_post_ms_input
 
         ch_tracking            = channel.fromPath(params.prefix_tracking, checkIfExists: true).collect()
         ch_uniprot_fasta       = channel.fromPath(params.uniprot_fasta, checkIfExists: true).collect()
@@ -79,17 +88,7 @@ workflow IPG {
         // MS SEARCH ENTRY POINT
         // Runs search engines on MS data against a FASTA database.
         //
-        Channel
-            .fromList(samplesheetToList(params.ms_input, "${projectDir}/assets/schema_ms_input.json"))
-            .map { row ->
-                // Schema emits 2-3 elements depending on whether `condition`
-                // is present; accept both and drop condition for now
-                // (reserved for future FlashLFQ grouping support).
-                def meta    = row[0]
-                def ms_file = row[1]
-                [ meta, file(ms_file) ]
-            }
-            .set { ch_ms_data }
+        ch_ms_data = ch_ms_input
 
         ch_search_fasta = channel.fromPath(params.search_fasta, checkIfExists: true).collect()
 
@@ -150,11 +149,11 @@ workflow IPG {
         //
         // MODULE: FastQC — per-sample raw read QC
         //
-        FASTQC(ch_samplesheet)
+        FASTQC(ch_rnaseq_input)
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect { row -> row[1] })
         ch_versions      = ch_versions.mix(FASTQC.out.versions.first())
 
-        ch_reads = ch_samplesheet
+        ch_reads = ch_rnaseq_input
 
         //
         // SUBWORKFLOW: align_qc — steps 1-3

@@ -23,6 +23,17 @@
                 "type": "string",
                 "default": "",
                 "errorMessage": "Optional condition label for FlashLFQ grouping"
+            },
+            "fraction": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1,
+                "errorMessage": "Optional 1-based fraction index for fractionated LC-MS (pre-fractionated pool number). Defaults to 1."
+            },
+            "replicate": {
+                "type": "string",
+                "default": "",
+                "errorMessage": "Optional replicate label (e.g. rep1, rep2). Useful when one sample has multiple biological replicates."
             }
         },
         "required": ["sample", "ms_file"]
