@@ -55,6 +55,7 @@ biopython = ">=1.80"
 matplotlib-base = ">=3.6"
 logomaker = ">=0.8"
 pandas = ">=1.5,<2.2"   # mokapot 0.10.0 uses pd.to_numeric(errors="ignore"), removed in pandas 2.2+
+bwa = ">=0.7.19,<0.8"
 
 # ── Isolated feature environments ──
 # These avoid dependency conflicts with the main env.
@@ -66,3 +67,6 @@ python = ">=3.10,<3.12"
 
 [environments]
 ms2rescore = { features = ["ms2rescore"], no-default-feature = true, solve-group = "ms2rescore" }
+
+[pypi-dependencies]
+nf-metro = ">=0.7.1, <0.8"
