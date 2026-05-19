@@ -1,0 +1,40 @@
+name: samplesheet_to_channel
+description: Parse the active --*_input samplesheet, validate combinations, and emit per-step channels.
+keywords:
+  - samplesheet
+  - validation
+  - parsing
+input:
+  - step:
+      type: string
+      description: Active pipeline step (db_construct, ms_search, post_ms)
+  - input:
+      type: file
+      description: RNAseq samplesheet (db_construct entry); null if unused
+  - ms_input:
+      type: file
+      description: MS samplesheet (ms_search entry); null if unused
+  - post_ms_input:
+      type: file
+      description: Post-MS samplesheet (post_ms entry); null if unused
+  - schema_input:
+      type: file
+      description: Path to assets/schema_input.json
+  - schema_ms_input:
+      type: file
+      description: Path to assets/schema_ms_input.json
+  - schema_post_ms_input:
+      type: file
+      description: Path to assets/schema_post_ms_input.json
+output:
+  - rnaseq:
+      type: channel
+      description: tuple val(meta), path([fastq_1, fastq_2]). Empty unless step==db_construct.
+  - ms:
+      type: channel
+      description: tuple val(meta), path(ms_file). Empty unless step==ms_search.
+  - post_ms:
+      type: channel
+      description: tuple val(meta), path(cryptic_psm), path(uniprot_psm). Empty unless step==post_ms.
+authors:
+  - "@sanjaysgk"
