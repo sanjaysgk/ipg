@@ -139,6 +139,11 @@
                         "branch": "master",
                         "git_sha": "4cfbd65a8dbdcfd1bb2736c4e8c5c12ac61d3281",
                         "installed_by": ["modules"]
+                    },
+                    "tabix/tabix": {
+                        "branch": "master",
+                        "git_sha": "900d0fed3e650300ae01b1ea4a3ac6f39ec238b8",
+                        "installed_by": ["modules"]
                     }
                 }
             },

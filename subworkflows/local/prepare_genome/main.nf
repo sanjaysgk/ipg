@@ -18,6 +18,10 @@ include { GUNZIP as GUNZIP_GTF   } from '../../../modules/nf-core/gunzip/main'
 include { SAMTOOLS_FAIDX          } from '../../../modules/nf-core/samtools/faidx/main'
 include { GATK4_CREATESEQUENCEDICTIONARY } from '../../../modules/nf-core/gatk4/createsequencedictionary/main'
 include { STAR_GENOMEGENERATE     } from '../../../modules/nf-core/star/genomegenerate/main'
+include { TABIX_TABIX as TABIX_DBSNP            } from '../../../modules/nf-core/tabix/tabix/main'
+include { TABIX_TABIX as TABIX_KNOWN_INDELS     } from '../../../modules/nf-core/tabix/tabix/main'
+include { TABIX_TABIX as TABIX_MILLS            } from '../../../modules/nf-core/tabix/tabix/main'
+include { TABIX_TABIX as TABIX_GERMLINE_RESOURCE } from '../../../modules/nf-core/tabix/tabix/main'
 
 /*
  * Resolve a reference parameter: explicit CLI param wins, then --genome
@@ -116,32 +120,68 @@ workflow PREPARE_GENOME {
     }
     ch_rseqc_bed = Channel.value( file(r_rseqc_bed) )
 
-    // ---- GATK variant calling resources: pass-through ---------------------------
-    if ( !r_dbsnp || !r_dbsnp_tbi ) {
-        error "dbSNP VCF + index are required. Provide --dbsnp and --dbsnp_tbi, or set --genome."
+    // ---- GATK variant calling resources -----------------------------------------
+    // Each VCF is required; the matching .tbi is auto-built via TABIX_TABIX if
+    // not supplied. Accepts both bundled .tbi (fast) and missing-tbi (one-time
+    // build, ~30s per index).
+    if ( !r_dbsnp ) {
+        error "dbSNP VCF is required. Provide --dbsnp or set --genome."
     }
-    if ( !r_known_indels || !r_known_indels_tbi ) {
-        error "Known indels VCF + index are required. Provide --known_indels and --known_indels_tbi, or set --genome."
+    if ( !r_known_indels ) {
+        error "Known indels VCF is required. Provide --known_indels or set --genome."
     }
-    if ( !r_mills || !r_mills_tbi ) {
-        error "Mills VCF + index are required. Provide --mills and --mills_tbi, or set --genome."
+    if ( !r_mills ) {
+        error "Mills VCF is required. Provide --mills or set --genome."
     }
-    if ( !r_germline_resource || !r_germline_resource_tbi ) {
-        error "Germline resource VCF + index are required. Provide --germline_resource and --germline_resource_tbi, or set --genome."
+    if ( !r_germline_resource ) {
+        error "Germline resource VCF is required. Provide --germline_resource or set --genome."
     }
 
+    // Helper: emit [meta, vcf] for TABIX input shape
+    def tabix_in = { name, path -> [ [id: name], file(path), [], [] ] }
+
+    if ( r_dbsnp_tbi ) {
+        ch_dbsnp_tbi = Channel.value( file(r_dbsnp_tbi) )
+    } else {
+        TABIX_DBSNP( Channel.value( tabix_in('dbsnp', r_dbsnp) ) )
+        ch_dbsnp_tbi = TABIX_DBSNP.out.index.map { _meta, tbi -> tbi }
+    }
+
+    if ( r_known_indels_tbi ) {
+        ch_known_indels_tbi = Channel.value( file(r_known_indels_tbi) )
+    } else {
+        TABIX_KNOWN_INDELS( Channel.value( tabix_in('known_indels', r_known_indels) ) )
+        ch_known_indels_tbi = TABIX_KNOWN_INDELS.out.index.map { _meta, tbi -> tbi }
+    }
+
+    if ( r_mills_tbi ) {
+        ch_mills_tbi = Channel.value( file(r_mills_tbi) )
+    } else {
+        TABIX_MILLS( Channel.value( tabix_in('mills', r_mills) ) )
+        ch_mills_tbi = TABIX_MILLS.out.index.map { _meta, tbi -> tbi }
+    }
+
+    if ( r_germline_resource_tbi ) {
+        ch_germline_resource_tbi = Channel.value( file(r_germline_resource_tbi) )
+    } else {
+        TABIX_GERMLINE_RESOURCE( Channel.value( tabix_in('germline_resource', r_germline_resource) ) )
+        ch_germline_resource_tbi = TABIX_GERMLINE_RESOURCE.out.index.map { _meta, tbi -> tbi }
+    }
+
+    // known_sites is a list-channel [meta, [3 VCFs], [3 TBIs]] used by BaseRecalibrator
     ch_known_sites = Channel.value( [ ref_meta, [
         file(r_dbsnp),
         file(r_known_indels),
         file(r_mills),
     ] ] )
-    ch_known_sites_tbi = Channel.value( [ ref_meta, [
-        file(r_dbsnp_tbi),
-        file(r_known_indels_tbi),
-        file(r_mills_tbi),
-    ] ] )
+    // Combine .tbi paths (which may be original files or TABIX outputs) into a list channel
+    ch_known_sites_tbi = ch_dbsnp_tbi
+        .combine(ch_known_indels_tbi)
+        .combine(ch_mills_tbi)
+        .map { dbsnp_tbi, known_tbi, mills_tbi ->
+            [ ref_meta, [ dbsnp_tbi, known_tbi, mills_tbi ] ]
+        }
     ch_germline_resource     = Channel.value( file(r_germline_resource) )
-    ch_germline_resource_tbi = Channel.value( file(r_germline_resource_tbi) )
 
     // ---- Composite channel: [meta, fasta, fai] for processes needing both -------
     ch_fasta_fai = ch_fasta.combine( ch_fai ).map { fasta_meta, fasta, fai_meta, fai ->
