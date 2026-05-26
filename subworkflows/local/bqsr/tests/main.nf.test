@@ -1,0 +1,38 @@
+nextflow_workflow {
+
+    name "Test Subworkflow BQSR"
+    script "../main.nf"
+    workflow "BQSR"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "bqsr"
+    tag "stub"
+
+    test("bqsr - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test' ], file("test.bam") ])
+                input[1] = Channel.value([ [ id:'genome' ], file("genome.fasta") ])
+                input[2] = Channel.value([ [ id:'genome' ], file("genome.fasta.fai") ])
+                input[3] = Channel.value([ [ id:'genome' ], file("genome.dict") ])
+                input[4] = Channel.value([ [ id:'genome' ], [ file("known1.vcf.gz"), file("known2.vcf.gz") ] ])
+                input[5] = Channel.value([ [ id:'genome' ], [ file("known1.vcf.gz.tbi"), file("known2.vcf.gz.tbi") ] ])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.recal_bam,
+                    workflow.out.before_table,
+                    workflow.out.after_table,
+                    workflow.out.versions
+                ).match() }
+            )
+        }
+    }
+}
