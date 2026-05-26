@@ -1,0 +1,63 @@
+{
+    "flashlfq - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "QuantifiedPeptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "flashlfq_input.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    "quant_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "4": [
+                    "versions.yml:md5,34df565876be2af4ed28fa45b341e366"
+                ],
+                "input": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "flashlfq_input.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    "quant_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "peaks": [
+                    
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "QuantifiedPeptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,34df565876be2af4ed28fa45b341e366"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:36:26.651535896",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
