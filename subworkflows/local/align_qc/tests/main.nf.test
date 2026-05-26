@@ -1,0 +1,38 @@
+nextflow_workflow {
+
+    name "Test Subworkflow ALIGN_QC"
+    script "../main.nf"
+    workflow "ALIGN_QC"
+    config "./nextflow.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "align_qc"
+    tag "stub"
+
+    test("align_qc - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test', single_end:false ], [ file("r1.fastq.gz"), file("r2.fastq.gz") ] ])
+                input[1] = Channel.value([ [ id:'genome' ], file("star_index") ])
+                input[2] = Channel.value([ [ id:'genome' ], file("genome.gtf") ])
+                input[3] = Channel.value([ [ id:'genome' ], file("genome.fasta"), file("genome.fasta.fai") ])
+                input[4] = Channel.value(file("genome.bed"))
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.sorted_bam,
+                    workflow.out.sorted_bai,
+                    workflow.out.strandedness_txt,
+                    workflow.out.star_log
+                ).match() }
+            )
+        }
+    }
+}
