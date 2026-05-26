@@ -1,0 +1,68 @@
+name: "vcf_annotate_all"
+description: Annotate a somatic VCF with Ensembl VEP and SnpEff, with an optional AlphaMissense VEP plugin. Published artifacts only.
+keywords:
+  - vcf
+  - annotation
+  - vep
+  - snpeff
+  - alphamissense
+components:
+  - ensemblvep/vep
+  - ensemblvep/download
+  - snpeff/snpeff
+  - snpeff/download
+  - tabix/bgziptabix
+input:
+  - ch_vcf:
+      type: file
+      description: VCF + index, "[ [ id ], vcf, tbi ]"
+  - ch_fasta:
+      type: file
+      description: Reference FASTA, "[ [ id ], fasta ]"
+  - ch_fai:
+      type: file
+      description: Reference FASTA index, "[ [ id ], fai ]"
+  - ch_vep_cache:
+      type: file
+      description: VEP cache directory, or [] to auto-download
+  - val_vep_genome:
+      type: string
+      description: VEP genome assembly (e.g. GRCh38)
+  - val_vep_species:
+      type: string
+      description: VEP species (e.g. homo_sapiens)
+  - val_vep_cache_version:
+      type: integer
+      description: Ensembl cache version (e.g. 113)
+  - ch_snpeff_cache:
+      type: file
+      description: SnpEff cache directory, or [] to auto-download
+  - val_snpeff_db:
+      type: string
+      description: SnpEff database name (e.g. GRCh38.105)
+  - ch_alphamissense_tsv:
+      type: file
+      description: AlphaMissense_hg38.tsv.gz (+ .tbi), or [] to skip the plugin
+  - val_tools:
+      type: string
+      description: Comma list of annotators (vep,snpeff,alphamissense)
+output:
+  - vcf_vep:
+      type: file
+      description: VEP-annotated VCF, "[ [ id ], vcf ]"
+  - vcf_snpeff:
+      type: file
+      description: SnpEff-annotated VCF, "[ [ id ], vcf ]"
+  - vcf_indexed:
+      type: file
+      description: bgzipped + tabixed annotated VCFs
+  - reports:
+      type: file
+      description: VEP/SnpEff summary reports for MultiQC
+  - versions:
+      type: file
+      description: versions.yml
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"
