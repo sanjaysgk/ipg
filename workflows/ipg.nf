@@ -21,6 +21,7 @@ include { BAM_PREP            } from '../subworkflows/local/bam_prep/main'
 include { BQSR                } from '../subworkflows/local/bqsr/main'
 include { BAM_VARIANT_CALLING_MUTECT2 } from '../subworkflows/local/bam_variant_calling_mutect2/main'
 include { VCF_CURATE          } from '../subworkflows/local/vcf_curate/main'
+include { VCF_ANNOTATE_ALL    } from '../subworkflows/local/vcf_annotate_all/main'
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
@@ -221,6 +222,26 @@ workflow IPG {
         //
         VCF_CURATE(BAM_VARIANT_CALLING_MUTECT2.out.vcf)
         ch_versions = ch_versions.mix(VCF_CURATE.out.versions)
+
+        //
+        // SUBWORKFLOW: vcf_annotate_all — leaf branch, published artifacts only
+        //
+        if (params.tools) {
+            VCF_ANNOTATE_ALL(
+                BAM_VARIANT_CALLING_MUTECT2.out.vcf.join(BAM_VARIANT_CALLING_MUTECT2.out.tbi),
+                ch_fasta,
+                ch_fai,
+                params.vep_cache         ? file(params.vep_cache)         : [],
+                params.vep_genome,
+                params.vep_species,
+                params.vep_cache_version,
+                params.snpeff_cache      ? file(params.snpeff_cache)      : [],
+                params.snpeff_db,
+                params.alphamissense_tsv ? file(params.alphamissense_tsv) : [],
+                params.tools
+            )
+            ch_versions = ch_versions.mix(VCF_ANNOTATE_ALL.out.versions)
+        }
 
         //
         // SUBWORKFLOW: db_construct — steps 24-31
