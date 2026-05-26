@@ -1,0 +1,36 @@
+nextflow_workflow {
+
+    name "Test Subworkflow POST_MS_ANALYSIS"
+    script "../main.nf"
+    workflow "POST_MS_ANALYSIS"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "post_ms_analysis"
+    tag "stub"
+
+    test("post_ms_analysis - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                def cryptic = file("\${workDir}/cryptic.psms"); cryptic.text = "peptide\\n"
+                def uniprot = file("\${workDir}/uniprot.psms"); uniprot.text = "peptide\\n"
+                def track   = file("\${workDir}/ref.tracking"); track.text   = "x\\n"
+                def uni     = file("\${workDir}/uniprot.fasta"); uni.text    = ">p\\nMACGT\\n"
+                def tx      = file("\${workDir}/transcriptome.fasta"); tx.text = ">t\\nACGT\\n"
+                input[0] = channel.of([[id:'test', cryptic_decoy_score:0.5, uniprot_decoy_score:0.5], cryptic, uniprot])
+                input[1] = track
+                input[2] = uni
+                input[3] = tx
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.phase1_cryptic_only, workflow.out.phase2_unconventional, workflow.out.origins_full, workflow.out.versions).match() }
+            )
+        }
+    }
+}
