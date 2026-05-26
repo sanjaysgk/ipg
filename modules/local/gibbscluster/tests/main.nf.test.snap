@@ -1,0 +1,67 @@
+{
+    "gibbscluster - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "gibbs_clusters.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "gibbs.KLDvsClusters.tab:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "gibbs.KLDvsClusters.tab:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,f60ec8ddec3f8d21cf87bac0de5026f4"
+                ],
+                "clusters": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "gibbs_clusters.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "kld": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "gibbs.KLDvsClusters.tab:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "raw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "gibbs.KLDvsClusters.tab:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,f60ec8ddec3f8d21cf87bac0de5026f4"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:38:44.188729188",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
