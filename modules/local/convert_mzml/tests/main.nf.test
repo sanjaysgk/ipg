@@ -1,0 +1,29 @@
+nextflow_process {
+
+    name "Test Process CONVERT_MZML"
+    script "../main.nf"
+    process "CONVERT_MZML"
+
+    tag "modules"
+    tag "modules_local"
+    tag "convert_mzml"
+    tag "stub"
+
+    test("convert_mzml - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def mzml = file("\${workDir}/sample.mzML"); mzml.text = "stub\\n"
+                input[0] = [ [ id:'test' ], mzml ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

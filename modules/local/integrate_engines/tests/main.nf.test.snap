@@ -1,0 +1,63 @@
+{
+    "integrate_engines - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "integrated_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "integrated_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    "versions.yml:md5,8197e27891cf38efb4117c178dbf6db4"
+                ],
+                "chim_only": [
+                    
+                ],
+                "chimeric": [
+                    
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "integrated_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "psms": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "integrated_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,8197e27891cf38efb4117c178dbf6db4"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:43:53.275059037",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

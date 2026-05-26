@@ -1,0 +1,95 @@
+{
+    "origins - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "peptides_origins_discard.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "peptides_origins_unconventional.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "peptides_origins_prot.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptides_origins_rna.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "peptides_origins_discard.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptides_origins_unconventional.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "4": [
+                    "versions.yml:md5,5bced94591ff78066e9f40c38957fa75"
+                ],
+                "all_txt": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "peptides_origins_discard.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptides_origins_unconventional.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "discard": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "peptides_origins_discard.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "origins_csv": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "peptides_origins_prot.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptides_origins_rna.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "unconventional": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "peptides_origins_unconventional.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,5bced94591ff78066e9f40c38957fa75"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:41:19.37057673",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

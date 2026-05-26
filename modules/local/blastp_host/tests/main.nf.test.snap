@@ -1,0 +1,51 @@
+{
+    "blastp_host - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "peptides.blastp.tsv:md5,f6b1e58ec38eac34f060ab4ecf43e57c"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "blastp_out.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,da34cebba0bd960f34d65a1c147aa59e"
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "peptides.blastp.tsv:md5,f6b1e58ec38eac34f060ab4ecf43e57c"
+                    ]
+                ],
+                "raw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "blastp_out.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,da34cebba0bd960f34d65a1c147aa59e"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:38:32.370159591",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

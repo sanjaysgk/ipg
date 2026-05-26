@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process INTEGRATE_ENGINES"
+    script "../main.nf"
+    process "INTEGRATE_ENGINES"
+
+    tag "modules"
+    tag "modules_local"
+    tag "integrate_engines"
+    tag "stub"
+
+    test("integrate_engines - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def t1 = file("\${workDir}/msfragger.psms.tsv"); t1.text = "peptide\\n"
+                def t2 = file("\${workDir}/comet.psms.tsv");     t2.text = "peptide\\n"
+                def fa = file("\${workDir}/db.fasta");           fa.text = ">p\\nMACGT\\n"
+                input[0] = [ [ id:'test' ], [ t1, t2 ] ]
+                input[1] = [ 'mokapot_msfragger', 'mokapot_comet' ]
+                input[2] = fa
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

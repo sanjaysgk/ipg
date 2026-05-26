@@ -1,0 +1,35 @@
+{
+    "immunoinformatics_report - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_immunoinformatics_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,c6e869a79972cd3de8502c5035614e05"
+                ],
+                "html": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_immunoinformatics_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,c6e869a79972cd3de8502c5035614e05"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:41:09.633810185",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

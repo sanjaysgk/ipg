@@ -1,0 +1,105 @@
+{
+    "mokapot - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.target.psms.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.target.peptides.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.decoy.psms.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.decoy.peptides.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search_combined.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "5": [
+                    "mokapot_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "6": [
+                    "versions.yml:md5,025958cabcc57bb52214d4678d7df0a9"
+                ],
+                "combined_pin": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search_combined.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "decoy_peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.decoy.peptides.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "decoy_psms": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.decoy.psms.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    "mokapot_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.target.peptides.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "psms": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "msfragger_search.target.psms.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,025958cabcc57bb52214d4678d7df0a9"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:36:37.614205808",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

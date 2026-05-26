@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process CONVERT_PEAKS"
+    script "../main.nf"
+    process "CONVERT_PEAKS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "convert_peaks"
+    tag "stub"
+
+    test("convert_peaks - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def csv = file("\${workDir}/peaks.csv");          csv.text = "Scan,Peptide\\n1,PEPTIDE\\n"
+                def pkl = file("\${workDir}/sample.index2scan.pkl"); pkl.text = "stub\\n"
+                input[0] = [ [ id:'test' ], csv ]
+                input[1] = [ pkl ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

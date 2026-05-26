@@ -1,0 +1,57 @@
+{
+    "msfragger - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "search_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "3": [
+                    "versions.yml:md5,a38b313f88a4d26fe2942469148a051d"
+                ],
+                "log": [
+                    "search_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "mzml": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "pin": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,a38b313f88a4d26fe2942469148a051d"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:34:26.391167006",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

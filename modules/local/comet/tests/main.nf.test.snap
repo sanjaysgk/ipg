@@ -1,0 +1,41 @@
+{
+    "comet - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "comet_search_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    "versions.yml:md5,3522c2875b94df36be86f7c176a1bee0"
+                ],
+                "log": [
+                    "comet_search_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "pin": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,3522c2875b94df36be86f7c176a1bee0"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:35:04.556968916",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

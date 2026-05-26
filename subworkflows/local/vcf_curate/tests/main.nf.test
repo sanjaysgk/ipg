@@ -1,0 +1,29 @@
+nextflow_workflow {
+
+    name "Test Subworkflow VCF_CURATE"
+    script "../main.nf"
+    workflow "VCF_CURATE"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "vcf_curate"
+    tag "stub"
+
+    test("vcf_curate - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                def vcf = file("\${workDir}/test.vcf"); vcf.text = "##fileformat=VCFv4.2\\n"
+                input[0] = channel.of([[id:'test'], vcf])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.unmasked_vcf, workflow.out.indel_vcf, workflow.out.versions).match() }
+            )
+        }
+    }
+}

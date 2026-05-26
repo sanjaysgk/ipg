@@ -1,0 +1,30 @@
+nextflow_process {
+
+    name "Test Process FLASHLFQ"
+    script "../main.nf"
+    process "FLASHLFQ"
+
+    tag "modules"
+    tag "modules_local"
+    tag "flashlfq"
+    tag "stub"
+
+    test("flashlfq - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def peptides = file("\${workDir}/peptides.tsv"); peptides.text = "stub\\n"
+                def msfile   = file("\${workDir}/sample.mzML");  msfile.text   = "stub\\n"
+                input[0] = [ [ id:'test' ], peptides, [ msfile ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
