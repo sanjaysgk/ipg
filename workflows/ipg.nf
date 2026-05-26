@@ -19,7 +19,8 @@ include { ALIGN_QC            } from '../subworkflows/local/align_qc/main'
 include { TRANSCRIPT_ASSEMBLY } from '../subworkflows/local/transcript_assembly/main'
 include { BAM_PREP            } from '../subworkflows/local/bam_prep/main'
 include { BQSR                } from '../subworkflows/local/bqsr/main'
-include { MUTECT_CALLING      } from '../subworkflows/local/mutect_calling/main'
+include { BAM_VARIANT_CALLING_MUTECT2 } from '../subworkflows/local/bam_variant_calling_mutect2/main'
+include { VCF_CURATE          } from '../subworkflows/local/vcf_curate/main'
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
@@ -203,9 +204,9 @@ workflow IPG {
         ch_versions = ch_versions.mix(BQSR.out.versions)
 
         //
-        // SUBWORKFLOW: mutect_calling — steps 17-23
+        // SUBWORKFLOW: bam_variant_calling_mutect2 — steps 17-22
         //
-        MUTECT_CALLING(
+        BAM_VARIANT_CALLING_MUTECT2(
             BQSR.out.recal_bam_bai,
             ch_fasta,
             ch_fai,
@@ -213,14 +214,20 @@ workflow IPG {
             ch_germline_resource,
             ch_germline_resource_tbi
         )
-        ch_versions = ch_versions.mix(MUTECT_CALLING.out.versions)
+        ch_versions = ch_versions.mix(BAM_VARIANT_CALLING_MUTECT2.out.versions)
+
+        //
+        // SUBWORKFLOW: vcf_curate — step 23 (curate_vcf -> unmasked + indel VCFs)
+        //
+        VCF_CURATE(BAM_VARIANT_CALLING_MUTECT2.out.vcf)
+        ch_versions = ch_versions.mix(VCF_CURATE.out.versions)
 
         //
         // SUBWORKFLOW: db_construct — steps 24-31
         //
         DB_CONSTRUCT(
-            MUTECT_CALLING.out.unmasked_vcf,
-            MUTECT_CALLING.out.indel_vcf,
+            VCF_CURATE.out.unmasked_vcf,
+            VCF_CURATE.out.indel_vcf,
             TRANSCRIPT_ASSEMBLY.out.combined_gtf,
             TRANSCRIPT_ASSEMBLY.out.tracking,
             ch_fasta,

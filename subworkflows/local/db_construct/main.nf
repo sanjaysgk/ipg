@@ -54,8 +54,8 @@ include { SQUISH                                              } from '../../../m
 workflow DB_CONSTRUCT {
 
     take:
-    ch_unmasked_vcf       // channel: [ val(meta), path(vcf) ]      from MUTECT_CALLING.unmasked_vcf
-    ch_indel_vcf          // channel: [ val(meta), path(vcf) ]      from MUTECT_CALLING.indel_vcf
+    ch_unmasked_vcf       // channel: [ val(meta), path(vcf) ]      from VCF_CURATE.unmasked_vcf
+    ch_indel_vcf          // channel: [ val(meta), path(vcf) ]      from VCF_CURATE.indel_vcf
     ch_assembly_gtf       // channel: [ val(meta), path(gtf) ]      from TRANSCRIPT_ASSEMBLY.combined_gtf
     ch_tracking           // channel: [ val(meta), path(tracking) ] from TRANSCRIPT_ASSEMBLY.tracking
     ch_fasta              // channel: [ val(meta), path(fasta) ]

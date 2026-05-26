@@ -1,0 +1,29 @@
+name: vcf_curate
+description: |
+  kescull curate_vcf wrapper — produces unmasked and indel variant tracks.
+  Step 23 of the legacy cryptic peptide pipeline. Runs the curate_vcf C tool
+  to generate two VCF outputs: an indel-preserving track and a
+  deletion-deprioritised (unmasked) track for FastaAlternateReferenceMaker.
+keywords:
+  - vcf
+  - curation
+  - somatic
+  - curate_vcf
+components:
+  - curate_vcf
+input:
+  - ch_vcf:
+      description: PASS-only sites-only VCF from BAM_VARIANT_CALLING_MUTECT2 [ val(meta), path(vcf) ]
+output:
+  - unmasked_vcf:
+      description: Deletion-deprioritised VCF for DB_CONSTRUCT SNV track [ val(meta), path(*_unmasked.vcf) ]
+  - indel_vcf:
+      description: Indel-preserving VCF for DB_CONSTRUCT indel track [ val(meta), path(*_indel.vcf) ]
+  - curate_log:
+      description: curate_vcf run logs (indel + unmasked) [ val(meta), path(*.log) ]
+  - versions:
+      description: Software versions
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

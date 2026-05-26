@@ -1,0 +1,42 @@
+nextflow_workflow {
+
+    name "Test Subworkflow BAM_VARIANT_CALLING_MUTECT2"
+    script "../main.nf"
+    workflow "BAM_VARIANT_CALLING_MUTECT2"
+    config "./nextflow.config"
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "bam_variant_calling_mutect2"
+    tag "stub"
+
+    test("mutect2 tumour-only - stub") {
+
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test' ], file("test.bam"), file("test.bam.bai") ])
+                input[1] = Channel.value([ [ id:'genome' ], file("genome.fasta") ])
+                input[2] = Channel.value([ [ id:'genome' ], file("genome.fasta.fai") ])
+                input[3] = Channel.value([ [ id:'genome' ], file("genome.dict") ])
+                input[4] = Channel.value(file("germline.vcf.gz"))
+                input[5] = Channel.value(file("germline.vcf.gz.tbi"))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.vcf,
+                    workflow.out.tbi,
+                    workflow.out.filtered_vcf,
+                    workflow.out.contamination,
+                    workflow.out.versions
+                ).match() }
+            )
+        }
+    }
+}
