@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process ORIGINS"
+    script "../main.nf"
+    process "ORIGINS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "origins"
+    tag "stub"
+
+    test("origins - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep    = file("\${workDir}/peptides.tsv");  pep.text    = "peptide\\n"
+                def track  = file("\${workDir}/prefix.tracking"); track.text = "x\\n"
+                def uni    = file("\${workDir}/uniprot.fasta");  uni.text    = ">p\\nMACGT\\n"
+                def tx     = file("\${workDir}/transcriptome.fasta"); tx.text = ">t\\nACGT\\n"
+                input[0] = [ [ id:'test' ], pep ]
+                input[1] = track
+                input[2] = uni
+                input[3] = tx
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
