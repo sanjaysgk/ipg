@@ -1,0 +1,67 @@
+{
+    "netmhcpan - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "netmhcpan_output.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "netmhcpan_parsed.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "netmhcpan_best.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,45a127e629acb0c28eeff44e77266362"
+                ],
+                "best": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "netmhcpan_best.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "parsed": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "netmhcpan_parsed.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "raw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "netmhcpan_output.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,45a127e629acb0c28eeff44e77266362"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:39:11.052350704",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
