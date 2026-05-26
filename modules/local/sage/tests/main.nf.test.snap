@@ -1,0 +1,53 @@
+{
+    "sage - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.sage.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    "sage_search_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "3": [
+                    "used_params.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                ],
+                "4": [
+                    "versions.yml:md5,b3f89a7e79ea66dbec81b2f64a504d6d"
+                ],
+                "log": [
+                    "sage_search_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "pin": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.sage.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "tsv": [
+                    
+                ],
+                "used_params": [
+                    "used_params.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                ],
+                "versions": [
+                    "versions.yml:md5,b3f89a7e79ea66dbec81b2f64a504d6d"
+                ]
+            }
+        ],
+        "timestamp": "2026-05-26T20:35:15.311088084",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
