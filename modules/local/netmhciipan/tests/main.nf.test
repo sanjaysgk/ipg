@@ -1,0 +1,32 @@
+nextflow_process {
+
+    name "Test Process NETMHCIIPAN"
+    script "../main.nf"
+    process "NETMHCIIPAN"
+
+    tag "modules"
+    tag "modules_local"
+    tag "netmhciipan"
+    tag "stub"
+
+    test("netmhciipan - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep = file("\${workDir}/peptides.tsv"); pep.text = "PEPTIDE\\n"
+                def bin = file("\${workDir}/netMHCIIpan");  bin.text = "stub"
+                input[0] = [ [ id:'test' ], pep ]
+                input[1] = 'DRB1_0101'
+                input[2] = bin
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
