@@ -112,7 +112,7 @@ workflow BQSR {
     emit:
     recal_bam       = GATK4_APPLYBQSR.out.bam                 // [meta, bam]
     recal_bai       = SAMTOOLS_INDEX_RECAL.out.index          // [meta, bai]
-    recal_bam_bai   = ch_recal_bam_bai                        // [meta, bam, bai] — input to MUTECT_CALLING
+    recal_bam_bai   = ch_recal_bam_bai                        // [meta, bam, bai] — input to BAM_VARIANT_CALLING_MUTECT2
     before_table    = BASERECALIBRATOR_FIRST.out.table
     after_table     = BASERECALIBRATOR_SECOND.out.table
     covariates_pdf  = GATK4_ANALYZECOVARIATES.out.plots

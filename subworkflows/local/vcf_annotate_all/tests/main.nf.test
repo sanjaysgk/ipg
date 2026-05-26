@@ -1,0 +1,109 @@
+nextflow_workflow {
+
+    name "Test Subworkflow VCF_ANNOTATE_ALL"
+    script "../main.nf"
+    workflow "VCF_ANNOTATE_ALL"
+    config "./nextflow.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "vcf_annotate_all"
+    tag "stub"
+
+    test("vep only - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                def vcf = file("\${workDir}/test.vcf.gz"); vcf.text = "##fileformat=VCFv4.2\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+                def tbi = file("\${workDir}/test.vcf.gz.tbi"); tbi.text = ""
+                def fa  = file("\${workDir}/chr22.fa"); fa.text = ">chr22\\nACGT\\n"
+                def fai = file("\${workDir}/chr22.fa.fai"); fai.text = "chr22\\t4\\t6\\t4\\t5\\n"
+                def cache = file("\${workDir}/vep_cache"); cache.mkdirs()
+                input[0]  = channel.of([[id:'test'], vcf, tbi])
+                input[1]  = channel.value([[id:'chr22'], fa])
+                input[2]  = channel.value([[id:'chr22'], fai])
+                input[3]  = cache
+                input[4]  = 'GRCh38'
+                input[5]  = 'homo_sapiens'
+                input[6]  = 113
+                input[7]  = []
+                input[8]  = 'GRCh38.105'
+                input[9]  = []
+                input[10] = 'vep'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.vcf_vep, workflow.out.versions).match() }
+            )
+        }
+    }
+
+    test("all three - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                def vcf = file("\${workDir}/test.vcf.gz"); vcf.text = "##fileformat=VCFv4.2\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+                def tbi = file("\${workDir}/test.vcf.gz.tbi"); tbi.text = ""
+                def fa  = file("\${workDir}/chr22.fa"); fa.text = ">chr22\\nACGT\\n"
+                def fai = file("\${workDir}/chr22.fa.fai"); fai.text = "chr22\\t4\\t6\\t4\\t5\\n"
+                def vcache = file("\${workDir}/vep_cache"); vcache.mkdirs()
+                def scache = file("\${workDir}/snpeff_cache"); scache.mkdirs()
+                def am  = file("\${workDir}/AlphaMissense_hg38.tsv.gz"); am.text = "stub"
+                input[0]  = channel.of([[id:'test'], vcf, tbi])
+                input[1]  = channel.value([[id:'chr22'], fa])
+                input[2]  = channel.value([[id:'chr22'], fai])
+                input[3]  = vcache
+                input[4]  = 'GRCh38'
+                input[5]  = 'homo_sapiens'
+                input[6]  = 113
+                input[7]  = scache
+                input[8]  = 'GRCh38.105'
+                input[9]  = am
+                input[10] = 'vep,snpeff,alphamissense'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.vcf_vep, workflow.out.vcf_snpeff, workflow.out.versions).match() }
+            )
+        }
+    }
+
+    test("alphamissense requested but no tsv - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                def vcf = file("\${workDir}/test.vcf.gz"); vcf.text = "##fileformat=VCFv4.2\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+                def tbi = file("\${workDir}/test.vcf.gz.tbi"); tbi.text = ""
+                def fa  = file("\${workDir}/chr22.fa"); fa.text = ">chr22\\nACGT\\n"
+                def fai = file("\${workDir}/chr22.fa.fai"); fai.text = "chr22\\t4\\t6\\t4\\t5\\n"
+                def vcache = file("\${workDir}/vep_cache"); vcache.mkdirs()
+                input[0]  = channel.of([[id:'test'], vcf, tbi])
+                input[1]  = channel.value([[id:'chr22'], fa])
+                input[2]  = channel.value([[id:'chr22'], fai])
+                input[3]  = vcache
+                input[4]  = 'GRCh38'
+                input[5]  = 'homo_sapiens'
+                input[6]  = 113
+                input[7]  = []
+                input[8]  = 'GRCh38.105'
+                input[9]  = []
+                input[10] = 'vep,alphamissense'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success }
+            )
+        }
+    }
+}

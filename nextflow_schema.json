@@ -508,6 +508,63 @@
                     "hidden": true
                 }
             }
+        },
+        "variant_annotation_options": {
+            "title": "Variant annotation options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Configure VEP / SnpEff / AlphaMissense annotation of Mutect2 calls. Published leaf branch; does not feed the cryptic-peptide database.",
+            "properties": {
+                "tools": {
+                    "type": "string",
+                    "pattern": "^((vep|snpeff|alphamissense)(,(vep|snpeff|alphamissense))*)?$",
+                    "description": "Comma-separated annotators to run. Empty/null skips vcf_annotate_all entirely.",
+                    "fa_icon": "fas fa-toolbox"
+                },
+                "vep_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-folder",
+                    "description": "Pre-staged VEP cache dir; auto-downloaded if unset."
+                },
+                "vep_genome": {
+                    "type": "string",
+                    "default": "GRCh38",
+                    "fa_icon": "fas fa-dna",
+                    "description": "VEP genome assembly."
+                },
+                "vep_species": {
+                    "type": "string",
+                    "default": "homo_sapiens",
+                    "fa_icon": "fas fa-dna",
+                    "description": "VEP species."
+                },
+                "vep_cache_version": {
+                    "type": "integer",
+                    "default": 113,
+                    "fa_icon": "fas fa-tag",
+                    "description": "Ensembl VEP cache version."
+                },
+                "snpeff_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-folder",
+                    "description": "Pre-staged SnpEff cache dir; auto-downloaded if unset."
+                },
+                "snpeff_db": {
+                    "type": "string",
+                    "default": "GRCh38.105",
+                    "fa_icon": "fas fa-database",
+                    "description": "SnpEff database name."
+                },
+                "alphamissense_tsv": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "\\.tsv\\.gz$",
+                    "fa_icon": "fas fa-file",
+                    "description": "Path to AlphaMissense_hg38.tsv.gz (sibling .tbi expected). Optional VEP plugin; ignored if 'alphamissense' not in --tools."
+                }
+            }
         }
     },
     "allOf": [
@@ -528,6 +585,9 @@
         },
         {
             "$ref": "#/$defs/post_ms_options"
+        },
+        {
+            "$ref": "#/$defs/variant_annotation_options"
         },
         {
             "$ref": "#/$defs/generic_options"

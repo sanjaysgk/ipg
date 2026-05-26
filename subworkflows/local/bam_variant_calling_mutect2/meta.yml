@@ -1,0 +1,48 @@
+name: bam_variant_calling_mutect2
+description: |
+  Mutect2 tumour-only somatic variant calling with contamination estimation.
+  Implements steps 17-22 of the legacy cryptic peptide pipeline: Mutect2,
+  LearnReadOrientationModel, GetPileupSummaries, CalculateContamination,
+  FilterMutectCalls, and SelectVariants (PASS-only, sites-only output).
+  Curation (step 23) is handled by the separate VCF_CURATE subworkflow.
+keywords:
+  - somatic
+  - mutect2
+  - variant_calling
+  - gatk4
+  - contamination
+components:
+  - gatk4/mutect2
+  - gatk4/learnreadorientationmodel
+  - gatk4/getpileupsummaries
+  - gatk4/calculatecontamination
+  - gatk4/filtermutectcalls
+  - gatk4/selectvariants
+input:
+  - ch_recal_bam_bai:
+      description: Recalibrated BAM and index from BQSR [ val(meta), path(bam), path(bai) ]
+  - ch_fasta:
+      description: Reference genome FASTA [ val(meta), path(fasta) ]
+  - ch_fai:
+      description: Reference genome FASTA index [ val(meta), path(fai) ]
+  - ch_dict:
+      description: Reference genome sequence dictionary [ val(meta), path(dict) ]
+  - ch_germline_resource:
+      description: Germline allele frequency VCF for Mutect2/GetPileupSummaries path(vcf.gz)
+  - ch_germline_tbi:
+      description: Germline resource TBI index path(vcf.gz.tbi)
+output:
+  - vcf:
+      description: PASS-only sites-only VCF from SelectVariants [ val(meta), path(vcf.gz) ]
+  - tbi:
+      description: TBI index for the SelectVariants VCF [ val(meta), path(vcf.gz.tbi) ]
+  - filtered_vcf:
+      description: Full filtered VCF from FilterMutectCalls (before SelectVariants) [ val(meta), path(vcf.gz) ]
+  - contamination:
+      description: Contamination estimate table from CalculateContamination [ val(meta), path(table) ]
+  - versions:
+      description: Software versions
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

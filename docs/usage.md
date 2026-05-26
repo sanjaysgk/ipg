@@ -64,6 +64,31 @@ The pipeline supports three entry points via `--step`:
 | `ms_search`              | Open-source MS database search (MSFragger/Comet/Sage/PEAKS) + mokapot + MS2Rescore + integration    |
 | `post_ms`                | Post-MS search analysis only: two-phase `db_compare` + `origins` on PEAKS/search engine PSM results |
 
+## Variant annotation (optional)
+
+The `vcf_annotate_all` subworkflow annotates the Mutect2 sites-only callset with
+Ensembl VEP and SnpEff. It is a **leaf branch** — annotated VCFs are published to
+`<outdir>/annotation/` and do **not** feed the cryptic-peptide database. It runs
+during `--step db_construct` only when `--tools` is set.
+
+```bash
+nextflow run sanjaysgk/ipg --tools vep,snpeff [other args]
+```
+
+| Param | Default | Notes |
+| --- | --- | --- |
+| `--tools` | `null` | Comma list: `vep`, `snpeff`, `alphamissense`. Unset = annotation skipped. |
+| `--vep_cache` | auto-download | Pre-stage on shared storage (the cache is ~25 GB) and pass the path to avoid re-downloading every run. |
+| `--vep_genome` / `--vep_species` / `--vep_cache_version` | `GRCh38` / `homo_sapiens` / `113` | Must match the staged cache. |
+| `--snpeff_cache` | auto-download | Pre-stage as above. |
+| `--snpeff_db` | `GRCh38.105` | Pin to the cache version. |
+| `--alphamissense_tsv` | `null` | Path to `AlphaMissense_hg38.tsv.gz` (with sibling `.tbi`). Adds the AlphaMissense VEP plugin. Requires `alphamissense` in `--tools`; if the file is unset the plugin is silently skipped. |
+
+VEP and SnpEff caches are auto-downloaded if unset, but on offline HPC nodes you
+should pre-stage them and pass the paths. AlphaMissense data is available from
+[google-deepmind/alphamissense](https://github.com/google-deepmind/alphamissense)
+(hg38 TSV + tabix index).
+
 ## MS search (`--step ms_search`)
 
 Runs up to four search engines in parallel against a target-decoy FASTA, then
