@@ -1,0 +1,39 @@
+nextflow_workflow {
+
+    name "Test Subworkflow IMMUNOINFORMATICS"
+    script "../main.nf"
+    workflow "IMMUNOINFORMATICS"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "immunoinformatics"
+    tag "stub"
+
+    test("immunoinformatics - all tools off - stub") {
+        options "-stub"
+        when {
+            params {
+                run_netmhcpan    = false
+                run_netmhciipan  = false
+                run_gibbscluster = false
+                run_flashlfq     = false
+                run_blastp_host  = false
+            }
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test' ], file("peptides.tsv") ])
+                input[1] = Channel.of([ [ id:'test' ], [ file("a.mzML") ] ])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.report,
+                    workflow.out.versions
+                ).match() }
+            )
+        }
+    }
+}
