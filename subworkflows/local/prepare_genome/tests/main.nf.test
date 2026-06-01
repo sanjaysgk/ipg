@@ -1,0 +1,40 @@
+nextflow_workflow {
+
+    name "Test Subworkflow PREPARE_GENOME"
+    script "../main.nf"
+    workflow "PREPARE_GENOME"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "prepare_genome"
+    tag "stub"
+
+    test("prepare_genome - build all indices - stub") {
+        options "-stub"
+        when {
+            params {
+                genome             = null
+                fasta              = "genome.fasta"
+                gtf                = "genes.gtf"
+                rseqc_bed          = "genes.bed"
+                dbsnp              = "dbsnp.vcf.gz"
+                known_indels       = "known_indels.vcf.gz"
+                mills              = "mills.vcf.gz"
+                germline_resource  = "germline.vcf.gz"
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                // fasta/gtf are pass-throughs of the test inputs (non-portable
+                // absolute paths), so assert only the built indices + versions.
+                { assert snapshot(
+                    workflow.out.fasta_fai,
+                    workflow.out.fasta_dict,
+                    workflow.out.star_index,
+                    workflow.out.versions
+                ).match() }
+            )
+        }
+    }
+}
