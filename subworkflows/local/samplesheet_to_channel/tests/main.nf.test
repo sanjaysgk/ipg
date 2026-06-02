@@ -21,7 +21,7 @@ nextflow_workflow {
                 def base = "\${projectDir}/subworkflows/local/samplesheet_to_channel/tests/inputs"
                 def sheet = file("\${workDir}/samplesheet_db_construct.csv")
                 sheet.text = "sample,fastq_1,fastq_2,strandedness\\n" +
-                             "TEST,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,reverse\\n"
+                    "TEST,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,reverse\\n"
                 input[0] = 'db_construct'
                 input[1] = sheet
                 input[2] = []
@@ -66,7 +66,7 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.failed },
                 { assert workflow.stdout.any { it.contains('--step db_construct requires --input') } ||
-                         workflow.errorReport.contains('--step db_construct requires --input') }
+                    workflow.errorReport.contains('--step db_construct requires --input') }
             )
         }
     }
