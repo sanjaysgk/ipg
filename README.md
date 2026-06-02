@@ -57,7 +57,6 @@ The 31 legacy steps span **three pipeline modes** (`--step db_construct | ms_sea
 
 > Diagram source: [`docs/images/ipg_overview.mmd`](docs/images/ipg_overview.mmd) — re-render with `pixi run nf-metro render docs/images/ipg_overview.mmd -o docs/images/ipg_overview.svg`.
 
-
 ## Quick start
 
 ### 1. Install the dev environment
