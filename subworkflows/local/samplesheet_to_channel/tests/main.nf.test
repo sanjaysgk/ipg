@@ -18,7 +18,7 @@ nextflow_workflow {
                 // Build the samplesheet at runtime: nf-schema resolves relative
                 // CSV paths against the work dir, so write projectDir-absolute
                 // paths to the committed fixtures (keeps the test portable).
-                def base = "\${projectDir}/subworkflows/local/samplesheet_to_channel/tests/data"
+                def base = "\${projectDir}/subworkflows/local/samplesheet_to_channel/tests/inputs"
                 def sheet = file("\${workDir}/samplesheet_db_construct.csv")
                 sheet.text = "sample,fastq_1,fastq_2,strandedness\\n" +
                              "TEST,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,reverse\\n"
