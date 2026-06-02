@@ -1,0 +1,40 @@
+nextflow_workflow {
+
+    name "Test Subworkflow MS_SEARCH"
+    script "../main.nf"
+    workflow "MS_SEARCH"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "ms_search"
+    tag "stub"
+
+    // Single-engine path with MS2Rescore skipped: PREPARE_FASTA -> SAGE ->
+    // MOKAPOT. The heavy rescore/integrate chain is covered by the
+    // module-level stub tests (mokapot, ms2rescore, integrate_engines).
+    test("ms_search - sage, skip ms2rescore - stub") {
+        options "-stub"
+        when {
+            params {
+                ms_engines      = 'sage'
+                instrument      = 'orbitrap'
+                mod_type        = 'mod'
+                skip_ms2rescore = true
+            }
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test' ], [ file("sample.mzML") ] ])
+                input[1] = file("db.fasta")
+                input[2] = [ 'sage' ]
+                input[3] = file("${projectDir}/assets/NO_FILE")
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.versions).match() }
+            )
+        }
+    }
+}
