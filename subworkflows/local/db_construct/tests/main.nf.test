@@ -1,0 +1,42 @@
+nextflow_workflow {
+
+    name "Test Subworkflow DB_CONSTRUCT"
+    script "../main.nf"
+    workflow "DB_CONSTRUCT"
+    config "./nextflow.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "db_construct"
+    tag "stub"
+
+    test("db_construct - reference-only - stub") {
+        options "-stub"
+        when {
+            params {
+                include_variant_peptides = false
+            }
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test' ], file("unmasked.vcf.gz") ])
+                input[1] = Channel.of([ [ id:'test' ], file("indel.vcf.gz") ])
+                input[2] = Channel.of([ [ id:'test' ], file("assembly.gtf") ])
+                input[3] = Channel.of([ [ id:'test' ], file("ref.tracking") ])
+                input[4] = Channel.value([ [ id:'genome' ], file("genome.fasta") ])
+                input[5] = Channel.value([ [ id:'genome' ], file("genome.fasta.fai") ])
+                input[6] = Channel.value([ [ id:'genome' ], file("genome.dict") ])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.cryptic_fasta,
+                    workflow.out.sorted_gtf,
+                    workflow.out.versions
+                ).match() }
+            )
+        }
+    }
+}

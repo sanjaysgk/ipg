@@ -98,19 +98,18 @@ workflow IMMUNOINFORMATICS {
     // Final HTML report per sample. Pads missing inputs with the assets/NO_FILE
     // sentinel so every branch produces a report even when some tools are off.
     //
+    // remainder:true pads unmatched samples with null for absent tool outputs;
+    // ?: swaps each null for the NO_FILE sentinel so every sample still reports.
     def no_file = file("${projectDir}/assets/NO_FILE")
     ch_report_in = ch_peptides
-        .map { meta, pep -> [meta, pep] }
-        .join(ch_netmhcpan_best.map   { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
-        .map   { meta, pep, nmhc1 -> [meta, pep, nmhc1 ?: no_file] }
-        .join(ch_netmhciipan_best.map { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
-        .map   { meta, pep, nmhc1, nmhc2 -> [meta, pep, nmhc1, nmhc2 ?: no_file] }
-        .join(ch_gibbs.map            { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
-        .map   { meta, pep, nmhc1, nmhc2, gbs -> [meta, pep, nmhc1, nmhc2, gbs ?: no_file] }
-        .join(ch_flashlfq.map         { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
-        .map   { meta, pep, nmhc1, nmhc2, gbs, lfq -> [meta, pep, nmhc1, nmhc2, gbs, lfq ?: no_file] }
-        .join(ch_blastp.map           { meta, f -> [meta, f] }.ifEmpty { [null, no_file] }, remainder: true)
-        .map   { meta, pep, nmhc1, nmhc2, gbs, lfq, bp -> [meta, pep, nmhc1, nmhc2, gbs, lfq, bp ?: no_file] }
+        .join(ch_netmhcpan_best,   remainder: true)
+        .join(ch_netmhciipan_best, remainder: true)
+        .join(ch_gibbs,            remainder: true)
+        .join(ch_flashlfq,         remainder: true)
+        .join(ch_blastp,           remainder: true)
+        .map { meta, pep, nmhc1, nmhc2, gbs, lfq, bp ->
+            [meta, pep, nmhc1 ?: no_file, nmhc2 ?: no_file, gbs ?: no_file, lfq ?: no_file, bp ?: no_file]
+        }
 
     IMMUNOINFORMATICS_REPORT(ch_report_in)
     ch_versions = ch_versions.mix(IMMUNOINFORMATICS_REPORT.out.versions)

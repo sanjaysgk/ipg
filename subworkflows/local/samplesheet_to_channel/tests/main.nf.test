@@ -1,0 +1,73 @@
+nextflow_workflow {
+
+    name "Test Subworkflow SAMPLESHEET_TO_CHANNEL"
+    script "../main.nf"
+    workflow "SAMPLESHEET_TO_CHANNEL"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "samplesheet_to_channel"
+
+    // Pure parsing/validation subworkflow (no processes), so no -stub.
+    // Asserts on channel structure rather than file paths (which are
+    // absolute and machine-specific, hence non-portable in a snapshot).
+    test("samplesheet_to_channel - db_construct rnaseq paired-end") {
+        when {
+            workflow {
+                """
+                // Build the samplesheet at runtime: nf-schema resolves relative
+                // CSV paths against the work dir, so write projectDir-absolute
+                // paths to the committed fixtures (keeps the test portable).
+                def base = "\${projectDir}/subworkflows/local/samplesheet_to_channel/tests/inputs"
+                def sheet = file("\${workDir}/samplesheet_db_construct.csv")
+                sheet.text = "sample,fastq_1,fastq_2,strandedness\\n" +
+                    "TEST,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,reverse\\n"
+                input[0] = 'db_construct'
+                input[1] = sheet
+                input[2] = []
+                input[3] = []
+                input[4] = "\${projectDir}/assets/schema_input.json"
+                input[5] = "\${projectDir}/assets/schema_ms_input.json"
+                input[6] = "\${projectDir}/assets/schema_post_ms_input.json"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.rnaseq.size() == 1 },
+                { assert workflow.out.ms == [] },
+                { assert workflow.out.post_ms == [] },
+                // [ meta, [r1, r2] ] — paired-end, strandedness tag preserved
+                { assert workflow.out.rnaseq[0][0].id == 'TEST' },
+                { assert workflow.out.rnaseq[0][0].single_end == false },
+                { assert workflow.out.rnaseq[0][0].strandedness == 'reverse' },
+                { assert workflow.out.rnaseq[0][1].size() == 2 },
+                { assert workflow.out.rnaseq[0][1].collect { file(it).name }.sort() == ['test_R1.fastq.gz', 'test_R2.fastq.gz'] }
+            )
+        }
+    }
+
+    test("samplesheet_to_channel - missing input for step errors") {
+        when {
+            workflow {
+                """
+                input[0] = 'db_construct'
+                input[1] = []
+                input[2] = []
+                input[3] = []
+                input[4] = "\${projectDir}/assets/schema_input.json"
+                input[5] = "\${projectDir}/assets/schema_ms_input.json"
+                input[6] = "\${projectDir}/assets/schema_post_ms_input.json"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.any { it.contains('--step db_construct requires --input') } ||
+                    workflow.errorReport.contains('--step db_construct requires --input') }
+            )
+        }
+    }
+}

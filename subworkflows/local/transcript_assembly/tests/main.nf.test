@@ -1,0 +1,34 @@
+nextflow_workflow {
+
+    name "Test Subworkflow TRANSCRIPT_ASSEMBLY"
+    script "../main.nf"
+    workflow "TRANSCRIPT_ASSEMBLY"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "transcript_assembly"
+    tag "stub"
+
+    test("transcript_assembly - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                def bam = file("\${workDir}/test.bam");   bam.text = "stub\\n"
+                def gtf = file("\${workDir}/ref.gtf");     gtf.text = "stub\\n"
+                def fa  = file("\${workDir}/genome.fasta"); fa.text  = ">chr\\nACGT\\n"
+                def fai = file("\${workDir}/genome.fasta.fai"); fai.text = "chr\\t4\\t6\\t4\\t5\\n"
+                input[0] = channel.of([[id:'test', strandedness:'forward'], bam])
+                input[1] = channel.of([[id:'test'], gtf])
+                input[2] = channel.value([[id:'test'], fa, fai])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.assembly_gtf, workflow.out.combined_gtf, workflow.out.tracking).match() }
+            )
+        }
+    }
+}

@@ -75,14 +75,14 @@ during `--step db_construct` only when `--tools` is set.
 nextflow run sanjaysgk/ipg --tools vep,snpeff [other args]
 ```
 
-| Param | Default | Notes |
-| --- | --- | --- |
-| `--tools` | `null` | Comma list: `vep`, `snpeff`, `alphamissense`. Unset = annotation skipped. |
-| `--vep_cache` | auto-download | Pre-stage on shared storage (the cache is ~25 GB) and pass the path to avoid re-downloading every run. |
-| `--vep_genome` / `--vep_species` / `--vep_cache_version` | `GRCh38` / `homo_sapiens` / `113` | Must match the staged cache. |
-| `--snpeff_cache` | auto-download | Pre-stage as above. |
-| `--snpeff_db` | `GRCh38.105` | Pin to the cache version. |
-| `--alphamissense_tsv` | `null` | Path to `AlphaMissense_hg38.tsv.gz` (with sibling `.tbi`). Adds the AlphaMissense VEP plugin. Requires `alphamissense` in `--tools`; if the file is unset the plugin is silently skipped. |
+| Param                                                    | Default                           | Notes                                                                                                                                                                                     |
+| -------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--tools`                                                | `null`                            | Comma list: `vep`, `snpeff`, `alphamissense`. Unset = annotation skipped.                                                                                                                 |
+| `--vep_cache`                                            | auto-download                     | Pre-stage on shared storage (the cache is ~25 GB) and pass the path to avoid re-downloading every run.                                                                                    |
+| `--vep_genome` / `--vep_species` / `--vep_cache_version` | `GRCh38` / `homo_sapiens` / `113` | Must match the staged cache.                                                                                                                                                              |
+| `--snpeff_cache`                                         | auto-download                     | Pre-stage as above.                                                                                                                                                                       |
+| `--snpeff_db`                                            | `GRCh38.105`                      | Pin to the cache version.                                                                                                                                                                 |
+| `--alphamissense_tsv`                                    | `null`                            | Path to `AlphaMissense_hg38.tsv.gz` (with sibling `.tbi`). Adds the AlphaMissense VEP plugin. Requires `alphamissense` in `--tools`; if the file is unset the plugin is silently skipped. |
 
 VEP and SnpEff caches are auto-downloaded if unset, but on offline HPC nodes you
 should pre-stage them and pass the paths. AlphaMissense data is available from

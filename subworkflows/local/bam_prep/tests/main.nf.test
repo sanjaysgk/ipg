@@ -1,0 +1,38 @@
+nextflow_workflow {
+
+    name "Test Subworkflow BAM_PREP"
+    script "../main.nf"
+    workflow "BAM_PREP"
+    config "./nextflow.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "bam_prep"
+    tag "stub"
+
+    test("bam_prep - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test', single_end:false ], file("aligned.bam") ])
+                input[1] = Channel.of([ [ id:'test', single_end:false ], [ file("r1.fastq.gz"), file("r2.fastq.gz") ] ])
+                input[2] = Channel.value([ [ id:'genome' ], file("genome.fasta") ])
+                input[3] = Channel.value([ [ id:'genome' ], file("genome.fasta.fai") ])
+                input[4] = Channel.value([ [ id:'genome' ], file("genome.dict") ])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.splitncigar_bam,
+                    workflow.out.markdup_metrics,
+                    workflow.out.validate_report,
+                    workflow.out.versions
+                ).match() }
+            )
+        }
+    }
+}

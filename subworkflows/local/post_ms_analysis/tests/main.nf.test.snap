@@ -1,0 +1,50 @@
+{
+    "post_ms_analysis - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "cryptic_decoy_score": 0.5,
+                        "uniprot_decoy_score": 0.5
+                    },
+                    "test_cryptic_only.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "cryptic_decoy_score": 0.5,
+                        "uniprot_decoy_score": 0.5
+                    },
+                    "test_unambiguous_unconventional.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "cryptic_decoy_score": 0.5,
+                        "uniprot_decoy_score": 0.5
+                    },
+                    [
+                        "test_unambiguous_unconventional_origins_discard.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_unambiguous_unconventional_origins_unconventional.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                "versions.yml:md5,516c0058bab69832bdd09e1e20dc3217",
+                "versions.yml:md5,576bb39db14688512b1f57d7cceadf7f",
+                "versions.yml:md5,96f329db76e97be50ec056702c9410ad",
+                "versions.yml:md5,c4c98b7526a8fe6fa36a32607e6b5341"
+            ]
+        ],
+        "timestamp": "2026-05-26T21:05:25.075684285",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

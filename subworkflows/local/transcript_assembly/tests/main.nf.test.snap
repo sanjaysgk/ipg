@@ -1,0 +1,38 @@
+{
+    "transcript_assembly - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "strandedness": "forward"
+                    },
+                    "test.transcripts.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "strandedness": "forward"
+                    },
+                    "test.combined.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "strandedness": "forward"
+                    },
+                    "test.tracking:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-05-26T20:48:20.103127523",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

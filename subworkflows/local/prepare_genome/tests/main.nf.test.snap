@@ -1,0 +1,55 @@
+{
+    "prepare_genome - build all indices - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "reference"
+                    },
+                    "GRCh38.chr22.fa.fai:md5,3d787b51d8c774263f3e384098cc7e86"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "reference"
+                    },
+                    "GRCh38.chr22.dict:md5,9b07bffbe78a387f16223d630974b337"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "reference"
+                    },
+                    [
+                        "Genome:md5,37a6483b536b5148284751d216e5a925",
+                        "Log.out:md5,7c4e43effc5c097dc14c3d2e416e2319",
+                        "SA:md5,e921bf97af543aac39ceb53f4692c72e",
+                        "SAindex:md5,6119d0b0f9b68fda9a0a18f7ad513775",
+                        "chrLength.txt:md5,e909cd14a5a7e4c171e8e51531a9e97f",
+                        "chrName.txt:md5,5ae68a67b70976ee95342a7451cb5af1",
+                        "chrNameLength.txt:md5,3b8cd381d92f11c1a6cd64a01a5c4b66",
+                        "chrStart.txt:md5,62a1f8523d80657c261d47c8bc7e5573",
+                        "exonGeTrInfo.tab:md5,900a80f960e72dd94170f65766e5c8de",
+                        "exonInfo.tab:md5,193b45c73b272f2a55bcd723b426f849",
+                        "geneInfo.tab:md5,e528875fb41ee52d320be596035ef703",
+                        "genomeParameters.txt:md5,5f39335f00c4c47a01851f019ad97c61",
+                        "sjdbInfo.txt:md5,92fc382a5d229f4f6049433c65ad55c3",
+                        "sjdbList.fromGTF.out.tab:md5,85caefa06dbdb4e0e577cb71f5c5c9a3",
+                        "sjdbList.out.tab:md5,ca9f11af0e5efea1398e9e6aacfd1bf5",
+                        "transcriptInfo.tab:md5,366176d740857ada4eb56ce081ead8ce"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-06-01T16:47:42.174503781",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
