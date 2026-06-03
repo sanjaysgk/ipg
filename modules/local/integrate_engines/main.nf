@@ -25,8 +25,13 @@ process INTEGRATE_ENGINES {
     script:
     len_arg = params.peptide_length ?: '9'
     fdr_arg = params.integrate_fdr ?: '0.01'
-    // Pair staged files with engine names; order is preserved.
-    pairs = [engine_names, engine_tsvs].transpose().collect { name, f -> "${name}=${f}" }.join(' ')
+    // Pair staged files with engine names; order is preserved. Coerce to lists first:
+    // with a single engine Nextflow passes a scalar Path/value (not a list), and
+    // transpose() would then iterate the Path's components (pairing name with the
+    // '?/*' stage dir '1' instead of the file). Wrapping guarantees n=1 works too.
+    def names = engine_names instanceof List ? engine_names : [engine_names]
+    def files = engine_tsvs  instanceof List ? engine_tsvs  : [engine_tsvs]
+    pairs = [names, files].transpose().collect { name, f -> "${name}=${f}" }.join(' ')
     template 'integrate_engines.py'
 
     stub:

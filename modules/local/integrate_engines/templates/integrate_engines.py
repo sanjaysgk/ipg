@@ -43,7 +43,7 @@ PEP_COLUMNS = [
 
 
 def pepform2seq(pepform: str) -> str:
-    return re.sub(r"[^A-Z]", "", re.sub(r"\[.*?\]", "", pepform))
+    return re.sub(r"[^A-Z]", "", re.sub(r"\\[.*?\\]", "", pepform))
 
 
 def sort_protein_list(protein_list: str) -> str:
@@ -59,7 +59,7 @@ def parse_fasta_prot_info(fasta: Path) -> dict:
         gene = ""
         species = ""
         if "GN=" in header:
-            m = re.search(r"GN=(\S+)", header)
+            m = re.search(r"GN=(\\S+)", header)
             gene = m.group(1) if m else ""
         if "OS=" in header:
             m = re.search(r"OS=([^=]+?)(?=\\s+[A-Z]{2}=|\$)", header)

@@ -239,8 +239,9 @@ void translate_fasta(FILE *f, FILE *g)
 	if (info.strand == UNKNOWN) {
 		unknown_strand_cnt ++;
 		printf("Transcript with unknown strand not printed:\n\t%s\n", header);
-	} else { 
+	} else {
 		aa = make_translation(seq, &info);
+		format_translation(g, aa, info);
 		for (i = 0; i<3; i++) {
 			if (aa[i] != NULL)
 				free(aa[i]);

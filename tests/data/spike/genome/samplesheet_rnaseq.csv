@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,strandedness
+SPIKE,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_R2.fastq.gz,forward
