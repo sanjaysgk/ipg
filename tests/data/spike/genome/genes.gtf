@@ -1,0 +1,6 @@
+chrSPIKE	synth	gene	1200	1649	.	+	.	gene_id "SPIKE_G1"; transcript_id "SPIKE_T1";
+chrSPIKE	synth	transcript	1200	1649	.	+	.	gene_id "SPIKE_G1"; transcript_id "SPIKE_T1";
+chrSPIKE	synth	exon	1200	1649	.	+	.	gene_id "SPIKE_G1"; transcript_id "SPIKE_T1"; exon_number "1";
+chrSPIKE	synth	gene	2000	2299	.	+	.	gene_id "SPIKE_G2"; transcript_id "SPIKE_T2";
+chrSPIKE	synth	transcript	2000	2299	.	+	.	gene_id "SPIKE_G2"; transcript_id "SPIKE_T2";
+chrSPIKE	synth	exon	2000	2299	.	+	.	gene_id "SPIKE_G2"; transcript_id "SPIKE_T2"; exon_number "1";
