@@ -310,6 +310,12 @@
                     "enum": ["mokapot", "percolator"],
                     "description": "Rescoring engine MS2Rescore uses for final FDR. 'mokapot' runs in-process; 'percolator' shells out to the percolator CLI.",
                     "fa_icon": "fas fa-balance-scale"
+                },
+                "canonical_protein_prefixes": {
+                    "type": "string",
+                    "default": "sp|,tr|",
+                    "description": "Comma-separated accession prefixes marking canonical proteins. Peptides mapping only to non-canonical proteins are classed 'cryptic' by INTEGRATE_ENGINES.",
+                    "fa_icon": "fas fa-tags"
                 }
             }
         },

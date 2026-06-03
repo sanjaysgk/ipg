@@ -25,6 +25,7 @@ process INTEGRATE_ENGINES {
     script:
     len_arg = params.peptide_length ?: '9'
     fdr_arg = params.integrate_fdr ?: '0.01'
+    canonical_prefixes = params.canonical_protein_prefixes ?: 'sp|,tr|'
     // Pair staged files with engine names; order is preserved. Coerce to lists first:
     // with a single engine Nextflow passes a scalar Path/value (not a list), and
     // transpose() would then iterate the Path's components (pairing name with the

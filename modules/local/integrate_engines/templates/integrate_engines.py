@@ -26,7 +26,7 @@ from Bio import SeqIO
 
 OUT_COLUMNS = [
     "scan_id", "run", "peptide", "length", "immuno", "peptidoform",
-    "protein_list", "gene", "species", "description leftmost",
+    "protein_list", "class", "gene", "species", "description leftmost",
     "engine", "psm_qval", "psm_score", "psm_PEP",
     "peptide_qval", "peptide_score", "peptide_PEP",
     "precursor_mz", "retention_time", "ion_mobility",
@@ -35,7 +35,7 @@ OUT_COLUMNS = [
 ]
 
 PEP_COLUMNS = [
-    "peptide", "length", "immuno", "peptidoform", "protein_list",
+    "peptide", "length", "immuno", "peptidoform", "protein_list", "class",
     "gene", "species", "description leftmost", "engine",
     "peptide_qval", "peptide_score", "peptide_PEP",
     "rescoring:spec_pearson", "rescoring:rt_diff_best",
@@ -49,6 +49,16 @@ def pepform2seq(pepform: str) -> str:
 def sort_protein_list(protein_list: str) -> str:
     s = str(protein_list).strip("[]").replace("'", "").replace(", ", ";")
     return ";".join(sorted(p for p in s.split(";") if not p.startswith("rev_")))
+
+
+def classify_peptide(protein_list: str, canonical_prefixes: list[str]) -> str:
+    '''canonical if ANY mapped protein is canonical (UniProt-style accession);
+    cryptic only when every protein is non-canonical. A peptide shared with a
+    canonical protein is NOT a cryptic discovery, so the canonical label wins.'''
+    proteins = [p for p in str(protein_list).split(";") if p]
+    if any(p.startswith(pre) for p in proteins for pre in canonical_prefixes):
+        return "canonical"
+    return "cryptic"
 
 
 def parse_fasta_prot_info(fasta: Path) -> dict:
@@ -73,7 +83,7 @@ def parse_fasta_prot_info(fasta: Path) -> dict:
 
 
 def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
-                     immuno_lengths: list[int],
+                     immuno_lengths: list[int], canonical_prefixes: list[str],
                      fdr: float = 0.01) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(tsv, sep="\\t")
     # PSM- and peptide-level FDR, target only.
@@ -100,6 +110,9 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     })
 
     df["protein_list"] = df["protein_list"].apply(sort_protein_list)
+    df["class"] = df["protein_list"].apply(
+        lambda x: classify_peptide(x, canonical_prefixes)
+    )
     df["gene"] = df["protein_list"].apply(
         lambda x: ";".join(prot_info.get(p, {}).get("gene", "") for p in x.split(";"))
     )
@@ -116,7 +129,8 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     agg = {
         "length": "first", "immuno": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
-        "protein_list": "first", "gene": "first", "species": "first",
+        "protein_list": "first", "class": "first",
+        "gene": "first", "species": "first",
         "description leftmost": "first", "engine": "first",
         "peptide_qval": "min", "peptide_score": "max", "peptide_PEP": "min",
         "rescoring:spec_pearson": "max", "rescoring:rt_diff_best": "min",
@@ -144,14 +158,15 @@ def count_chimera(chimera_psms: pd.DataFrame) -> tuple[dict, dict]:
 
 
 def integrate(engine_tsvs: dict[str, Path], fasta: Path,
-              immuno_lengths: list[int], outdir: Path,
-              fdr: float = 0.01) -> None:
+              immuno_lengths: list[int], canonical_prefixes: list[str],
+              outdir: Path, fdr: float = 0.01) -> None:
     prot_info = parse_fasta_prot_info(fasta)
     psms_all = pd.DataFrame(columns=OUT_COLUMNS)
     peptides_all = pd.DataFrame(columns=PEP_COLUMNS)
 
     for engine, tsv in engine_tsvs.items():
-        psms, peps = read_engine_psms(tsv, engine, prot_info, immuno_lengths, fdr=fdr)
+        psms, peps = read_engine_psms(tsv, engine, prot_info, immuno_lengths,
+                                      canonical_prefixes, fdr=fdr)
         psms_all = pd.concat([psms_all, psms], ignore_index=True)
         peptides_all = pd.concat([peptides_all, peps], ignore_index=True)
 
@@ -168,7 +183,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
         "run": "first",
         "peptide": lambda x: ";".join(pd.Series.unique(x)),
         "length": "first", "immuno": "first",
-        "peptidoform": list, "protein_list": "first",
+        "peptidoform": list, "protein_list": "first", "class": "first",
         "gene": "first", "species": "first",
         "description leftmost": "first",
         "engine": list,
@@ -193,7 +208,8 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     # Aggregate peptides across engines.
     agg_pep = {
         "length": "first", "immuno": "first",
-        "protein_list": "first", "gene": "first", "species": "first",
+        "protein_list": "first", "class": "first",
+        "gene": "first", "species": "first",
         "description leftmost": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
         "engine": list,
@@ -256,6 +272,7 @@ ENGINE_TSV_PAIRS = "${pairs}"   # space-separated "name=path" tokens
 FASTA = "${fasta}"
 PEPTIDE_LENGTH = "${len_arg}"
 FDR = float("${fdr_arg}")
+CANONICAL_PREFIXES = [p for p in "${canonical_prefixes}".split(",") if p]
 PROCESS_NAME = "${task.process}"
 
 if "-" in PEPTIDE_LENGTH:
@@ -265,7 +282,8 @@ else:
     immuno_lengths = [int(PEPTIDE_LENGTH)]
 
 engine_tsvs = parse_engine_tsv_arg(ENGINE_TSV_PAIRS.split())
-integrate(engine_tsvs, Path(FASTA), immuno_lengths, Path("."), fdr=FDR)
+integrate(engine_tsvs, Path(FASTA), immuno_lengths, CANONICAL_PREFIXES,
+          Path("."), fdr=FDR)
 
 with open("versions.yml", "w") as _f:
     _f.write(f'"{PROCESS_NAME}":\\n')
