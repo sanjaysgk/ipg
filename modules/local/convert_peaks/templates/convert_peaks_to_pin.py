@@ -18,7 +18,7 @@ from pathlib import Path
 import pandas as pd
 
 PEAKS_CSV = "${peaks_csv}"
-INDEX2SCAN_PKLS_STR = "${index2scan_pkls.join(' ')}"
+INDEX2SCAN_PKLS_STR = "${idx_pkls.join(' ')}"
 MIN_MATCH = float("${min_match}")
 PROCESS_NAME = "${task.process}"
 

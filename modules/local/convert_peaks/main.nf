@@ -20,6 +20,9 @@ process CONVERT_PEAKS {
 
     script:
     min_match = params.peaks_min_match_fraction ?: 0.98
+    // Coerce to a list: with a single index2scan pickle Nextflow passes a scalar Path, and
+    // .join(' ') would iterate its path components ('idx', 'name.pkl') instead of the file.
+    idx_pkls = index2scan_pkls instanceof List ? index2scan_pkls : [index2scan_pkls]
     template 'convert_peaks_to_pin.py'
 
     stub:
