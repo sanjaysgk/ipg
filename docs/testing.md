@@ -104,24 +104,29 @@ ORFs; Phase 2 ≈ 6 processes / 10 min / ~130 cryptic-peptide PSMs per engine.
 
 ### 2d. Synthetic spike-in positive control (known-answer)
 
-The fastest, deterministic check that the MS-search half works end to end. A planted cryptic
-peptide (`CRYPTICALLY`) must be recovered through
-`PREPARE_FASTA → COMET/SAGE → MOKAPOT → MS2RESCORE → INTEGRATE_ENGINES`. No download — the
-fixtures are generated from a fixed RNG seed (`tests/data/spike/`).
+The fastest, deterministic check of the **whole** pipeline. A planted cryptic peptide
+(`CRYPTICALLY`) must be recovered from synthetic RNAseq into the cryptic FASTA
+(`STAR → StringTie → triple_translate → squish`) **and** from synthetic spectra into the
+integrated table (`COMET/SAGE → MOKAPOT → MS2RESCORE → INTEGRATE_ENGINES`). No download —
+fixtures are generated from a fixed RNG seed (`tests/data/spike/`; regenerate per clone, see
+its README).
 
 ```bash
-# one-time per clone: rewrite the samplesheet's absolute ms_file path for your checkout
-pixi run -e ms2rescore python tests/data/spike/make_synth_spectra.py \
-    --out-mzml tests/data/spike/synth.mzML --out-fasta tests/data/spike/synth_db.fasta
+# MS-search half (~5 min): search the hand-made FASTA
+pixi run nextflow run . -profile pixi,test_spike --outdir results_spike
 
-pixi run nextflow run . -profile pixi,test_spike --outdir results_spike     # ~5 min
+# db_construct half (~3.5 min): build the cryptic FASTA from synthetic RNAseq
+pixi run nextflow run . -profile pixi,test_spike --step db_construct --outdir results_db
 ```
 
-Green = `results_spike/integrate/integrated_peptides.tsv` contains `CRYPTICALLY` at peptide
-q ≤ 0.01 (engines `['comet','sage']`, q ≈ 0.0033). MSFragger is omitted by default (its JAR
-is academic-license-gated); add it with
-`--ms_engines comet,sage,msfragger --msfragger_jar /path/to/MSFragger-4.2.jar`. Details in
+The **full two-phase e2e** (db_construct → search its *own* cryptic FASTA concatenated with a
+background proteome — a cryptic-only DB is too small for Mokapot's FDR) is in
 `tests/data/spike/README.md`.
+
+Green = the relevant `integrate/integrated_peptides.tsv` contains `CRYPTICALLY` at peptide
+q ≤ 0.01 (engines `['comet','sage']`, q ≈ 0.0033), and db_construct's
+`squish/SPIKE_cryptic.fasta` contains it. MSFragger is omitted by default (academic-license
+JAR); add it with `--ms_engines comet,sage,msfragger --msfragger_jar /path/to/MSFragger-4.2.jar`.
 
 ### Profile reference
 
@@ -132,7 +137,7 @@ is academic-license-gated); add it with
 | `test_ms_search_hepg2` | ms_search | HepG2 Orbitrap + mini SwissProt | real MS search |
 | `test_e2e_hepg2_chr22` | db_construct → ms_search | HepG2 chr22 | full two-phase e2e |
 | `test_full` | db_construct | mirrors `test` | placeholder until full-size data is published |
-| `test_spike` | ms_search | synthetic (planted `CRYPTICALLY`) | known-answer positive control |
+| `test_spike` | db_construct → ms_search | synthetic (planted `CRYPTICALLY`) | known-answer positive control (full pipeline) |
 
 > The `post_ms` step has no published test profile yet — it is exercised via its
 > `nf-test` stub (`--tag post_ms_analysis`) and run on real data downstream of `ms_search`.
