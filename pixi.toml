@@ -39,13 +39,11 @@ r-hrbrthemes = ">=0.8.7,<1"
 # MS search + immunoinformatics runtime tools (for --step ms_search under
 # -profile pixi). Matches the per-module environment.yml files so the
 # pipeline works without containers.
-# msfragger pinned to 4.1 — matches vendored SG_Neopep_fragger.params.
-# Upgrade to 4.2 requires regenerating params (separate sprint).
-msfragger = "==4.1"
+msfragger = "==4.2"
 pymzml = ">=2.5.2,<3"
 mokapot = "==0.10.0"
 numpy = "<2"   # mokapot 0.10.0 still references np.float_, removed in numpy 2.0
-comet-ms = ">=2023010,<2024000"   # pinned to match vendored 2023.01 params files
+comet-ms = ">=2026010,<2027000"   # bumped from 2023.01; params regenerated to match
 sage-proteomics = ">=0.14.7,<0.15"
 # ms2rescore + flashlfq have dependency conflicts with the main env
 # (pyopenms→eigen/icu chain, dotnet-runtime). Isolated in per-feature
