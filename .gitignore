@@ -1,4 +1,6 @@
 .nextflow*
+.env
+.env.*
 work/
 data/
 !tests/data/
@@ -64,6 +66,10 @@ tests/data/ipg-db-constructions/variant_calling/
 tests/data/ipg-db-constructions/_prefilter/
 tests/data/ipg-db-constructions/samplesheet_test.csv
 tests/data/e2e_hepg2_chr22/fastq/
+# Synthetic spike control: keep fixtures (mzML/fasta/csv/py/README), drop run artifacts.
+tests/data/spike/work_*/
+tests/data/spike/results_*/
+tests/data/spike/*.log
 *.bak
 
 # IDE settings
