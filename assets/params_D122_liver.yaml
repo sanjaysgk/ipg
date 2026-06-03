@@ -6,7 +6,7 @@
 #       --outdir /fs04/scratch2/xy86/sanjay/ipg-runs/D122_liver_full
 #
 # To build the reference bundle from scratch (or on another machine):
-#   pixi run bash bin/build_full_reference.sh
+#   pixi run bash scripts/build_full_reference.sh
 #   # then use the auto-generated params_reference.yaml instead of this file
 
 input: /fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/assets/samplesheet_D122_liver.csv

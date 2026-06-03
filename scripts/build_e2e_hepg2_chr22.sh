@@ -10,12 +10,12 @@
 # (GRCh38.chr22.fa, gencode.v44.chr22.gtf, STAR index, GATK VCFs).
 #
 # Prerequisites:
-#   - tests/data/ipg-db-constructions/ populated (run bin/build_test_bundle.sh)
-#   - tests/data/ms_search/HepG2_rep*_clean.mzML (run bin/build_test_ms_search_bundle.sh)
+#   - tests/data/ipg-db-constructions/ populated (run scripts/build_test_bundle.sh)
+#   - tests/data/ms_search/HepG2_rep*_clean.mzML (run scripts/build_test_ms_search_bundle.sh)
 #   - samtools in PATH (or pixi env)
 #
 # USAGE:
-#   bash bin/build_e2e_hepg2_chr22.sh
+#   bash scripts/build_e2e_hepg2_chr22.sh
 #
 # Output: tests/data/e2e_hepg2_chr22/
 set -euo pipefail

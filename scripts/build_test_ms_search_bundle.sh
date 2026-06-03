@@ -15,7 +15,7 @@
 # (default: ~/xy86_scratch2/sanjay/singularity_cache/proteowizard.sif)
 #
 # USAGE:
-#   bash bin/build_test_ms_search_bundle.sh
+#   bash scripts/build_test_ms_search_bundle.sh
 #
 # Output lives under tests/data/ms_search/ which is .gitignored — fetch
 # on demand, never commit the ~160 MB of mzMLs.

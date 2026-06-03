@@ -7,7 +7,7 @@
 # All six binaries land in bin/ and are gitignored.
 #
 # Run once per clone:
-#   bash bin/build_ipg_tools.sh
+#   bash scripts/build_ipg_tools.sh
 #
 # Re-run after pulling a new version of containers/ipg-tools/src/.
 set -euo pipefail

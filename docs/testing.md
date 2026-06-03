@@ -63,7 +63,7 @@ Completes in ~15 min on a laptop.
 ```bash
 git clone https://github.com/sanjaysgk/ipg.git
 cd ipg
-bash bin/fetch_test_bundle.sh                       # one-time, downloads the bundle
+bash scripts/fetch_test_bundle.sh                       # one-time, downloads the bundle
 nextflow run . -profile test,docker --outdir results_test
 ```
 
@@ -89,7 +89,7 @@ Chains `db_construct → ms_search` on ENCODE HepG2 chr22 RNAseq + nf-core/mhcqu
 immunopeptidome MS. Build the fixture once, then run the two phases:
 
 ```bash
-bash bin/build_e2e_hepg2_chr22.sh                   # one-time fixture build
+bash scripts/build_e2e_hepg2_chr22.sh                   # one-time fixture build
 
 # Phase 1 — build the cryptic FASTA from RNAseq
 nextflow run . -profile pixi,test_e2e_hepg2_chr22 --step db_construct --outdir results_e2e
@@ -166,7 +166,7 @@ JAR); add it with `--ms_engines comet,sage,msfragger --msfragger_jar /path/to/MS
     └── small_exac_common_3.chr22.vcf.gz + .tbi
 ```
 
-Tarball is ~200 MB compressed; `bin/build_test_bundle.sh` reproduces it byte-for-byte
+Tarball is ~200 MB compressed; `scripts/build_test_bundle.sh` reproduces it byte-for-byte
 (seqtk seed = 42).
 
 ### Regenerating the bundle (maintainer only)
@@ -180,14 +180,14 @@ export FASTQ_R1=/path/to/sample_R1.fastq.gz
 export FASTQ_R2=/path/to/sample_R2.fastq.gz
 export TEST_BUNDLE_DIR=/path/to/output/bundle
 
-bash bin/build_test_bundle.sh
+bash scripts/build_test_bundle.sh
 
 gh release create v0.1.X-test-data ipg-test-bundle-chr22.tar.gz \
     --title 'Test data bundle vX (chr22)' \
     --notes 'chr22-subset reference + 200k-pair FASTQ for -profile test'
 ```
 
-Then update the `URL` default in `bin/fetch_test_bundle.sh` if the bundle layout changes.
+Then update the `URL` default in `scripts/fetch_test_bundle.sh` if the bundle layout changes.
 
 ---
 
