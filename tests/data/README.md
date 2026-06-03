@@ -18,6 +18,7 @@ documenting:
 | [`ipg-db-constructions/`](ipg-db-constructions/README.md) | `--step db_construct` | D100_liver chr22 subset, GRCh38 / GENCODE v44 | ~545 MB | none |
 | [`ms_search/`](ms_search/README.md) | `--step ms_search` | HepG2 from nf-core/mhcquant (PRIDE PXD009752) | ~160 MB | MSFragger optional |
 | [`post_ms/`](post_ms/README.md) | `--step post_ms` | Hand-built synthetic — 10 cryptic + 12 UniProt peptides | ~10 KB | none |
+| [`spike/`](spike/README.md) | `--step ms_search` | Synthetic known-answer — planted cryptic peptide `CRYPTICALLY` | ~1.3 MB | MSFragger optional |
 
 ## Adding a new fixture
 
