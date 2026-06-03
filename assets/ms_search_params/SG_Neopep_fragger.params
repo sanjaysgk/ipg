@@ -47,7 +47,7 @@ diagnostic_fragments = 			# [nglycan/labile search_mode only]. Specify diagnosti
 remainder_fragment_masses = 			# [labile search_mode only] List of possible remainder fragment ions to consider. Remainder masses are partial modification masses left on b/y ions after fragmentation.
 
 search_enzyme_name_1 = nonspecific			# Name of the first enzyme.
-search_enzyme_cut_1 = -			# First enzyme's cutting amino acid.
+search_enzyme_cut_1 = @			# First enzyme's cutting amino acid.
 search_enzyme_nocut_1 = 			# First enzyme's protecting amino acid.
 search_enzyme_sense_1 = C			# First enzyme's cutting terminal.
 allowed_missed_cleavage_1 = 2			# First enzyme's allowed number of missed cleavages per peptide. Maximum value is 5.
