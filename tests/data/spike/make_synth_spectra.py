@@ -79,6 +79,10 @@ def main() -> int:
                     help="ms_search samplesheet to emit (default: samplesheet_ms.csv next "
                          "to --out-mzml). nf-schema validates ms_file against launchDir, so "
                          "the path is written absolute to stay portable across run dirs.")
+    ap.add_argument("--out-peaks", default=None,
+                    help="synthetic PEAKS db.psms.csv to emit (default: db.psms.csv next to "
+                         "--out-mzml). Exercises the --ms_engines peaks branch (CONVERT_PEAKS "
+                         "ingests a PEAKS export — the commercial tool can't be run here).")
     ap.add_argument("--n-background", type=int, default=300)
     ap.add_argument("--n-noise", type=int, default=150,
                     help="random-peak spectra so some matches land on decoys, "
@@ -181,10 +185,37 @@ def main() -> int:
         f.write("sample,ms_file,condition,fraction,replicate\n")
         f.write(f"SPIKE,{os.path.abspath(args.out_mzml)},synthetic,1,rep1\n")
 
+    # ---- PEAKS db.psms.csv (exercises the --ms_engines peaks branch) ----------
+    # PEAKS is commercial and can't be run here; the pipeline ingests its db.psms.csv
+    # export (CONVERT_PEAKS -> mokapot). Emit a synthetic export: target PSMs (scans 1..N,
+    # incl. CRYPTICALLY at scan 1 with a high -10LgP) + decoy PSMs (reversed background
+    # peptides, low -10LgP) so Mokapot/Percolator can fit FDR. Scan = mzML scan index
+    # (index2scan from CONVERT_MZML maps synth_<scan> -> <scan>).
+    peaks_csv = args.out_peaks or os.path.join(
+        os.path.dirname(os.path.abspath(args.out_mzml)), "db.psms.csv")
+    src = os.path.basename(args.out_mzml)
+    bg = peptides[1:]
+    with open(peaks_csv, "w") as f:
+        f.write("Source File,Scan,decoy,Accession,-10LgP,Tag Length,Delta RT,"
+                "MS2 Correlation,ppm,Peptide\n")
+        for i, (pep, _z) in enumerate(charged, start=1):              # target PSMs
+            acc = f"CRYPTIC_SPIKE_{pep}" if pep == CRYPTIC else f"sp|SYN{i - 1:04d}|SYN{i - 1:04d}_HUMAN"
+            lgp = round(rng.uniform(45, 70) if pep == CRYPTIC else rng.uniform(30, 60), 2)
+            f.write(f"{src},{i},False,{acc},{lgp},{len(pep)},{round(rng.uniform(-0.5, 0.5), 3)},"
+                    f"{round(rng.uniform(0.85, 0.98), 3)},{round(rng.uniform(-2, 2), 2)},{pep}\n")
+        for j in range(args.n_noise):                                 # decoy PSMs (low scores)
+            scan = len(charged) + j + 1
+            rev = rng.choice(bg)[::-1]
+            f.write(f"{src},{scan},True,#DECOY#rev_SYN{j:04d},{round(rng.uniform(8, 28), 2)},"
+                    f"{len(rev)},{round(rng.uniform(-3, 3), 3)},{round(rng.uniform(0.2, 0.45), 3)},"
+                    f"{round(rng.uniform(-6, 6), 2)},{rev}\n")
+
     print(f"[make_synth_spectra] wrote {len(charged) + args.n_noise} spectra "
           f"({len(charged)} target + {args.n_noise} decoy-seed) to {args.out_mzml}")
     print(f"[make_synth_spectra] wrote {len(charged)} sequences to {args.out_fasta}")
     print(f"[make_synth_spectra] wrote samplesheet to {samplesheet}")
+    print(f"[make_synth_spectra] wrote PEAKS db.psms.csv to {peaks_csv} "
+          f"({len(charged)} target + {args.n_noise} decoy PSMs)")
     print(f"[make_synth_spectra] planted cryptic peptide: {CRYPTIC}")
     return 0
 

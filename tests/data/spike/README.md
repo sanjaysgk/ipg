@@ -22,6 +22,7 @@ spike/
 ├── synth.mzML                # 451 spectra (301 target + 150 decoy-seed)
 ├── synth_db.fasta            # 301 seqs incl. >CRYPTIC_SPIKE_CRYPTICALLY (MS-half search DB)
 ├── samplesheet_ms.csv        # ms_search input (absolute ms_file path — regenerate per machine)
+├── db.psms.csv               # synthetic PEAKS export (for the --ms_engines peaks branch)
 ├── genome/                   # db_construct fixtures
 │   ├── genome.fa             #   3 kb contig: gene1 carries CRYPTICALLY, gene2 is a sentinel*
 │   ├── genes.gtf, genes.bed
@@ -55,6 +56,10 @@ pixi run nextflow run . -profile pixi,test_spike --outdir results_spike
 
 # db_construct half only (~3.5 min) — builds the cryptic FASTA from synthetic RNAseq
 pixi run nextflow run . -profile pixi,test_spike --step db_construct --outdir results_db
+
+# add the PEAKS branch (ingest-only — the commercial tool isn't run; we feed its export)
+pixi run nextflow run . -profile pixi,test_spike \
+    --ms_engines comet,sage,peaks --peaks_psm_csv tests/data/spike/db.psms.csv --outdir results_spike
 ```
 
 ### Full two-phase e2e (the real known-answer chain)
