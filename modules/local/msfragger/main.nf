@@ -41,8 +41,10 @@ process MSFRAGGER {
     def run_cmd = use_jar
         ? "java -Dfile.encoding=UTF-8 -Xmx${mem}g -jar ${msfragger_jar}"
         : "msfragger ${key_arg}"
+    // grep the version token only: with _JAVA_OPTIONS exported the JVM prints a
+    // "Picked up _JAVA_OPTIONS: ..." banner whose colons would corrupt versions.yml.
     def version_cmd = use_jar
-        ? "java -jar ${msfragger_jar} --version 2>&1 | head -1 || echo unknown"
+        ? "java -jar ${msfragger_jar} --version 2>&1 | grep -m1 -oE 'MSFragger-[0-9.]+' || echo unknown"
         : "echo 'MSFragger 4.1 (bioconda)'"
     """
     # bioconda msfragger wrapper hardcodes -Xmx1g which is too small;
