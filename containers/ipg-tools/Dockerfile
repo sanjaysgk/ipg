@@ -15,7 +15,9 @@
 #                          compatibility with the upstream 2-arg form).
 #                          Originally revert_headers.c in IPG_slurm/.
 #   - alt_liftover.c     — unmodified, kescull/immunopeptidogenomics.
-#   - triple_translate.c — unmodified, kescull/immunopeptidogenomics.
+#   - triple_translate.c — locally fixed (writes the final transcript record,
+#                          which upstream silently dropped) from
+#                          sanjaysgk/immunopeptidogenomics@ac8ca06. See ipg issue #43.
 #   - squish.c           — unmodified, kescull/immunopeptidogenomics.
 #
 # Bundling the sources directly in the repository (rather than git-cloning
