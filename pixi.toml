@@ -62,6 +62,7 @@ bwa = ">=0.7.19,<0.8"
 [feature.ms2rescore.dependencies]
 ms2rescore = "==3.2.1"
 python = ">=3.10,<3.12"
+percolator = ">=3.06"   # optional MS2Rescore rescoring_engine (params.ms2rescore_engine = percolator)
 
 [environments]
 ms2rescore = { features = ["ms2rescore"], no-default-feature = true, solve-group = "ms2rescore" }
