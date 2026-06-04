@@ -211,9 +211,28 @@ def count_chimera(chimera_psms: pd.DataFrame) -> tuple[dict, dict]:
     return count, copep
 
 
+def cryptic_spectral_status(row, min_spec_pearson, max_rt_diff) -> str:
+    '''Class-specific orthogonal-evidence gate. Cryptic peptides lack database
+    corroboration, so MS2PIP fragment correlation and DeepLC RT agreement are
+    independent evidence the PSM is real. Canonical peptides are not gated; when
+    no threshold is configured cryptic peptides are flagged 'not_filtered'.'''
+    if str(row.get("class", "")) != "cryptic":
+        return ""
+    if min_spec_pearson is None and max_rt_diff is None:
+        return "not_filtered"
+    sp = row.get("rescoring:spec_pearson")
+    rt = row.get("rescoring:rt_diff_best")
+    if min_spec_pearson is not None and (pd.isna(sp) or sp < min_spec_pearson):
+        return "fail"
+    if max_rt_diff is not None and (pd.isna(rt) or rt > max_rt_diff):
+        return "fail"
+    return "pass"
+
+
 def integrate(engine_tsvs: dict[str, Path], fasta: Path,
               immuno_lengths: list[int], canonical_prefixes: list[str],
-              outdir: Path, fdr: float = 0.01) -> None:
+              outdir: Path, fdr: float = 0.01,
+              min_spec_pearson=None, max_rt_diff=None) -> None:
     prot_info = parse_fasta_prot_info(fasta)
     psms_all = pd.DataFrame(columns=OUT_COLUMNS)
     peptides_all = pd.DataFrame(columns=PEP_COLUMNS)
@@ -287,6 +306,10 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     peptides["#chimeric_peptides"] = (
         peptides["peptide"].map(chimera_pep).fillna("NA").astype(str)
     )
+    peptides["spectral_status"] = peptides.apply(
+        lambda r: cryptic_spectral_status(r, min_spec_pearson, max_rt_diff),
+        axis=1,
+    )
 
     psms_total = psms.groupby("peptide").size().reset_index(name="PSMs_total")
     peptides = peptides.merge(psms_total, on="peptide", how="left")
@@ -327,6 +350,8 @@ FASTA = "${fasta}"
 PEPTIDE_LENGTH = "${len_arg}"
 FDR = float("${fdr_arg}")
 CANONICAL_PREFIXES = [p for p in "${canonical_prefixes}".split(",") if p]
+MIN_SPEC_PEARSON = float("${min_spec_pearson}") if "${min_spec_pearson}" else None
+MAX_RT_DIFF = float("${max_rt_diff}") if "${max_rt_diff}" else None
 PROCESS_NAME = "${task.process}"
 
 if "-" in PEPTIDE_LENGTH:
@@ -337,7 +362,8 @@ else:
 
 engine_tsvs = parse_engine_tsv_arg(ENGINE_TSV_PAIRS.split())
 integrate(engine_tsvs, Path(FASTA), immuno_lengths, CANONICAL_PREFIXES,
-          Path("."), fdr=FDR)
+          Path("."), fdr=FDR,
+          min_spec_pearson=MIN_SPEC_PEARSON, max_rt_diff=MAX_RT_DIFF)
 
 with open("versions.yml", "w") as _f:
     _f.write(f'"{PROCESS_NAME}":\\n')

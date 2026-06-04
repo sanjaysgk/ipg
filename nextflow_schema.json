@@ -322,6 +322,16 @@
                     "default": false,
                     "description": "Run PepQuery2 spectrum-level validation on the cryptic peptide subset; annotates pepquery_status onto the integrated peptides.",
                     "fa_icon": "fas fa-check-double"
+                },
+                "cryptic_min_spec_pearson": {
+                    "type": "number",
+                    "description": "Minimum MS2PIP spectral (fragment-intensity) Pearson correlation for a cryptic peptide to be flagged spectral_status=pass. Unset = annotate only.",
+                    "fa_icon": "fas fa-wave-square"
+                },
+                "cryptic_max_rt_diff": {
+                    "type": "number",
+                    "description": "Maximum DeepLC retention-time error for a cryptic peptide to be flagged spectral_status=pass. Unset = annotate only.",
+                    "fa_icon": "fas fa-clock"
                 }
             }
         },
