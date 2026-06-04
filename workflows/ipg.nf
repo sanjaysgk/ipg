@@ -27,6 +27,7 @@ include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/mai
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
 include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
 include { ANNOTATE_ORIGIN     } from '../modules/local/annotate_origin/main'
+include { CRYPTIC_REPORT      } from '../modules/local/cryptic_report/main'
 include { IMMUNOINFORMATICS   } from '../subworkflows/local/immunoinformatics/main'
 
 /*
@@ -143,6 +144,21 @@ workflow IPG {
             )
             ch_versions    = ch_versions.mix(ANNOTATE_ORIGIN.out.versions)
             ch_ms_peptides = ANNOTATE_ORIGIN.out.peptides
+        }
+
+        //
+        // Optional cryptic-discovery HTML report: class breakdown, cross-engine
+        // corroboration, PepQuery/spectral confidence, novelty class + origin,
+        // before/after-rescore shift by class.
+        //
+        if (params.run_cryptic_report) {
+            ch_report_in = ch_ms_peptides.join(
+                MS_SEARCH.out.rescored_per_eng
+                    .map { meta, _eng, f -> [meta, f] }
+                    .groupTuple(by: 0)
+            )   // [meta, peptides_tsv, [rescored tsvs]]
+            CRYPTIC_REPORT(ch_report_in)
+            ch_versions = ch_versions.mix(CRYPTIC_REPORT.out.versions)
         }
 
         //

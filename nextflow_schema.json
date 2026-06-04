@@ -356,6 +356,12 @@
                     "format": "file-path",
                     "description": "gffcompare .tmap (FPKM/TPM/length) used by --run_annotate_origin.",
                     "fa_icon": "fas fa-file"
+                },
+                "run_cryptic_report": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Generate a self-contained cryptic-discovery HTML report (class breakdown, cross-engine corroboration, PepQuery/spectral confidence, novelty class, origin, rescore shift).",
+                    "fa_icon": "fas fa-chart-bar"
                 }
             }
         },
