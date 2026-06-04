@@ -45,6 +45,7 @@ mokapot = "==0.10.0"
 numpy = "<2"   # mokapot 0.10.0 still references np.float_, removed in numpy 2.0
 comet-ms = ">=2026010,<2027000"   # bumped from 2023.01; params regenerated to match
 sage-proteomics = ">=0.14.7,<0.15"
+pepquery = ">=2.0.2,<3"   # PepQuery2 cryptic validation (--run_pepquery); Java/noarch, uses openjdk above
 # ms2rescore + flashlfq have dependency conflicts with the main env
 # (pyopenms→eigen/icu chain, dotnet-runtime). Isolated in per-feature
 # pixi environments below. Use `pixi run -e ms2rescore ...` to invoke.
