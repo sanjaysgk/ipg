@@ -332,6 +332,30 @@
                     "type": "number",
                     "description": "Maximum DeepLC retention-time error for a cryptic peptide to be flagged spectral_status=pass. Unset = annotate only.",
                     "fa_icon": "fas fa-clock"
+                },
+                "run_annotate_origin": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Backtrack cryptic peptides to their RNA-seq source ORF/transcript/gene/locus/novelty-class using the 3-frame translation + gffcompare .tracking (no network).",
+                    "fa_icon": "fas fa-dna"
+                },
+                "origin_orf_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "3-frame translated ORF FASTA (TRIPLE_TRANSLATE output) used by --run_annotate_origin.",
+                    "fa_icon": "fas fa-file"
+                },
+                "origin_gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "gffcompare .combined.gtf (gene/locus/class/tss/coords) used by --run_annotate_origin.",
+                    "fa_icon": "fas fa-file"
+                },
+                "origin_tmap": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "gffcompare .tmap (FPKM/TPM/length) used by --run_annotate_origin.",
+                    "fa_icon": "fas fa-file"
                 }
             }
         },
