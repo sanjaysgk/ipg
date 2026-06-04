@@ -1,0 +1,51 @@
+{
+    "cryptic_report - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_cryptic_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_cryptic_summary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,71d1fc0b350cd41c63c22fec506b9a81"
+                ],
+                "html": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_cryptic_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_cryptic_summary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,71d1fc0b350cd41c63c22fec506b9a81"
+                ]
+            }
+        ],
+        "timestamp": "2026-06-04T12:01:02.176470065",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

@@ -1,0 +1,30 @@
+nextflow_process {
+
+    name "Test Process PEPQUERY_ANNOTATE"
+    script "../main.nf"
+    process "PEPQUERY_ANNOTATE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "pepquery_annotate"
+    tag "stub"
+
+    test("pepquery_annotate - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep = file("\${workDir}/integrated_peptides.tsv"); pep.text = "peptide\\tclass\\n"
+                def pq  = file("\${workDir}/psm_rank.txt");            pq.text = "peptide\\tconfident\\n"
+                input[0] = [ [ id:'test' ], pep, pq ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

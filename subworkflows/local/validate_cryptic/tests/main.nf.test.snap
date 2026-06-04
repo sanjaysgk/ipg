@@ -1,0 +1,14 @@
+{
+    "validate_cryptic - stub": {
+        "content": [
+            [
+                "versions.yml:md5,0e41c2a055895c4e8b2b73fec4036a04"
+            ]
+        ],
+        "timestamp": "2026-06-04T12:01:38.700021514",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
