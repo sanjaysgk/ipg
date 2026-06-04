@@ -20,6 +20,7 @@ import re
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from Bio import SeqIO
 
@@ -54,11 +55,52 @@ def sort_protein_list(protein_list: str) -> str:
 def classify_peptide(protein_list: str, canonical_prefixes: list[str]) -> str:
     '''canonical if ANY mapped protein is canonical (UniProt-style accession);
     cryptic only when every protein is non-canonical. A peptide shared with a
-    canonical protein is NOT a cryptic discovery, so the canonical label wins.'''
-    proteins = [p for p in str(protein_list).split(";") if p]
+    canonical protein is NOT a cryptic discovery, so the canonical label wins.
+    Strips the rev_ decoy prefix first so a decoy inherits its target's class
+    (rev_sp|.. -> canonical, rev_TCONS.. -> cryptic), which separated-class FDR
+    relies on. Accepts the raw "['sp|..']" repr or a ;-joined accession list.'''
+    s = str(protein_list).strip("[]").replace("'", "").replace(", ", ";")
+    proteins = [p[4:] if p.startswith("rev_") else p for p in s.split(";") if p]
     if any(p.startswith(pre) for p in proteins for pre in canonical_prefixes):
         return "canonical"
     return "cryptic"
+
+
+def _tdc_q(score, is_decoy):
+    '''Monotone target-decoy q-values for one competition (high score = better).
+    q(s) = min over t<=s of (#decoys>=t)/(#targets>=t); matches mokapot semantics.'''
+    s = np.asarray(score, dtype=float)
+    d = np.asarray(is_decoy, dtype=bool)
+    order = np.argsort(-s, kind="mergesort")
+    d_sorted = d[order]
+    fdr = np.cumsum(d_sorted) / np.maximum(np.cumsum(~d_sorted), 1)
+    q_sorted = np.minimum.accumulate(fdr[::-1])[::-1]
+    out = np.empty_like(q_sorted)
+    out[order] = q_sorted
+    return out
+
+
+def class_separated_psm_q(df: pd.DataFrame, score_col: str) -> pd.Series:
+    '''PSM-level TDC q estimated independently within each class group, so
+    cryptic targets compete only against cryptic decoys (never canonical).'''
+    q = pd.Series(1.0, index=df.index, dtype=float)
+    for _, idx in df.groupby("class").groups.items():
+        sub = df.loc[idx]
+        q.loc[idx] = _tdc_q(sub[score_col].to_numpy(), sub["_decoy"].to_numpy())
+    return q
+
+
+def class_separated_peptide_q(df: pd.DataFrame):
+    '''Peptide-level TDC q within class: best peptide_score per
+    (class, peptide, decoy), competed within class, mapped back to every PSM.'''
+    rep = df.groupby(["class", "peptide", "_decoy"], as_index=False)["peptide_score"].max()
+    rep["pq"] = 1.0
+    for _, idx in rep.groupby("class").groups.items():
+        sub = rep.loc[idx]
+        rep.loc[idx, "pq"] = _tdc_q(sub["peptide_score"].to_numpy(), sub["_decoy"].to_numpy())
+    merged = df.merge(rep[["class", "peptide", "_decoy", "pq"]],
+                      on=["class", "peptide", "_decoy"], how="left")
+    return merged["pq"].to_numpy()
 
 
 def parse_fasta_prot_info(fasta: Path) -> dict:
@@ -86,33 +128,45 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
                      immuno_lengths: list[int], canonical_prefixes: list[str],
                      fdr: float = 0.01) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(tsv, sep="\\t")
-    # PSM- and peptide-level FDR, target only.
+    if df.empty:
+        return (pd.DataFrame(columns=OUT_COLUMNS),
+                pd.DataFrame(columns=PEP_COLUMNS))
+
+    # Classify EVERY PSM (targets + decoys); a decoy inherits its target's class
+    # via rev_-stripping so each class gets its own target-decoy competition.
+    df["class"] = df["protein_list"].apply(
+        lambda x: classify_peptide(x, canonical_prefixes)
+    )
+    df["_decoy"] = df["is_decoy"].astype(bool)
+    df["peptide"] = df["peptidoform"].apply(pepform2seq)
+    df = df.rename(columns={
+        "score": "psm_score", "pep": "psm_PEP",
+        "meta:peptide_score": "peptide_score",
+        "meta:peptide_pep": "peptide_PEP",
+    })
+
+    # Separated-class FDR: cryptic targets compete only against cryptic decoys,
+    # canonical only against canonical. Replaces the canonical-dominated global q
+    # so the cryptic subset is not swamped by the canonical majority.
+    df["psm_qval"] = class_separated_psm_q(df, "psm_score")
+    df["peptide_qval"] = class_separated_peptide_q(df)
+
+    # Class-specific PSM- and peptide-level FDR cut, target only.
     df = df[
-        (df["qvalue"] <= fdr)
-        & (df["meta:peptide_qvalue"] <= fdr)
-        & (~df["is_decoy"].astype(bool))
+        (df["psm_qval"] <= fdr)
+        & (df["peptide_qval"] <= fdr)
+        & (~df["_decoy"])
     ].copy()
     if df.empty:
         return (pd.DataFrame(columns=OUT_COLUMNS),
                 pd.DataFrame(columns=PEP_COLUMNS))
 
-    df["peptide"] = df["peptidoform"].apply(pepform2seq)
     df["length"] = df["peptide"].str.len()
     df["engine"] = engine
     df["scan_id"] = df["run"] + "_" + df["spectrum_id"].astype(str)
-
-    df = df.sort_values(by=["qvalue", "pep"], ascending=[True, True])
-    df = df.rename(columns={
-        "qvalue": "psm_qval", "score": "psm_score", "pep": "psm_PEP",
-        "meta:peptide_qvalue": "peptide_qval",
-        "meta:peptide_score": "peptide_score",
-        "meta:peptide_pep": "peptide_PEP",
-    })
+    df = df.sort_values(by=["psm_qval", "psm_PEP"], ascending=[True, True])
 
     df["protein_list"] = df["protein_list"].apply(sort_protein_list)
-    df["class"] = df["protein_list"].apply(
-        lambda x: classify_peptide(x, canonical_prefixes)
-    )
     df["gene"] = df["protein_list"].apply(
         lambda x: ";".join(prot_info.get(p, {}).get("gene", "") for p in x.split(";"))
     )
