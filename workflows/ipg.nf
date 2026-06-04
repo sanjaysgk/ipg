@@ -25,6 +25,7 @@ include { VCF_ANNOTATE_ALL    } from '../subworkflows/local/vcf_annotate_all/mai
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
+include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
 include { IMMUNOINFORMATICS   } from '../subworkflows/local/immunoinformatics/main'
 
 /*
@@ -113,13 +114,25 @@ workflow IPG {
         ch_versions = ch_versions.mix(MS_SEARCH.out.versions)
 
         //
+        // Optional PepQuery2 spectrum-level validation of the cryptic subset.
+        // Annotates pepquery_status onto the integrated peptides before any
+        // downstream analysis consumes them.
+        //
+        ch_ms_peptides = MS_SEARCH.out.peptides
+        if (params.run_pepquery) {
+            VALIDATE_CRYPTIC(MS_SEARCH.out.peptides, MS_SEARCH.out.mgf, ch_search_fasta)
+            ch_versions    = ch_versions.mix(VALIDATE_CRYPTIC.out.versions)
+            ch_ms_peptides = VALIDATE_CRYPTIC.out.peptides
+        }
+
+        //
         // Optional immunoinformatics analysis on integrated peptides.
         // Only triggers any downstream work if at least one --run_* flag is set.
         //
         if (params.run_netmhcpan || params.run_netmhciipan
                 || params.run_gibbscluster || params.run_flashlfq
                 || params.run_blastp_host) {
-            IMMUNOINFORMATICS(MS_SEARCH.out.peptides, ch_ms_data)
+            IMMUNOINFORMATICS(ch_ms_peptides, ch_ms_data)
             ch_versions = ch_versions.mix(IMMUNOINFORMATICS.out.versions)
         }
 

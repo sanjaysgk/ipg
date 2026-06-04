@@ -316,6 +316,12 @@
                     "default": "sp|,tr|",
                     "description": "Comma-separated accession prefixes marking canonical proteins. Peptides mapping only to non-canonical proteins are classed 'cryptic' by INTEGRATE_ENGINES.",
                     "fa_icon": "fas fa-tags"
+                },
+                "run_pepquery": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run PepQuery2 spectrum-level validation on the cryptic peptide subset; annotates pepquery_status onto the integrated peptides.",
+                    "fa_icon": "fas fa-check-double"
                 }
             }
         },

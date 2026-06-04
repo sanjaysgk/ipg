@@ -1,0 +1,36 @@
+name: "pepquery_annotate"
+description: Annotate integrated peptides with PepQuery2 confident/not_confident status
+keywords:
+  - proteomics
+  - proteogenomics
+  - validation
+  - immunopeptidomics
+tools:
+  - python:
+      description: "Merge PepQuery2 psm_rank verdicts onto the integrated peptide table"
+      homepage: https://www.python.org/
+      licence: ["PSF"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides_tsv:
+        type: file
+        description: integrated_peptides.tsv from INTEGRATE_ENGINES
+        pattern: "*.tsv"
+    - psm_rank:
+        type: file
+        description: PepQuery2 psm_rank.txt with the confident column
+        pattern: "psm_rank.txt"
+output:
+  - peptides:
+      - meta:
+          type: map
+      - "integrated_peptides_validated.tsv":
+          type: file
+          description: Integrated peptides with pepquery_status + pepquery_pvalue columns
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

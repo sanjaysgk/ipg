@@ -241,6 +241,7 @@ workflow MS_SEARCH {
     peptides          = ch_integrated_peptides
     chimeric          = ch_integrated_chimeric
     calibrated_mzml   = ch_calibrated_mzml
+    mgf               = ch_mgf_per_sample
     rescored_per_eng  = ch_rescored
     versions          = ch_versions
 }

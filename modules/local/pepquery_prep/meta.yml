@@ -1,0 +1,40 @@
+name: "pepquery_prep"
+description: Build PepQuery2 inputs — cryptic peptide list + canonical-only reference FASTA
+keywords:
+  - proteomics
+  - proteogenomics
+  - validation
+  - immunopeptidomics
+tools:
+  - python:
+      description: "Extract cryptic peptides and filter the canonical reference proteome"
+      homepage: https://www.python.org/
+      licence: ["PSF"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides_tsv:
+        type: file
+        description: integrated_peptides.tsv from INTEGRATE_ENGINES (carries the class column)
+        pattern: "*.tsv"
+  - - search_fasta:
+        type: file
+        description: Target search FASTA (canonical + cryptic) to derive the canonical reference from
+        pattern: "*.{fasta,fa}"
+output:
+  - peptides:
+      - meta:
+          type: map
+      - "cryptic_peptides.txt":
+          type: file
+          description: Cryptic-class peptide sequences, one per line
+  - ref_fasta:
+      - "canonical_ref.fasta":
+          type: file
+          description: Canonical-only reference proteome for PepQuery competition
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

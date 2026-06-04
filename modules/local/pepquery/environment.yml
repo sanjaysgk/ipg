@@ -1,0 +1,6 @@
+name: pepquery
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::pepquery=2.0.2
