@@ -64,7 +64,7 @@ process MS2RESCORE {
 
     stub:
     """
-    touch ${engine}.psms.tsv ${engine}_rescore_input.tsv ${engine}.report.html ${engine}_pipeline_log.txt
+    touch ${engine}.psms.tsv ${engine}_rescore_input.tsv ${engine}_pipeline_log.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
