@@ -31,6 +31,10 @@ workflow ALIGN_QC {
     // because doing so breaks the YAML loader in utils_nfcore_pipeline.
     ch_versions = channel.empty()
 
+    // Reference is a singleton — make it a value channel so it broadcasts to
+    // every rep (a queue channel would throttle per-rep processes to one run).
+    ch_fasta = ch_fasta.first()
+
     //
     // Step 01: STAR two-pass alignment
     //

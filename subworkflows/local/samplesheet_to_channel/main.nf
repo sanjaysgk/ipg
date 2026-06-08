@@ -41,18 +41,34 @@ workflow SAMPLESHEET_TO_CHANNEL {
     }
 
     // ---- RNAseq samplesheet (params.input) -------------------------------------
+    // A sample may appear on multiple rows (lanes / technical reps). Each row
+    // is one rep, aligned separately with its own read group (rg1, rg2... by
+    // fastq name so STAR and FastqToSam agree), then merged at MarkDuplicates.
+    // A single-row sample keeps meta.id = sample, unchanged from before.
     if ( step == 'db_construct' ) {
         ch_rnaseq = Channel
             .fromList(samplesheetToList(input, schema_input))
             .map { meta, fastq_1, fastq_2 ->
-                if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end: true  ], [ file(fastq_1) ] ]
-                } else {
-                    return [ meta.id, meta + [ single_end: false ], [ file(fastq_1), file(fastq_2) ] ]
-                }
+                def reads = fastq_2 ? [ file(fastq_1), file(fastq_2) ] : [ file(fastq_1) ]
+                [ meta.id, meta + [ single_end: !fastq_2 ], reads ]
             }
             .groupTuple()
-            .map { _id, metas, fastqs -> [ metas[0], fastqs.flatten() ] }
+            .flatMap { id, metas, reads_list ->
+                def n    = metas.size()
+                def reps = (0..<n)
+                    .collect { [ m: metas[it], reads: reads_list[it] ] }
+                    .sort { it.reads[0].name }
+                reps.withIndex().collect { rep, i ->
+                    def k = i + 1
+                    // Single-rep sample: leave meta untouched (id = sample), so
+                    // existing samplesheets produce byte-identical metas. Only
+                    // multi-rep samples gain the per-rep tags + unique id.
+                    def m = n == 1
+                        ? rep.m
+                        : rep.m + [ sample: id, rep: k, num_reps: n, read_group: "rg${k}", id: "${id}_rg${k}" ]
+                    [ m, rep.reads ]
+                }
+            }
     } else {
         ch_rnaseq = Channel.empty()
     }

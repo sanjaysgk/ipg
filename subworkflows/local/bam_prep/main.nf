@@ -40,6 +40,12 @@ workflow BAM_PREP {
     // rationale on why we do not mix them into ch_versions.
     ch_versions = channel.empty()
 
+    // References are singletons — value channels so they broadcast to every
+    // rep (queue channels would throttle the per-rep processes to one run).
+    ch_fasta = ch_fasta.first()
+    ch_fai   = ch_fai.first()
+    ch_dict  = ch_dict.first()
+
     //
     // Step 07: sort aligned BAM by queryname for MergeBamAlignment
     //
@@ -47,7 +53,9 @@ workflow BAM_PREP {
     // to add a '.qnsort' suffix.
     SAMTOOLS_SORT(
         ch_star_bam,
-        ch_fasta.combine(ch_fai.map { _meta, fai -> fai }).map { meta, fasta, fai -> [meta, fasta, fai] },
+        // .first() re-broadcasts: combine() yields a queue channel even from
+        // value inputs, which would throttle this to one rep.
+        ch_fasta.combine(ch_fai.map { _meta, fai -> fai }).map { meta, fasta, fai -> [meta, fasta, fai] }.first(),
         /* index_format = */ ''
     )
 
@@ -67,11 +75,21 @@ workflow BAM_PREP {
     )
 
     //
-    // Step 10: mark duplicates
-    // GATK4_MARKDUPLICATES takes bare path fasta / path fai (not tuples)
+    // Step 10: mark duplicates, merging a sample's technical reps here.
+    // Group per-rep BAMs by meta.sample; MarkDuplicates takes one --INPUT per
+    // BAM. Single-rep samples group by meta.id into a one-element list, i.e.
+    // the original single-BAM path. fasta/fai are bare paths, not tuples.
     //
+    ch_markdup_input = GATK4_MERGEBAMALIGNMENT.out.bam
+        .map { meta, bam -> [ meta.sample ?: meta.id, meta, bam ] }
+        .groupTuple()
+        .map { sample, metas, bams ->
+            def keep = metas[0].keySet() - ['rep', 'read_group', 'num_reps', 'sample']
+            [ metas[0].subMap(keep) + [ id: sample ], bams ]
+        }
+
     GATK4_MARKDUPLICATES(
-        GATK4_MERGEBAMALIGNMENT.out.bam,
+        ch_markdup_input,
         ch_fasta.map { _meta, fasta -> fasta },
         ch_fai.map  { _meta, fai   -> fai   }
     )
@@ -107,6 +125,7 @@ workflow BAM_PREP {
 
     emit:
     splitncigar_bam = GATK4_SPLITNCIGARREADS.out.bam             // [meta, bam]  — input to BQSR
+    markdup_bam     = GATK4_MARKDUPLICATES.out.bam               // [meta, bam]  — merged, coord-sorted; feeds transcript assembly
     markdup_metrics = GATK4_MARKDUPLICATES.out.metrics           // [meta, metrics.txt]
     validate_report = GATK4_VALIDATESAMFILE.out.summary          // [meta, txt]
     versions        = ch_versions
