@@ -311,6 +311,28 @@
                     "description": "Rescoring engine MS2Rescore uses for final FDR. 'mokapot' runs in-process; 'percolator' shells out to the percolator CLI.",
                     "fa_icon": "fas fa-balance-scale"
                 },
+                "ms2rescore_write_report": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Write the MS2Rescore HTML QC report. Off by default because the DeepLC RT scatter aborts when retention-time predictions are sparse (small or low-ID databases).",
+                    "fa_icon": "fas fa-file-code"
+                },
+                "mokapot_train_fdr": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "mokapot INTERNAL model-training FDR (not the reported FDR). Raise toward 0.5 for small or low-ID databases where mokapot cannot calibrate at a tight threshold; final FDR control is integrate_fdr.",
+                    "fa_icon": "fas fa-graduation-cap"
+                },
+                "mokapot_test_fdr": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "mokapot INTERNAL score-calibration FDR (not the reported FDR). Raise toward 0.5 for small or low-ID databases; mokapot aborts with 'no target PSMs below eval_fdr' if it is too tight.",
+                    "fa_icon": "fas fa-balance-scale-right"
+                },
                 "canonical_protein_prefixes": {
                     "type": "string",
                     "default": "sp|,tr|",
