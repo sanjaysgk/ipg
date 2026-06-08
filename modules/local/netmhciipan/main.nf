@@ -3,7 +3,7 @@ process NETMHCIIPAN {
     label 'process_low'
 
     // netMHCIIpan-4.3 is closed-source, academic-license. Binary supplied by user.
-    conda "conda-forge::python>=3.9 conda-forge::pandas>=1.5"
+    conda "${moduleDir}/environment.yml"
 
     input:
     tuple val(meta), path(peptides_tsv)

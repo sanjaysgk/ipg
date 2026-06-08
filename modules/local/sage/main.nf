@@ -2,7 +2,7 @@ process SAGE {
     tag "${meta.id}"
     label 'process_medium'
 
-    conda "bioconda::sage-proteomics=0.14.7"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/sage-proteomics:0.14.7--h92b4e83_0' :
         'biocontainers/sage-proteomics:0.14.7--h92b4e83_0' }"
