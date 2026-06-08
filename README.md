@@ -77,7 +77,7 @@ If you don't have pixi: `curl -fsSL https://pixi.sh/install.sh | bash`.
 ### 2. Build the chr22 test bundle (~5 minutes, one time)
 
 ```bash
-pixi run bash bin/build_test_bundle.sh
+pixi run bash scripts/build_test_bundle.sh
 ```
 
 By default this writes to `/fs04/scratch2/xy86/sanjay/ipg-test-data/`. Override
@@ -89,11 +89,11 @@ REFERENCE_DIR=/path/to/GRCh38 \
 VARIANT_DIR=/path/to/variant-resources \
 FASTQ_R1=/path/to/sample_R1.fq.gz \
 FASTQ_R2=/path/to/sample_R2.fq.gz \
-pixi run bash bin/build_test_bundle.sh
+pixi run bash scripts/build_test_bundle.sh
 ```
 
 The bundle is **never committed to git** — only the build script is. See
-[`bin/build_test_bundle.sh`](bin/build_test_bundle.sh) for the exact recipe.
+[`scripts/build_test_bundle.sh`](scripts/build_test_bundle.sh) for the exact recipe.
 
 ### 3. Run the pipeline against the test bundle
 
@@ -259,7 +259,7 @@ results/
 
 | Profile                     | Purpose                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `test`                      | Use the chr22 test bundle (built by `bin/build_test_bundle.sh`)                                          |
+| `test`                      | Use the chr22 test bundle (built by `scripts/build_test_bundle.sh`)                                          |
 | `pixi`                      | Run every process from the local pixi env, no containers                                                 |
 | `singularity` / `apptainer` | Pull biocontainers via singularity/apptainer (HPC default)                                               |
 | `docker`                    | Pull biocontainers via docker (laptop / cloud / CI default)                                              |
@@ -300,8 +300,9 @@ sanjaysgk/ipg/
 │   ├── modules.config                   per-process ext.args / ext.prefix / errorStrategy
 │   ├── test.config                      chr22 test bundle paths
 │   └── monash.config                    Monash M3 SLURM
-├── bin/
-│   └── build_test_bundle.sh             reproducible chr22 test bundle builder
+├── bin/                                 runtime scripts staged onto PATH by modules
+├── scripts/
+│   └── build_test_bundle.sh             reproducible chr22 test bundle builder (dev/CI helper)
 ├── tests/                               nf-test pipeline-level tests
 ├── pixi.toml                            dev env definition (committed)
 └── pixi.lock                            dev env lockfile (committed, bit-reproducible)

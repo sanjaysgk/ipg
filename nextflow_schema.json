@@ -303,6 +303,13 @@
                     "maximum": 1,
                     "description": "Minimum fraction of PEAKS rows that must resolve to scan numbers or the run aborts.",
                     "fa_icon": "fas fa-percentage"
+                },
+                "ms2rescore_engine": {
+                    "type": "string",
+                    "default": "mokapot",
+                    "enum": ["mokapot", "percolator"],
+                    "description": "Rescoring engine MS2Rescore uses for final FDR. 'mokapot' runs in-process; 'percolator' shells out to the percolator CLI.",
+                    "fa_icon": "fas fa-balance-scale"
                 }
             }
         },

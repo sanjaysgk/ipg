@@ -756,6 +756,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/packaging-26.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pandas-1.5.3-py311h2872171_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pcre2-10.47-haa7fec5_0.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/percolator-3.7.1-h3b5f4bd_2.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pillow-12.0.0-py311h267f063_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/plotly-6.6.0-pyhd8ed1ab_0.conda
@@ -797,6 +798,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/snappy-1.2.2-h03e3b7b_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.49-py311haee01d2_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlite-3.53.0-hbc0de68_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.17-h0157908_18.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tensorboard-2.19.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tensorboard-data-server-0.7.0-py311h97c413e_4.conda
@@ -836,6 +838,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxrender-0.9.12-hb9d3cd8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxshmfence-1.3.3-hb9d3cd8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxxf86vm-1.1.7-hb03c661_0.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/xsd-4.0.0_dep-h7208437_6.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xz-5.8.3-ha02ee65_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xz-gpl-tools-5.8.3-ha02ee65_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xz-tools-5.8.3-hb03c661_0.conda
@@ -5524,6 +5527,24 @@ packages:
   - pkg:pypi/peppy?source=hash-mapping
   size: 30161
   timestamp: 1760990724770
+- conda: https://conda.anaconda.org/bioconda/linux-64/percolator-3.7.1-h3b5f4bd_2.tar.bz2
+  sha256: ef9ae6ca68d25097f6f6d6820696a98f4d584a1eaf3c8f3f321d64b69f8bf672
+  md5: 4fbee2c5a6dae13132a566b61e4cc23a
+  depends:
+  - boost-cpp
+  - bzip2 >=1.0.8,<2.0a0
+  - libgcc >=13
+  - libsqlite >=3.49.1,<4.0a0
+  - libstdcxx >=13
+  - libzlib >=1.3.1,<2.0a0
+  - sqlite
+  - xerces-c >=3.2.5,<3.3.0a0
+  - xsd >=4.0.0.0dep,<5.0a0
+  - zlib
+  license: Apache-2.0
+  license_family: APACHE
+  size: 4842613
+  timestamp: 1741886614924
 - conda: https://conda.anaconda.org/conda-forge/linux-64/perl-5.32.1-7_hd590300_perl5.conda
   build_number: 7
   sha256: 9ec32b6936b0e37bcb0ed34f22ec3116e75b3c0964f9f50ecea5f58734ed6ce9
@@ -9432,6 +9453,19 @@ packages:
   purls: []
   size: 204195
   timestamp: 1772818887484
+- conda: https://conda.anaconda.org/conda-forge/linux-64/sqlite-3.53.0-hbc0de68_0.conda
+  sha256: 9649537a273a82318d47e1ee3838d301d4f002ed16546b6c6334fd241a913342
+  md5: af291b31a656f7d1b1d9c1f6ee45e9e9
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
+  - libsqlite 3.53.0 h0c1763c_0
+  - libzlib >=1.3.2,<2.0a0
+  - ncurses >=6.5,<7.0a0
+  - readline >=8.3,<9.0a0
+  license: blessing
+  size: 205073
+  timestamp: 1775753757115
 - conda: https://conda.anaconda.org/bioconda/linux-64/star-2.7.11b-h5ca1c30_7.tar.bz2
   sha256: 2afa23bc66ce51c7828ae84356ce886745fee73ec1b6553a5b1504fac4f4733f
   md5: 8d34a330e94dfb131b5841753d4335a5
@@ -10332,6 +10366,16 @@ packages:
   purls: []
   size: 30549
   timestamp: 1726846235301
+- conda: https://conda.anaconda.org/bioconda/linux-64/xsd-4.0.0_dep-h7208437_6.tar.bz2
+  sha256: 7300bdc0e2fce26bb85bbd404ce2410359b6421c12027829cedcf1860882da24
+  md5: e75804e0bf2a9efb8c7c312350d7ca4c
+  depends:
+  - libgcc >=13
+  - libstdcxx >=13
+  - xerces-c >=3.2.5,<3.3.0a0
+  license: GPL
+  size: 2398007
+  timestamp: 1741886095143
 - conda: https://conda.anaconda.org/conda-forge/linux-64/xz-5.8.3-ha02ee65_0.conda
   sha256: 2553fd3ec0a1020b2ca05ca10b0036a596cb0d4bf3645922fcf69dacce0e6679
   md5: 6a1b6af49a334e4e06b9f103367762bf

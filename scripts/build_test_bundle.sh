@@ -3,7 +3,7 @@
 # build_test_bundle.sh — MAINTAINER-ONLY script. Builds the chr22 test bundle
 # that ships as the v0.1.0-test-data GitHub Release asset.
 #
-# End users should NOT run this. They run `bin/fetch_test_bundle.sh` instead,
+# End users should NOT run this. They run `scripts/fetch_test_bundle.sh` instead,
 # which downloads the prebuilt tarball.
 #
 # Required env vars (no defaults; this script fails fast if missing):
@@ -187,7 +187,7 @@ fi
 # nf-validation requires ABSOLUTE paths in the samplesheet — relative paths
 # fail with "the file or directory '<rel>' does not exist". The bundle is
 # portable across machines, so we can't hardcode the absolute path here.
-# Use __BUNDLE_DIR__ placeholder; bin/fetch_test_bundle.sh substitutes the
+# Use __BUNDLE_DIR__ placeholder; scripts/fetch_test_bundle.sh substitutes the
 # actual extraction dir on first run.
 SHEET_OUT="${TEST_BUNDLE_DIR}/samplesheet_test.csv"
 cat > "${SHEET_OUT}" <<EOF

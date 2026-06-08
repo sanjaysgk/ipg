@@ -99,11 +99,11 @@ jobs:
 
       - name: Fetch the chr22 test bundle
         # The test profile points at ${projectDir}/.test-bundle, populated
-        # by bin/fetch_test_bundle.sh from the GitHub Release. The stub +
+        # by scripts/fetch_test_bundle.sh from the GitHub Release. The stub +
         # real run steps below need it staged before nf-validation runs.
         run: |
           cd ./${{ needs.configure.outputs.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ needs.configure.outputs.REPO_BRANCH }})
-          bash bin/fetch_test_bundle.sh
+          bash scripts/fetch_test_bundle.sh
 
       - name: Run the downloaded pipeline (stub)
         id: stub_run_pipeline

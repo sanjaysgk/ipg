@@ -5,7 +5,7 @@ work/
 data/
 !tests/data/
 # HepG2 mzMLs + Swiss-Prot FASTA are large (~160 MB total) and fetched
-# on demand by bin/build_test_ms_search_bundle.sh; never commit.
+# on demand by scripts/build_test_ms_search_bundle.sh; never commit.
 tests/data/ms_search/*.mzML
 tests/data/ms_search/*.fasta
 results/
@@ -20,7 +20,7 @@ null/
 .claude/
 CLAUDE.md
 
-# Test bundle (downloaded by bin/fetch_test_bundle.sh; never tracked).
+# Test bundle (downloaded by scripts/fetch_test_bundle.sh; never tracked).
 # No trailing slash so the pattern matches both real dirs and symlinks.
 .test-bundle
 ipg-test-bundle-chr22.tar.gz
@@ -33,8 +33,8 @@ ipg-test-bundle-chr22.tar.gz
 .nf-test/
 
 # Pre-built IPG tool binaries — these come from containers/ipg-tools or
-# from pixi+local compilation. They are not committed to git. Keep only
-# the build_test_bundle.sh script under bin/ tracked.
+# from pixi+local compilation. They are not committed to git. The dev/build
+# helper scripts live under scripts/ and are tracked.
 bin/curate_vcf
 bin/revert_headers
 bin/alt_liftover

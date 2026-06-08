@@ -3,14 +3,14 @@ name: nf-core CI
 # multiple container engines. The legacy nf-core template ran the full
 # pipeline against a `-profile test` dataset on every PR; sanjaysgk/ipg's
 # `test` profile points at a chr22-subset bundle on Monash M3 scratch
-# (built locally by `bin/build_test_bundle.sh`) which is not accessible
+# (built locally by `scripts/build_test_bundle.sh`) which is not accessible
 # from GitHub Actions runners. Until we publish a CI-accessible test
 # bundle (e.g. fork of nf-core/test-datasets) the CI verifies that the
 # repo parses cleanly under each profile combination.
 #
 # To run the full end-to-end test locally instead:
 #     pixi install
-#     pixi run bash bin/build_test_bundle.sh
+#     pixi run bash scripts/build_test_bundle.sh
 #     pixi run nextflow run . -profile test,pixi --outdir results
 
 on:

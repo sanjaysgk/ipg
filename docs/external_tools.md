@@ -80,7 +80,7 @@ Invoke with `-params-file params_full_run.yaml`.
 
 ## Pre-flight check
 
-Run `bin/check_external_tools.sh <params.yaml>` before kicking off a
+Run `scripts/check_external_tools.sh <params.yaml>` before kicking off a
 long job — the script resolves every external-tool path referenced in
 the params file and fails fast if anything is missing, unreadable, or
 not executable. Cheaper than discovering a typo 2 hours into the run.

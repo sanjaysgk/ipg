@@ -4,7 +4,7 @@
 # tools — anything bioconda ships is out of scope.
 #
 # Usage:
-#   bin/check_external_tools.sh assets/params_D106_liver.yaml
+#   scripts/check_external_tools.sh assets/params_D106_liver.yaml
 set -eu
 
 params_file=${1:?"usage: $0 <params.yaml>"}

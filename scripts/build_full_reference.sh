@@ -41,17 +41,17 @@
 # ---- Usage ----
 #
 # From the repo root, inside the pixi env:
-#     pixi run bash bin/build_full_reference.sh
+#     pixi run bash scripts/build_full_reference.sh
 #
 # Or override locations with env vars:
 #     REFERENCE_BASE=/my/ref/dir THREADS=16 \
-#         pixi run bash bin/build_full_reference.sh
+#         pixi run bash scripts/build_full_reference.sh
 #
 # To reuse existing local files (e.g. on Monash M3 where they already
 # exist), set GENOME_DIR and VARIANT_DIR to skip downloading:
 #     GENOME_DIR=/fs04/.../GRCh38 \
 #     VARIANT_DIR=/fs04/.../variant_calling_resources \
-#         pixi run bash bin/build_full_reference.sh
+#         pixi run bash scripts/build_full_reference.sh
 #
 # IMPORTANT: STAR genomeGenerate needs ~32 GB RAM. Do NOT run this on a
 # login node — submit it via SLURM or use an interactive compute node:

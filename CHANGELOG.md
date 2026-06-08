@@ -67,7 +67,7 @@ a chr22 subset of one D100-liver sample.
 
 - Five Nextflow profiles:
 
-  - `test` — chr22 subset bundle built locally by `bin/build_test_bundle.sh`
+  - `test` — chr22 subset bundle built locally by `scripts/build_test_bundle.sh`
   - `pixi` — run every process from the local pixi env, no containers
   - `singularity` / `apptainer` — pull biocontainers via singularity (HPC default)
   - `docker` — pull biocontainers via docker (laptop / cloud / CI default)
@@ -84,7 +84,7 @@ a chr22 subset of one D100-liver sample.
   performed in tumour-only Mutect2 mode against a gnomAD-style germline
   allele-frequency database, regardless of this flag.
 
-- `bin/build_test_bundle.sh` reproducible chr22 test bundle builder.
+- `scripts/build_test_bundle.sh` reproducible chr22 test bundle builder.
   Idempotent, env-var-overridable, derives from the real Monash GRCh38
   reference and a real D100-liver FASTQ sample. Default destination
   `/fs04/scratch2/xy86/sanjay/ipg-test-data/`.

@@ -4,5 +4,6 @@ channels:
   - bioconda
 dependencies:
   - bioconda::ms2rescore=3.1.5
+  - bioconda::percolator>=3.06
   - conda-forge::python>=3.9
   - conda-forge::pandas>=1.5
