@@ -1,0 +1,11 @@
+name: db_compare
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::r-base=4.3
+  - conda-forge::r-tidyverse
+  - conda-forge::r-optparse
+  - conda-forge::r-venndiagram
+  - conda-forge::r-upsetr
+  - conda-forge::r-hrbrthemes

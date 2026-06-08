@@ -2,7 +2,7 @@ process GFF3SORT {
     tag "${meta.id}"
     label 'process_single'
 
-    conda "bioconda::gff3sort=0.1.a1a2bc9"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gff3sort:0.1.a1a2bc9--hdfd78af_2' :
         'biocontainers/gff3sort:0.1.a1a2bc9--hdfd78af_2' }"

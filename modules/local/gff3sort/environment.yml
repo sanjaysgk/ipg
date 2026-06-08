@@ -1,0 +1,6 @@
+name: gff3sort
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::gff3sort=0.1.a1a2bc9
