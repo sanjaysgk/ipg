@@ -104,7 +104,7 @@ if "novelty_class" in cryptic.columns and not cryptic.empty:
 
 # 5. Before/after-rescore score shift, split by class (per-engine TSVs).
 frames = []
-for tsv in sorted(glob.glob("rescored/*")):
+for tsv in sorted(glob.glob("rescored/*/*.tsv") + glob.glob("rescored/*.tsv")):
     try:
         r = pd.read_csv(tsv, sep="\\t")
     except Exception:
