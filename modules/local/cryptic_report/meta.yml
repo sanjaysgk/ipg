@@ -1,0 +1,45 @@
+name: "cryptic_report"
+description: Self-contained cryptic-peptide discovery HTML report + summary
+keywords:
+  - proteogenomics
+  - cryptic peptides
+  - report
+  - immunopeptidomics
+tools:
+  - python:
+      description: |
+        Summarise the integrated peptide table for the cryptic subset: class
+        breakdown, cross-engine corroboration, PepQuery/spectral confidence,
+        gffcompare novelty class, RNA-seq origin, and before/after-rescore shift.
+      homepage: https://www.python.org/
+      licence: ["PSF"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides_tsv:
+        type: file
+        description: integrated_peptides.tsv (with class + confidence + origin columns)
+        pattern: "*.tsv"
+  - - rescored_tsvs:
+        type: file
+        description: Per-engine MS2Rescore PSM TSVs (for before/after-rescore plots)
+        pattern: "*.tsv"
+output:
+  - html:
+      - meta:
+          type: map
+      - "*_cryptic_report.html":
+          type: file
+          description: Self-contained HTML discovery report
+  - summary:
+      - meta:
+          type: map
+      - "*_cryptic_summary.tsv":
+          type: file
+          description: Class/confidence/novelty count summary
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

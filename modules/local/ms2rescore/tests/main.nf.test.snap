@@ -19,9 +19,12 @@
                     ]
                 ],
                 "2": [
-                    "msfragger_pipeline_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    
                 ],
                 "3": [
+                    "msfragger_pipeline_log.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "4": [
                     "versions.yml:md5,91c4f3bcfd26723a554621efa90f2795"
                 ],
                 "input_tsv": [
@@ -43,12 +46,15 @@
                         "msfragger.psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
+                "report": [
+                    
+                ],
                 "versions": [
                     "versions.yml:md5,91c4f3bcfd26723a554621efa90f2795"
                 ]
             }
         ],
-        "timestamp": "2026-05-26T20:36:48.14536089",
+        "timestamp": "2026-06-08T16:11:12.017708842",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

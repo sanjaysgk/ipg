@@ -1,0 +1,55 @@
+name: "pepquery"
+description: Spectrum-level validation of candidate cryptic peptides with PepQuery2
+keywords:
+  - proteomics
+  - proteogenomics
+  - validation
+  - novel peptides
+  - immunopeptidomics
+tools:
+  - PepQuery:
+      description: |
+        Targeted peptide-centric search engine that validates novel/cryptic
+        peptide identifications. For each candidate it tests whether the observed
+        spectrum is better explained by the peptide than by any reference
+        (canonical) peptide, with and without unanticipated modifications, and
+        assigns a statistical confidence.
+      homepage: https://www.pepquery.org/
+      documentation: https://www.pepquery.org/document.html
+      tool_dev_url: https://github.com/bzhanglab/PepQuery
+      doi: "10.1038/s41467-023-37462-4"
+      licence: ["GPL-3.0"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides:
+        type: file
+        description: Candidate peptide list, one sequence per line
+        pattern: "*.txt"
+    - mgf:
+        type: file
+        description: MS/MS spectra in MGF (from CONVERT_MZML) the candidates are validated against
+        pattern: "*.mgf"
+    - ref_fasta:
+        type: file
+        description: Reference (canonical) protein FASTA PepQuery competes candidates against
+        pattern: "*.{fasta,fa}"
+output:
+  - psm_rank:
+      - meta:
+          type: map
+      - "pepquery_out/psm_rank.txt":
+          type: file
+          description: Per-PSM validation result; 'confident' column = Yes/No
+  - outdir:
+      - meta:
+          type: map
+      - "pepquery_out":
+          type: directory
+          description: Full PepQuery output directory (psm_rank, detail, ptm, parameter)
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

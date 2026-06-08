@@ -22,6 +22,8 @@ process MOKAPOT {
 
     script:
     def prefix = "${engine}_search"
+    def train_fdr = params.mokapot_train_fdr
+    def test_fdr  = params.mokapot_test_fdr
     """
     # Concatenate all PIN files, keeping header from the first only
     awk 'NR == 1 || FNR > 1' ${pin_files} > ${prefix}_combined.pin
@@ -45,13 +47,15 @@ with open('${prefix}_combined.pin') as f, open('tmp.pin','w') as o:
         mv tmp.pin ${prefix}_combined.pin
     fi
 
-    # Run mokapot with relaxed FDR for both training and testing.
-    # Mini test databases / low-ID immunopeptidomics samples often need
-    # looser thresholds; downstream filtering can tighten.
+    # train/test FDR are mokapot's INTERNAL model-training and score-calibration
+    # thresholds, not the reported FDR. Small or low-ID databases (chr22-only
+    # cryptic FASTA, non-tryptic immunopeptidomics) need a looser value or
+    # mokapot aborts with "no target PSMs below eval_fdr". Set via
+    # --mokapot_train_fdr / --mokapot_test_fdr. Final FDR is integrate_fdr.
     mokapot \\
         --keep_decoys \\
-        --train_fdr 0.10 \\
-        --test_fdr 0.10 \\
+        --train_fdr ${train_fdr} \\
+        --test_fdr ${test_fdr} \\
         -d . \\
         -r ${prefix} \\
         ${prefix}_combined.pin \\

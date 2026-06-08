@@ -37,12 +37,11 @@ process MS2RESCORE {
         --mod    ${mod} \\
         --out    ${engine}_rescore_input.tsv
 
-    # Select the final rescoring engine. Default keeps the config's mokapot
-    # block; percolator swaps it in (percolator must be on PATH).
+    # Apply user-configurable rescoring settings to the base config: rescoring
+    # engine (mokapot|percolator), mokapot internal calibration FDR, and the
+    # HTML QC report toggle. These override whatever the JSON asset ships with.
     cp ${config_json} run_config.json
-    if [ "${rescore_engine}" = "percolator" ]; then
-        python3 -c "import json; c=json.load(open('run_config.json')); c['ms2rescore']['rescoring_engine']={'percolator':{}}; json.dump(c, open('run_config.json','w'), indent=4)"
-    fi
+    python3 -c "import json; c=json.load(open('run_config.json')); r=c['ms2rescore']; mk=r.get('rescoring_engine',{}).get('mokapot',{}); mk.update({'train_fdr': ${params.mokapot_train_fdr}, 'test_fdr': ${params.mokapot_test_fdr}}); r['rescoring_engine']=({'percolator':{}} if '${rescore_engine}'=='percolator' else {'mokapot': mk}); r['write_report']=${params.ms2rescore_write_report ? 'True' : 'False'}; json.dump(c, open('run_config.json','w'), indent=4)"
 
     ms2rescore \\
         -t tsv \\
@@ -65,7 +64,7 @@ process MS2RESCORE {
 
     stub:
     """
-    touch ${engine}.psms.tsv ${engine}_rescore_input.tsv ${engine}.report.html ${engine}_pipeline_log.txt
+    touch ${engine}.psms.tsv ${engine}_rescore_input.tsv ${engine}_pipeline_log.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

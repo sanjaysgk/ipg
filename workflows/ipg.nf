@@ -25,6 +25,9 @@ include { VCF_ANNOTATE_ALL    } from '../subworkflows/local/vcf_annotate_all/mai
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
+include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
+include { ANNOTATE_ORIGIN     } from '../modules/local/annotate_origin/main'
+include { CRYPTIC_REPORT      } from '../modules/local/cryptic_report/main'
 include { IMMUNOINFORMATICS   } from '../subworkflows/local/immunoinformatics/main'
 
 /*
@@ -113,13 +116,59 @@ workflow IPG {
         ch_versions = ch_versions.mix(MS_SEARCH.out.versions)
 
         //
+        // Optional PepQuery2 spectrum-level validation of the cryptic subset.
+        // Annotates pepquery_status onto the integrated peptides before any
+        // downstream analysis consumes them.
+        //
+        ch_ms_peptides = MS_SEARCH.out.peptides
+        if (params.run_pepquery) {
+            VALIDATE_CRYPTIC(MS_SEARCH.out.peptides, MS_SEARCH.out.mgf, ch_search_fasta)
+            ch_versions    = ch_versions.mix(VALIDATE_CRYPTIC.out.versions)
+            ch_ms_peptides = VALIDATE_CRYPTIC.out.peptides
+        }
+
+        //
+        // Optional cryptic-origin annotation: backtrack each cryptic peptide to
+        // its source ORF/transcript/gene via the 3-frame translation + gffcompare
+        // .tracking (both from DB_CONSTRUCT). No network — see ANNOTATE_ORIGIN.
+        //
+        if (params.run_annotate_origin) {
+            if (!params.origin_orf_fasta) error("--run_annotate_origin requires --origin_orf_fasta (3-frame ORF FASTA from db_construct)")
+            if (!params.origin_gtf)       error("--run_annotate_origin requires --origin_gtf (gffcompare .combined.gtf from db_construct)")
+            if (!params.origin_tmap)      error("--run_annotate_origin requires --origin_tmap (gffcompare .tmap from db_construct)")
+            ANNOTATE_ORIGIN(
+                ch_ms_peptides,
+                file(params.origin_orf_fasta, checkIfExists: true),
+                file(params.origin_gtf,       checkIfExists: true),
+                file(params.origin_tmap,      checkIfExists: true)
+            )
+            ch_versions    = ch_versions.mix(ANNOTATE_ORIGIN.out.versions)
+            ch_ms_peptides = ANNOTATE_ORIGIN.out.peptides
+        }
+
+        //
+        // Optional cryptic-discovery HTML report: class breakdown, cross-engine
+        // corroboration, PepQuery/spectral confidence, novelty class + origin,
+        // before/after-rescore shift by class.
+        //
+        if (params.run_cryptic_report) {
+            ch_report_in = ch_ms_peptides.join(
+                MS_SEARCH.out.rescored_per_eng
+                    .map { meta, _eng, f -> [meta, f] }
+                    .groupTuple(by: 0)
+            )   // [meta, peptides_tsv, [rescored tsvs]]
+            CRYPTIC_REPORT(ch_report_in)
+            ch_versions = ch_versions.mix(CRYPTIC_REPORT.out.versions)
+        }
+
+        //
         // Optional immunoinformatics analysis on integrated peptides.
         // Only triggers any downstream work if at least one --run_* flag is set.
         //
         if (params.run_netmhcpan || params.run_netmhciipan
                 || params.run_gibbscluster || params.run_flashlfq
                 || params.run_blastp_host) {
-            IMMUNOINFORMATICS(MS_SEARCH.out.peptides, ch_ms_data)
+            IMMUNOINFORMATICS(ch_ms_peptides, ch_ms_data)
             ch_versions = ch_versions.mix(IMMUNOINFORMATICS.out.versions)
         }
 

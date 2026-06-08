@@ -1,0 +1,49 @@
+name: "annotate_origin"
+description: Backtrack cryptic peptides to their RNA-seq genomic origin (no network)
+keywords:
+  - proteogenomics
+  - cryptic peptides
+  - origin
+  - provenance
+  - immunopeptidomics
+tools:
+  - python:
+      description: |
+        Resolve each cryptic peptide to its exact source ORF by substring match
+        against the 3-frame translation, then join the gffcompare .tracking for
+        reference gene, locus and novelty class. Lightweight alternative to the
+        Ensembl-REST ORIGINS module.
+      homepage: https://www.python.org/
+      licence: ["PSF"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides_tsv:
+        type: file
+        description: integrated_peptides.tsv (carries the class column)
+        pattern: "*.tsv"
+  - - orf_fasta:
+        type: file
+        description: 3-frame translated ORF FASTA from TRIPLE_TRANSLATE
+        pattern: "*.{fasta,fa}"
+  - - combined_gtf:
+        type: file
+        description: gffcompare .combined.gtf (gene_name, locus, class_code, tss, coords per transcript)
+        pattern: "*.combined.gtf"
+  - - tmap:
+        type: file
+        description: gffcompare .tmap (FPKM, TPM, length per transcript)
+        pattern: "*.tmap"
+output:
+  - peptides:
+      - meta:
+          type: map
+      - "integrated_peptides_origin.tsv":
+          type: file
+          description: Integrated peptides with source ORF/transcript/frame + gene_name/genomic_locus/novelty_class/FPKM/TPM
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

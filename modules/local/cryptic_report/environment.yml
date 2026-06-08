@@ -1,0 +1,8 @@
+name: cryptic_report
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::python>=3.9
+  - conda-forge::pandas>=1.5
+  - conda-forge::matplotlib>=3.6

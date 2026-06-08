@@ -222,6 +222,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pcre2-10.47-haa7fec5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pephubclient-0.4.4-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/peppy-0.40.8-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/pepquery-2.0.2-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/perl-5.32.1-7_hd590300_perl5.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/perl-archive-tar-3.04-pl5321hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/perl-carp-1.50-pl5321hd8ed1ab_0.tar.bz2
@@ -5527,6 +5528,15 @@ packages:
   - pkg:pypi/peppy?source=hash-mapping
   size: 30161
   timestamp: 1760990724770
+- conda: https://conda.anaconda.org/bioconda/noarch/pepquery-2.0.2-hdfd78af_0.tar.bz2
+  sha256: 684dddc1ed08efdce14905cdb00b298a1b2b9cd0c919c2994c0c6e813964ce18
+  md5: f5f90df96916b7b9802da5191620286e
+  depends:
+  - openjdk >=11
+  license: GPL-3
+  purls: []
+  size: 73473825
+  timestamp: 1660372020284
 - conda: https://conda.anaconda.org/bioconda/linux-64/percolator-3.7.1-h3b5f4bd_2.tar.bz2
   sha256: ef9ae6ca68d25097f6f6d6820696a98f4d584a1eaf3c8f3f321d64b69f8bf672
   md5: 4fbee2c5a6dae13132a566b61e4cc23a

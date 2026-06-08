@@ -1,0 +1,35 @@
+nextflow_workflow {
+
+    name "Test Subworkflow VALIDATE_CRYPTIC"
+    script "../main.nf"
+    workflow "VALIDATE_CRYPTIC"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "validate_cryptic"
+    tag "stub"
+
+    // Stub PEPQUERY_PREP emits an empty cryptic list, so the f.size()>0 gate
+    // skips PEPQUERY/ANNOTATE and the integrated table passes through unchanged.
+    test("validate_cryptic - stub") {
+        options "-stub"
+        when {
+            params {
+                canonical_protein_prefixes = 'sp|,tr|'
+            }
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'test' ], file("integrated_peptides.tsv") ])
+                input[1] = Channel.of([ [ id:'test' ], [ file("synth.mgf") ] ])
+                input[2] = file("search.fasta")
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.versions).match() }
+            )
+        }
+    }
+}

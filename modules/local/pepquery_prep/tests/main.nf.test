@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process PEPQUERY_PREP"
+    script "../main.nf"
+    process "PEPQUERY_PREP"
+
+    tag "modules"
+    tag "modules_local"
+    tag "pepquery_prep"
+    tag "stub"
+
+    test("pepquery_prep - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep = file("\${workDir}/integrated_peptides.tsv"); pep.text = "peptide\\tclass\\n"
+                def fa  = file("\${workDir}/search.fasta");            fa.text = ">sp|P1|P1\\nMACGT\\n"
+                input[0] = [ [ id:'test' ], pep ]
+                input[1] = fa
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

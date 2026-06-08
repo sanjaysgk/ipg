@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process PEPQUERY"
+    script "../main.nf"
+    process "PEPQUERY"
+
+    tag "modules"
+    tag "modules_local"
+    tag "pepquery"
+    tag "stub"
+
+    test("pepquery - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep = file("\${workDir}/cryptic_peptides.txt"); pep.text = "CRYPTICALLY\\n"
+                def mgf = file("\${workDir}/synth.mgf");            mgf.text = "BEGIN IONS\\nEND IONS\\n"
+                def ref = file("\${workDir}/canonical_ref.fasta");  ref.text = ">sp|P1|P1\\nMACGT\\n"
+                input[0] = [ [ id:'test' ], pep, mgf, ref ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

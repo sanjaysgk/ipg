@@ -310,6 +310,80 @@
                     "enum": ["mokapot", "percolator"],
                     "description": "Rescoring engine MS2Rescore uses for final FDR. 'mokapot' runs in-process; 'percolator' shells out to the percolator CLI.",
                     "fa_icon": "fas fa-balance-scale"
+                },
+                "ms2rescore_write_report": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Write the MS2Rescore HTML QC report. Off by default because the DeepLC RT scatter aborts when retention-time predictions are sparse (small or low-ID databases).",
+                    "fa_icon": "fas fa-file-code"
+                },
+                "mokapot_train_fdr": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "mokapot INTERNAL model-training FDR (not the reported FDR). Raise toward 0.5 for small or low-ID databases where mokapot cannot calibrate at a tight threshold; final FDR control is integrate_fdr.",
+                    "fa_icon": "fas fa-graduation-cap"
+                },
+                "mokapot_test_fdr": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "mokapot INTERNAL score-calibration FDR (not the reported FDR). Raise toward 0.5 for small or low-ID databases; mokapot aborts with 'no target PSMs below eval_fdr' if it is too tight.",
+                    "fa_icon": "fas fa-balance-scale-right"
+                },
+                "canonical_protein_prefixes": {
+                    "type": "string",
+                    "default": "sp|,tr|",
+                    "description": "Comma-separated accession prefixes marking canonical proteins. Peptides mapping only to non-canonical proteins are classed 'cryptic' by INTEGRATE_ENGINES.",
+                    "fa_icon": "fas fa-tags"
+                },
+                "run_pepquery": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run PepQuery2 spectrum-level validation on the cryptic peptide subset; annotates pepquery_status onto the integrated peptides.",
+                    "fa_icon": "fas fa-check-double"
+                },
+                "cryptic_min_spec_pearson": {
+                    "type": "number",
+                    "description": "Minimum MS2PIP spectral (fragment-intensity) Pearson correlation for a cryptic peptide to be flagged spectral_status=pass. Unset = annotate only.",
+                    "fa_icon": "fas fa-wave-square"
+                },
+                "cryptic_max_rt_diff": {
+                    "type": "number",
+                    "description": "Maximum DeepLC retention-time error for a cryptic peptide to be flagged spectral_status=pass. Unset = annotate only.",
+                    "fa_icon": "fas fa-clock"
+                },
+                "run_annotate_origin": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Backtrack cryptic peptides to their RNA-seq source ORF/transcript/gene/locus/novelty-class using the 3-frame translation + gffcompare .tracking (no network).",
+                    "fa_icon": "fas fa-dna"
+                },
+                "origin_orf_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "3-frame translated ORF FASTA (TRIPLE_TRANSLATE output) used by --run_annotate_origin.",
+                    "fa_icon": "fas fa-file"
+                },
+                "origin_gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "gffcompare .combined.gtf (gene/locus/class/tss/coords) used by --run_annotate_origin.",
+                    "fa_icon": "fas fa-file"
+                },
+                "origin_tmap": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "gffcompare .tmap (FPKM/TPM/length) used by --run_annotate_origin.",
+                    "fa_icon": "fas fa-file"
+                },
+                "run_cryptic_report": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Generate a self-contained cryptic-discovery HTML report (class breakdown, cross-engine corroboration, PepQuery/spectral confidence, novelty class, origin, rescore shift).",
+                    "fa_icon": "fas fa-chart-bar"
                 }
             }
         },

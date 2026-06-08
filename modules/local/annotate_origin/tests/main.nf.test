@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process ANNOTATE_ORIGIN"
+    script "../main.nf"
+    process "ANNOTATE_ORIGIN"
+
+    tag "modules"
+    tag "modules_local"
+    tag "annotate_origin"
+    tag "stub"
+
+    test("annotate_origin - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep = file("\${workDir}/integrated_peptides.tsv"); pep.text = "peptide\\tclass\\n"
+                def orf = file("\${workDir}/orfs.fasta");             orf.text = ">TCONS_00000001_f1p1\\nMACGT\\n"
+                def gtf = file("\${workDir}/combined.gtf");           gtf.text = "#\\n"
+                def tm  = file("\${workDir}/transcripts.tmap");       tm.text = "ref_gene_id\\tqry_id\\tFPKM\\tTPM\\tlen\\n"
+                input[0] = [ [ id:'test' ], pep ]
+                input[1] = orf
+                input[2] = gtf
+                input[3] = tm
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

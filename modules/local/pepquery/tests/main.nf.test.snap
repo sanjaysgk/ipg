@@ -1,0 +1,55 @@
+{
+    "pepquery - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "psm_rank.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "psm_rank.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,4877701f33f767b0708a87b3dc7e894d"
+                ],
+                "outdir": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "psm_rank.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "psm_rank": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "psm_rank.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,4877701f33f767b0708a87b3dc7e894d"
+                ]
+            }
+        ],
+        "timestamp": "2026-06-04T12:01:11.128874066",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

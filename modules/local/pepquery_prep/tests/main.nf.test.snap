@@ -1,0 +1,51 @@
+{
+    "pepquery_prep - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "cryptic_peptides.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "canonical_ref.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,db53b7b2c5d9b3a9aef5c4e7c4d0258d"
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "cryptic_peptides.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "ref_fasta": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "canonical_ref.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,db53b7b2c5d9b3a9aef5c4e7c4d0258d"
+                ]
+            }
+        ],
+        "timestamp": "2026-06-04T12:01:30.060379389",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
