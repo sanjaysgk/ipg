@@ -2,7 +2,7 @@ process MOKAPOT {
     tag "${meta.id}_${engine}"
     label 'process_medium'
 
-    conda "bioconda::mokapot=0.10.1"
+    conda "${moduleDir}/environment.yml"
 
     input:
     tuple val(meta), path(pin_files)
