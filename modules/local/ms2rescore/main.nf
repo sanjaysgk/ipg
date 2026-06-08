@@ -41,20 +41,7 @@ process MS2RESCORE {
     # engine (mokapot|percolator), mokapot internal calibration FDR, and the
     # HTML QC report toggle. These override whatever the JSON asset ships with.
     cp ${config_json} run_config.json
-    python3 -c "
-import json
-c = json.load(open('run_config.json'))
-r = c['ms2rescore']
-if '${rescore_engine}' == 'percolator':
-    r['rescoring_engine'] = {'percolator': {}}
-else:
-    mk = r.get('rescoring_engine', {}).get('mokapot', {})
-    mk['train_fdr'] = ${params.mokapot_train_fdr}
-    mk['test_fdr'] = ${params.mokapot_test_fdr}
-    r['rescoring_engine'] = {'mokapot': mk}
-r['write_report'] = ${params.ms2rescore_write_report ? 'True' : 'False'}
-json.dump(c, open('run_config.json', 'w'), indent=4)
-"
+    python3 -c "import json; c=json.load(open('run_config.json')); r=c['ms2rescore']; mk=r.get('rescoring_engine',{}).get('mokapot',{}); mk.update({'train_fdr': ${params.mokapot_train_fdr}, 'test_fdr': ${params.mokapot_test_fdr}}); r['rescoring_engine']=({'percolator':{}} if '${rescore_engine}'=='percolator' else {'mokapot': mk}); r['write_report']=${params.ms2rescore_write_report ? 'True' : 'False'}; json.dump(c, open('run_config.json','w'), indent=4)"
 
     ms2rescore \\
         -t tsv \\
