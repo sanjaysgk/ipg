@@ -5,7 +5,7 @@ process DB_COMPARE {
     // R script lives in pipeline bin/ (auto-added to PATH by Nextflow).
     // No container needed for pixi profile; for container profiles,
     // use the rocker/tidyverse image with additional CRAN packages.
-    conda "conda-forge::r-base=4.3 conda-forge::r-tidyverse conda-forge::r-optparse conda-forge::r-venndiagram conda-forge::r-upsetr conda-forge::r-hrbrthemes"
+    conda "${moduleDir}/environment.yml"
 
     input:
     tuple val(meta), path(cryptic_psm), path(uniprot_psm)

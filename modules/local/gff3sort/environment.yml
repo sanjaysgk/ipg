@@ -1,6 +1,6 @@
-name: comet
+name: gff3sort
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::comet-ms=2026011
+  - bioconda::gff3sort=0.1.a1a2bc9

@@ -8,10 +8,10 @@ process MSFRAGGER {
     //      activation: `pixi run msfragger --key <license-key>`.
     //   2. User-supplied JAR via --msfragger_jar — for containerised runs
     //      or when the bioconda package isn't wanted.
-    conda "bioconda::msfragger=4.1"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/msfragger:4.1--hdfd78af_0' :
-        'biocontainers/msfragger:4.1--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/msfragger:4.2--py311hdfd78af_0' :
+        'biocontainers/msfragger:4.2--py311hdfd78af_0' }"
 
     input:
     tuple val(meta), path(ms_files)
@@ -45,7 +45,7 @@ process MSFRAGGER {
     // "Picked up _JAVA_OPTIONS: ..." banner whose colons would corrupt versions.yml.
     def version_cmd = use_jar
         ? "java -jar ${msfragger_jar} --version 2>&1 | grep -m1 -oE 'MSFragger-[0-9.]+' || echo unknown"
-        : "echo 'MSFragger 4.1 (bioconda)'"
+        : "echo 'MSFragger 4.2 (bioconda)'"
     """
     # bioconda msfragger wrapper hardcodes -Xmx1g which is too small;
     # _JAVA_OPTIONS overrides it without touching the wrapper script.

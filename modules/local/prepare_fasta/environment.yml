@@ -1,6 +1,6 @@
-name: comet
+name: prepare_fasta
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::comet-ms=2026011
+  - conda-forge::python=3.12

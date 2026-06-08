@@ -2,7 +2,7 @@ process CONVERT_MZML {
     tag "${meta.id}_${mzml.baseName}"
     label 'process_low'
 
-    conda "bioconda::pymzml=2.5.2"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/pymzml:2.5.2--pyhdfd78af_0' :
         'biocontainers/pymzml:2.5.2--pyhdfd78af_0' }"

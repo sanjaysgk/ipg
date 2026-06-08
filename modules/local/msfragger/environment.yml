@@ -1,6 +1,6 @@
-name: comet
+name: msfragger
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::comet-ms=2026011
+  - bioconda::msfragger=4.2

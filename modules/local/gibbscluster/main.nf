@@ -2,7 +2,7 @@ process GIBBSCLUSTER {
     tag "${meta.id}"
     label 'process_low'
 
-    conda "conda-forge::python>=3.9 conda-forge::pandas>=1.5 conda-forge::perl"
+    conda "${moduleDir}/environment.yml"
 
     input:
     tuple val(meta), path(peptides_tsv)
