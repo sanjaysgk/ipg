@@ -2,7 +2,7 @@ name: gibbscluster
 channels:
   - conda-forge
 dependencies:
-  - conda-forge::python>=3.9
+  - conda-forge::python>=3.10,<3.12
   - conda-forge::pandas>=1.5
   - conda-forge::perl
   - conda-forge::r-base

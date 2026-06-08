@@ -4,5 +4,5 @@ channels:
   - bioconda
 dependencies:
   - bioconda::flashlfq=2.1.4
-  - conda-forge::python>=3.9
+  - conda-forge::python>=3.10,<3.12
   - conda-forge::pandas>=1.5

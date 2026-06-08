@@ -4,4 +4,4 @@ channels:
   - bioconda
 dependencies:
   - bioconda::sage-proteomics=0.14.7
-  - conda-forge::python>=3.9
+  - conda-forge::python>=3.10,<3.12

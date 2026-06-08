@@ -4,8 +4,8 @@ process MS2RESCORE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ms2rescore:3.1.5--pyhdfd78af_0' :
-        'biocontainers/ms2rescore:3.1.5--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/ms2rescore:3.2.1--pyhdfd78af_0' :
+        'biocontainers/ms2rescore:3.2.1--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(mokapot_target), path(mokapot_decoy), path(pin_file)

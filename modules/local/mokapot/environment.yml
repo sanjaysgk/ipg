@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::mokapot=0.10.1
+  - bioconda::mokapot=0.10.0

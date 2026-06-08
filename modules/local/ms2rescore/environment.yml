@@ -3,6 +3,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::ms2rescore=3.1.5
-  - conda-forge::python>=3.9
+  - bioconda::ms2rescore=3.2.1
+  - conda-forge::python>=3.10,<3.12
   - conda-forge::pandas>=1.5
