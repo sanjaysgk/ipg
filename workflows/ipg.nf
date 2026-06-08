@@ -170,17 +170,9 @@ workflow IPG {
         ch_versions = ch_versions.mix(ALIGN_QC.out.versions)
 
         //
-        // SUBWORKFLOW: transcript_assembly — steps 4-5
-        //
-        TRANSCRIPT_ASSEMBLY(
-            ALIGN_QC.out.sorted_bam,
-            ch_gtf,
-            ch_fasta_fai
-        )
-        ch_versions = ch_versions.mix(TRANSCRIPT_ASSEMBLY.out.versions)
-
-        //
-        // SUBWORKFLOW: bam_prep — steps 6-12
+        // SUBWORKFLOW: bam_prep — steps 6-12. STAR-aligned reps are merged at
+        // MarkDuplicates; the merged BAM feeds both transcript assembly and
+        // variant calling.
         //
         BAM_PREP(
             ALIGN_QC.out.star_bam_unsorted,
@@ -190,6 +182,17 @@ workflow IPG {
             ch_dict
         )
         ch_versions = ch_versions.mix(BAM_PREP.out.versions)
+
+        //
+        // SUBWORKFLOW: transcript_assembly — steps 4-5, on the merged
+        // (coord-sorted, dup-marked) MarkDuplicates BAM.
+        //
+        TRANSCRIPT_ASSEMBLY(
+            BAM_PREP.out.markdup_bam,
+            ch_gtf,
+            ch_fasta_fai
+        )
+        ch_versions = ch_versions.mix(TRANSCRIPT_ASSEMBLY.out.versions)
 
         //
         // SUBWORKFLOW: bqsr — steps 13-16
