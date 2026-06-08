@@ -2,7 +2,7 @@ process COMET {
     tag "${meta.id}"
     label 'process_medium'
 
-    conda "bioconda::comet-ms=2026011"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/comet-ms:2026011--h9ee0642_0' :
         'biocontainers/comet-ms:2026011--h9ee0642_0' }"

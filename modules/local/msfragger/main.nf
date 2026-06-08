@@ -8,7 +8,7 @@ process MSFRAGGER {
     //      activation: `pixi run msfragger --key <license-key>`.
     //   2. User-supplied JAR via --msfragger_jar — for containerised runs
     //      or when the bioconda package isn't wanted.
-    conda "bioconda::msfragger=4.2"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/msfragger:4.2--py311hdfd78af_0' :
         'biocontainers/msfragger:4.2--py311hdfd78af_0' }"

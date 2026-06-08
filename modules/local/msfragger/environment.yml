@@ -1,0 +1,6 @@
+name: msfragger
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::msfragger=4.2
