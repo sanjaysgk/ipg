@@ -14,13 +14,11 @@ nextflow_process {
         when {
             process {
                 """
-                def target = file("\${workDir}/target.psms.txt"); target.text = "stub\\n"
-                def decoy  = file("\${workDir}/decoy.psms.txt");  decoy.text  = "stub\\n"
                 def pin    = file("\${workDir}/test.pin");        pin.text    = "stub\\n"
                 def pkl    = file("\${workDir}/sample.scans.pkl"); pkl.text   = "stub\\n"
                 def mgf    = file("\${workDir}/sample.mgf");       mgf.text   = "stub\\n"
                 def cfg    = file("\${workDir}/ms2rescore.json");  cfg.text   = "{}\\n"
-                input[0] = [ [ id:'test' ], target, decoy, pin ]
+                input[0] = [ [ id:'test' ], pin ]
                 input[1] = 'msfragger'
                 input[2] = [ pkl ]
                 input[3] = [ mgf ]
