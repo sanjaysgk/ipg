@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Build an MS2Rescore TSV input from mokapot PSMs + PIN features + scans pickles.
+"""Build an MS2Rescore TSV input directly from a search-engine PIN + scans pickles.
 
-Extracted from immunopeptidomics/core.py:
-  - prepare_tsv() (L809)
-  - get_peptidoform() (L749)
-  - rescore_MSFragger / _Comet / _Sage / _PEAKS (L951-1117)
+PSM list, labels, peptides and the baseline score are all read from the PIN
+(percolator) file — no upstream mokapot run is required. MS2Rescore runs its own
+mokapot/percolator internally on the full target+decoy set, so a pre-rescoring
+mokapot pass added nothing but a dependency.
 
 Engine-specific SpecId parsing is encapsulated in `_extract_run_specid()`.
+Originally adapted from immunopeptidomics/core.py (prepare_tsv L809,
+rescore_* L951-1117); the mokapot-input coupling has been removed.
 """
 from __future__ import annotations
 
@@ -35,6 +37,15 @@ MOD_MAPPING = {
     "(+15.99)": "[Oxidation]", "(+42.01)": "[Acetyl]",
     "(-17.03)": "[Gln->pyro-Glu]", "(-18.01)": "[Glu->pyro-Glu]",
     "(+119.00)": "[Cysteinylation]",
+}
+
+# Primary search score per engine, taken straight from the PIN. Used only as the
+# baseline `score` column (MS2Rescore recomputes scores/q-values from features).
+SCORE_COL = {
+    "comet": "Xcorr",
+    "sage": "ln(hyperscore)",
+    "msfragger": "hyperscore",
+    "peaks": "score",
 }
 
 
@@ -69,7 +80,7 @@ def _extract_run_specid(df: pd.DataFrame, engine: str) -> pd.DataFrame:
     return df
 
 
-def prepare_tsv(psms: pd.DataFrame, scans: dict) -> pd.DataFrame:
+def prepare_tsv(psms: pd.DataFrame, scans: dict, engine: str) -> pd.DataFrame:
     psms["z"] = psms["specid"].apply(lambda x: scans[x]["z"])
     tsv = pd.DataFrame()
     tsv["peptidoform"] = (
@@ -80,10 +91,17 @@ def prepare_tsv(psms: pd.DataFrame, scans: dict) -> pd.DataFrame:
         psms["specid"].apply(lambda x: scans[x]["rescore"]) + tsv["peptide"]
     )
     tsv["run"] = psms["run"]
-    tsv["is_decoy"] = ~psms["Label"].astype(bool)
-    tsv["score"] = psms["mokapot score"]
-    tsv["qvalue"] = psms["mokapot q-value"]
-    tsv["pep"] = psms["mokapot PEP"]
+    # PIN Label is percolator convention: +1 target, -1 decoy.
+    tsv["is_decoy"] = pd.to_numeric(psms["Label"], errors="coerce") < 0
+    # Baseline score = engine's primary search score from the PIN. mokapot
+    # q-value / PEP no longer exist upstream; MS2Rescore recomputes its own.
+    score_col = SCORE_COL.get(engine)
+    if score_col and score_col in psms.columns:
+        tsv["score"] = pd.to_numeric(psms[score_col], errors="coerce")
+    else:
+        print(f"[prepare_ms2rescore] WARN: no score column {score_col!r} for "
+              f"engine {engine}; baseline score left empty", file=sys.stderr)
+        tsv["score"] = float("nan")
     tsv["ion_mobility"] = psms["specid"].apply(lambda x: scans[x]["im"])
     tsv["precursor_mz"] = psms["specid"].apply(lambda x: scans[x]["mz"])
     tsv["retention_time"] = psms["specid"].apply(lambda x: scans[x]["rt"])
@@ -115,9 +133,8 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--engine", required=True,
                    choices=["msfragger", "comet", "sage", "peaks"])
-    p.add_argument("--target", required=True, help="mokapot target PSMs TSV")
-    p.add_argument("--decoy", required=True, help="mokapot decoy PSMs TSV")
-    p.add_argument("--pin", required=True, help="combined PIN used by mokapot")
+    p.add_argument("--pin", required=True,
+                   help="combined search-engine PIN (percolator format)")
     p.add_argument("--scans", required=True, nargs="+",
                    help="scans.pkl file(s) from CONVERT_MZML")
     p.add_argument("--mod", default="mod",
@@ -143,12 +160,24 @@ def main() -> int:
     print(f"[prepare_ms2rescore] merged {len(scans)} MS2 scans from "
           f"{len(pkl_paths)} pickle(s)", file=sys.stderr)
 
-    target = pd.read_csv(args.target, sep="\t")
-    decoy = pd.read_csv(args.decoy, sep="\t")
-    psms = pd.concat([target, decoy], ignore_index=True)
+    # Read all PSMs straight from the PIN (target+decoy, percolator labels).
+    psms = pd.read_csv(args.pin, sep="\t", dtype=str)
     psms = _extract_run_specid(psms, args.engine)
 
-    tsv = prepare_tsv(psms, scans)
+    # Keep the best PSM per spectrum, matching mokapot's per-spectrum dedup:
+    # rank-1 where the engine emits a rank column (sage/msfragger), then the
+    # top engine-score row per scan (covers comet, which has no rank column).
+    score_col = SCORE_COL.get(args.engine)
+    if score_col and score_col in psms.columns:
+        psms["__score"] = pd.to_numeric(psms[score_col], errors="coerce")
+    else:
+        psms["__score"] = 0.0
+    if "rank" in psms.columns:
+        psms = psms[psms["rank"].astype(str) == "1"]
+    psms = (psms.sort_values("__score", ascending=False)
+                .drop_duplicates("specid", keep="first"))
+
+    tsv = prepare_tsv(psms, scans, args.engine)
 
     # Comet loses fixed TMT mods; reinstate them.
     if args.engine == "comet" and args.mod == "TMT16":
@@ -165,6 +194,7 @@ def main() -> int:
     features = features.set_index("spectrum_id").add_prefix("rescoring:")
     if "rescoring:rank" in features.columns:
         features = features.drop(columns=["rescoring:rank"])
+    features = features[~features.index.duplicated(keep="first")]
 
     tsv = tsv.set_index("spectrum_id", drop=False).join(features, how="inner")
     tsv.to_csv(args.out, sep="\t", index=False)

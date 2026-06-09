@@ -7,9 +7,9 @@
     3. COMET + SAGE            parallel on calibrated mzMLs → PIN
     4. CONVERT_MZML            mzML → MGF + scans.pkl + index2scan.pkl
     5. CONVERT_PEAKS           PEAKS db.psms.csv → PIN (uses index2scan)
-    6. MOKAPOT (per engine)    FDR control
-    7. MS2RESCORE (per engine) rescore mokapot PSMs with spectrum predictions
-    8. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
+    6. MS2RESCORE (per engine) rescore PINs with spectrum predictions; runs
+                               mokapot internally (no standalone mokapot pass)
+    7. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
 ----------------------------------------------------------------------------------------
 */
 
@@ -17,12 +17,8 @@ include { PREPARE_FASTA                } from '../../../modules/local/prepare_fa
 include { MSFRAGGER                    } from '../../../modules/local/msfragger/main'
 include { COMET                        } from '../../../modules/local/comet/main'
 include { SAGE                         } from '../../../modules/local/sage/main'
-include { MOKAPOT as MOKAPOT_MSFRAGGER } from '../../../modules/local/mokapot/main'
-include { MOKAPOT as MOKAPOT_COMET     } from '../../../modules/local/mokapot/main'
-include { MOKAPOT as MOKAPOT_SAGE      } from '../../../modules/local/mokapot/main'
 include { CONVERT_MZML                 } from '../../../modules/local/convert_mzml/main'
 include { CONVERT_PEAKS                } from '../../../modules/local/convert_peaks/main'
-include { MOKAPOT as MOKAPOT_PEAKS     } from '../../../modules/local/mokapot/main'
 include { MS2RESCORE as MS2RESCORE_MSFRAGGER } from '../../../modules/local/ms2rescore/main'
 include { MS2RESCORE as MS2RESCORE_COMET     } from '../../../modules/local/ms2rescore/main'
 include { MS2RESCORE as MS2RESCORE_SAGE      } from '../../../modules/local/ms2rescore/main'
@@ -56,7 +52,7 @@ workflow MS_SEARCH {
     //
     ch_calibrated_mzml = Channel.empty()
     ch_msfragger_log   = Channel.empty()
-    ch_mok_msfragger   = Channel.empty()
+    ch_pin_msfragger   = Channel.empty()
 
     if (engines.contains('msfragger')) {
         ch_msfragger_params = Channel.fromPath(
@@ -68,11 +64,7 @@ workflow MS_SEARCH {
         ch_calibrated_mzml = MSFRAGGER.out.mzml
         ch_msfragger_log   = MSFRAGGER.out.log
 
-        MOKAPOT_MSFRAGGER(MSFRAGGER.out.pin, 'msfragger')
-        ch_versions      = ch_versions.mix(MOKAPOT_MSFRAGGER.out.versions)
-        ch_mok_msfragger = MOKAPOT_MSFRAGGER.out.psms
-            .join(MOKAPOT_MSFRAGGER.out.decoy_psms)
-            .join(MOKAPOT_MSFRAGGER.out.combined_pin)
+        ch_pin_msfragger = MSFRAGGER.out.pin
     }
 
     // Always feed raw input to Comet/Sage — they handle their own calibration.
@@ -82,7 +74,7 @@ workflow MS_SEARCH {
     //
     // STEP 2b: Comet
     //
-    ch_mok_comet = Channel.empty()
+    ch_pin_comet = Channel.empty()
     if (engines.contains('comet')) {
         ch_comet_params = Channel.fromPath(
             "${projectDir}/assets/ms_search_params/comet/${instrument}_${mod_type}.params",
@@ -91,17 +83,13 @@ workflow MS_SEARCH {
         COMET(ch_engine_input, ch_tda_fasta, ch_comet_params)
         ch_versions = ch_versions.mix(COMET.out.versions)
 
-        MOKAPOT_COMET(COMET.out.pin, 'comet')
-        ch_versions  = ch_versions.mix(MOKAPOT_COMET.out.versions)
-        ch_mok_comet = MOKAPOT_COMET.out.psms
-            .join(MOKAPOT_COMET.out.decoy_psms)
-            .join(MOKAPOT_COMET.out.combined_pin)
+        ch_pin_comet = COMET.out.pin
     }
 
     //
     // STEP 2c: Sage
     //
-    ch_mok_sage = Channel.empty()
+    ch_pin_sage = Channel.empty()
     if (engines.contains('sage')) {
         ch_sage_params = Channel.fromPath(
             "${projectDir}/assets/ms_search_params/sage/${instrument}_${mod_type}.json",
@@ -113,11 +101,7 @@ workflow MS_SEARCH {
         SAGE(ch_engine_input, ch_tda_fasta, ch_sage_params, ch_sage_log)
         ch_versions = ch_versions.mix(SAGE.out.versions)
 
-        MOKAPOT_SAGE(SAGE.out.pin, 'sage')
-        ch_versions = ch_versions.mix(MOKAPOT_SAGE.out.versions)
-        ch_mok_sage = MOKAPOT_SAGE.out.psms
-            .join(MOKAPOT_SAGE.out.decoy_psms)
-            .join(MOKAPOT_SAGE.out.combined_pin)
+        ch_pin_sage = SAGE.out.pin
     }
 
     //
@@ -152,7 +136,7 @@ workflow MS_SEARCH {
     // User-supplied db.psms.csv is converted to PIN using index2scan.pkl,
     // then run through its own MOKAPOT instance.
     //
-    ch_mok_peaks = Channel.empty()
+    ch_pin_peaks = Channel.empty()
     if (engines.contains('peaks')) {
         ch_peaks_csv = ch_ms_data
             .map { meta, _files -> [meta, file(params.peaks_psm_csv, checkIfExists: true)] }
@@ -163,11 +147,7 @@ workflow MS_SEARCH {
         )
         ch_versions = ch_versions.mix(CONVERT_PEAKS.out.versions)
 
-        MOKAPOT_PEAKS(CONVERT_PEAKS.out.pin, 'peaks')
-        ch_versions  = ch_versions.mix(MOKAPOT_PEAKS.out.versions)
-        ch_mok_peaks = MOKAPOT_PEAKS.out.psms
-            .join(MOKAPOT_PEAKS.out.decoy_psms)
-            .join(MOKAPOT_PEAKS.out.combined_pin)
+        ch_pin_peaks = CONVERT_PEAKS.out.pin
     }
 
     ch_ms2rescore_cfg = Channel.fromPath(
@@ -191,22 +171,22 @@ workflow MS_SEARCH {
 
     if (!params.skip_ms2rescore) {
         if (engines.contains('msfragger')) {
-            MS2RESCORE_MSFRAGGER(ch_mok_msfragger, 'msfragger', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            MS2RESCORE_MSFRAGGER(ch_pin_msfragger, 'msfragger', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_MSFRAGGER.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_MSFRAGGER.out.psms.map { meta, f -> [meta, 'msfragger', f] })
         }
         if (engines.contains('comet')) {
-            MS2RESCORE_COMET(ch_mok_comet, 'comet', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            MS2RESCORE_COMET(ch_pin_comet, 'comet', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_COMET.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_COMET.out.psms.map { meta, f -> [meta, 'comet', f] })
         }
         if (engines.contains('sage')) {
-            MS2RESCORE_SAGE(ch_mok_sage, 'sage', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            MS2RESCORE_SAGE(ch_pin_sage, 'sage', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_SAGE.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_SAGE.out.psms.map { meta, f -> [meta, 'sage', f] })
         }
         if (engines.contains('peaks')) {
-            MS2RESCORE_PEAKS(ch_mok_peaks, 'peaks', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
+            MS2RESCORE_PEAKS(ch_pin_peaks, 'peaks', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_PEAKS.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_PEAKS.out.psms.map { meta, f -> [meta, 'peaks', f] })
         }

@@ -9,9 +9,9 @@ nextflow_workflow {
     tag "ms_search"
     tag "stub"
 
-    // Single-engine path with MS2Rescore skipped: PREPARE_FASTA -> SAGE ->
-    // MOKAPOT. The heavy rescore/integrate chain is covered by the
-    // module-level stub tests (mokapot, ms2rescore, integrate_engines).
+    // Single-engine path with MS2Rescore skipped: PREPARE_FASTA -> SAGE.
+    // The rescore/integrate chain (MS2Rescore reads the engine PIN directly)
+    // is covered by the module-level stub tests (ms2rescore, integrate_engines).
     test("ms_search - sage, skip ms2rescore - stub") {
         options "-stub"
         when {

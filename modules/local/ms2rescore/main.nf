@@ -8,7 +8,7 @@ process MS2RESCORE {
         'biocontainers/ms2rescore:3.1.5--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(mokapot_target), path(mokapot_decoy), path(pin_file)
+    tuple val(meta), path(pin_file)
     val(engine)
     path(scans_pkls, stageAs: 'scans/*')
     path(mgf_files,  stageAs: 'scans/*')
@@ -30,8 +30,6 @@ process MS2RESCORE {
     """
     prepare_ms2rescore_input.py \\
         --engine ${engine} \\
-        --target ${mokapot_target} \\
-        --decoy  ${mokapot_decoy} \\
         --pin    ${pin_file} \\
         --scans  ${scans_pkls.join(' ')} \\
         --mod    ${mod} \\
