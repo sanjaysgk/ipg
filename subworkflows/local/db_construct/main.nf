@@ -209,5 +209,7 @@ workflow DB_CONSTRUCT {
     sorted_gtf          = GFF3SORT.out.gtf
     lifted_gtf_unmasked = LIFTOVER_UNMASKED.out.gtf
     lifted_gtf_indel    = LIFTOVER_INDEL.out.gtf
+    transcriptome_fasta = GFFREAD_REFERENCE.out.gffread_fasta   // [meta, fasta] — origins -n; cryptic-ORF backtrack source
+    orf_fasta           = TT_REFERENCE.out.fasta                // [meta, fasta] — 3-frame ORF DB (annotate_origin)
     versions            = ch_versions
 }

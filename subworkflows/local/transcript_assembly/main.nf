@@ -45,6 +45,7 @@ workflow TRANSCRIPT_ASSEMBLY {
     emit:
     assembly_gtf = STRINGTIE_STRINGTIE.out.transcript_gtf   // [meta, gtf]  — input to gff3sort in DB_CONSTRUCT
     combined_gtf = GFFCOMPARE.out.combined_gtf              // [meta, gtf]
+    tmap         = GFFCOMPARE.out.tmap                      // [meta, tmap] — transcript expression (FPKM/TPM) for origin annotation
     tracking     = GFFCOMPARE.out.tracking                  // [meta, tracking] — input to triple_translate
     stats        = GFFCOMPARE.out.stats                     // [meta, stats]
     versions     = ch_versions
