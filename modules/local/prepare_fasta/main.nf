@@ -22,7 +22,7 @@ process PREPARE_FASTA {
     template 'prepare_fasta.py'
 
     stub:
-    def prefix = fasta.baseName
+    prefix = fasta.baseName
     """
     touch ${prefix}_tda.fasta
 
