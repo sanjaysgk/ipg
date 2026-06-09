@@ -59,8 +59,7 @@ workflow MS_SEARCH {
         ch_versions  = ch_versions.mix(COMBINE_FASTA.out.versions)
     } else {
         error("--db_search_mode '${db_mode}' not implemented yet (separate-search " +
-            "mode is a follow-up; use 'appended' or 'cryptic_only'). " +
-            "See .claude/specs/canonical-db-search.md")
+            "mode is a follow-up; use 'appended' or 'cryptic_only').")
     }
 
     PREPARE_FASTA(ch_search_db)
