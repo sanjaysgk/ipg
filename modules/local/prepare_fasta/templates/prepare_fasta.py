@@ -6,8 +6,8 @@ If none are found, generates reversed decoy sequences and writes a
 concatenated target-decoy FASTA. If decoys already exist, copies the
 input unchanged.
 
-Adapted from the prepare_fasta() function in Patrick Willems'
-immunopeptidomics pipeline (core.py).
+Adapted from the prepare_fasta() function in the upstream immunopeptidomics
+pipeline (core.py).
 
 Invoked as a Nextflow `template` from modules/local/prepare_fasta/main.nf.
 INPUT_FASTA / OUTPUT_FASTA / CONTAMINANT are interpolated by Nextflow.
