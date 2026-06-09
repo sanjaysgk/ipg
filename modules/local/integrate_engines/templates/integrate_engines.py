@@ -43,6 +43,11 @@ PEP_COLUMNS = [
     "rescoring:spec_pearson", "rescoring:rt_diff_best",
 ]
 
+# Per-class target-decoy q-values need enough target PSMs to be meaningful;
+# below this the per-class FDR estimate is unreliable. Warned per engine per
+# class, not enforced.
+MIN_CLASS_TARGETS = 100
+
 
 def pepform2seq(pepform: str) -> str:
     return re.sub(r"[^A-Z]", "", re.sub(r"\\[.*?\\]", "", pepform))
@@ -166,6 +171,15 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
         "meta:peptide_score": "peptide_score",
         "meta:peptide_pep": "peptide_PEP",
     })
+
+    # Warn when a class is too small for a reliable per-class TDC estimate.
+    target_class = df.loc[~df["_decoy"], "class"].value_counts()
+    for _cls in ("canonical", "cryptic"):
+        _n = int(target_class.get(_cls, 0))
+        if 0 < _n < MIN_CLASS_TARGETS:
+            print(f"[integrate_engines] WARNING: {engine} {_cls} class has {_n} "
+                  f"target PSMs (<{MIN_CLASS_TARGETS}); per-class {fdr*100:.0f}% FDR "
+                  f"may be unreliable", file=sys.stderr)
 
     # Separated-class FDR: cryptic targets compete only against cryptic decoys,
     # canonical only against canonical. Replaces the canonical-dominated global q
