@@ -4,8 +4,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Phase 1: db_compare → origins (simple mode)
     Phase 2: db_compare (with discard/unconventional) → origins (full Ensembl mode)
-
-    Follows the workflow clarified by Kate Scull (2025-07-15).
 ----------------------------------------------------------------------------------------
 */
 

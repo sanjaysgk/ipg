@@ -1,5 +1,5 @@
 //
-// VCF_CURATE: kescull curate_vcf — produces unmasked + indel variant tracks
+// VCF_CURATE: curate_vcf — produces unmasked + indel variant tracks
 //
 // Step 23 of the legacy pipeline. Runs the curate_vcf C tool twice:
 //   - without -d  -> *_indel.vcf     (deletions preserved; indel-aware track)

@@ -44,7 +44,7 @@ process CURATE_VCF {
             ;;
     esac
 
-    # The kescull curate_vcf binary segfaults on empty VCFs (no variant
+    # The curate_vcf binary segfaults on empty VCFs (no variant
     # records). Guard against that by short-circuiting to empty output
     # when there are zero non-header lines — this happens routinely on
     # tiny test data and on real samples that simply have no somatic

@@ -17,9 +17,9 @@
 // Mutect2 mode against a gnomAD-style germline allele-frequency database.
 // This pipeline does NOT support matched tumour-normal calling. The
 // include_variant_peptides flag controls only whether the discovered
-// variants get folded into the final cryptic peptide DB. The legacy Scull
-// et al. 2021 / D122_Lung pipeline always used reference-only (verified
-// empirically against the legacy squish.log) — enabling include_variant_peptides
+// variants get folded into the final cryptic peptide DB. The original
+// D122_Lung pipeline always used reference-only (verified empirically
+// against the legacy squish.log) — enabling include_variant_peptides
 // is an EXTENSION suitable for samples expected to harbour biologically
 // meaningful somatic variants (e.g. tumour tissue, hypermutated samples).
 //
@@ -96,7 +96,7 @@ workflow DB_CONSTRUCT {
     // Branch the curated VCFs by include_variant_peptides. Samples that
     // do NOT request variant peptides bypass the entire FARM/revert/liftover/
     // gffread/tt-unmasked-indel chain. Their cryptic.fasta is built from
-    // the reference branch only — matching legacy Scull et al. 2021.
+    // the reference branch only — matching the legacy reference-only default.
     //
     ch_unmasked_vcf
         .branch { meta, _vcf ->
