@@ -19,6 +19,12 @@ lint:
   #   - CONTRIBUTING / ISSUE_TEMPLATE / PR_TEMPLATE / linting_comment.yml:
   #     all updated to point at sanjaysgk/ipg instead of nf-core/ipg
   #     (commit 78526c6 - bulk identity rename)
+  #   - .gitignore / .prettierignore: extra entries for pixi, .claude/, the
+  #     vendored MS-search param templates, and bin/ — intentional.
+  #   - branch.yml / linting.yml: CI guards target `main` (not the template's
+  #     master/dev) and run our pixi+nf-test harness.
+  #   - docs/README.md, email/sendmail templates: project-specific text for a
+  #     non-nf-core academic pipeline.
   files_unchanged:
     - .gitattributes
     - .prettierrc.yml
@@ -26,6 +32,17 @@ lint:
     - .github/ISSUE_TEMPLATE/bug_report.yml
     - .github/PULL_REQUEST_TEMPLATE.md
     - .github/workflows/linting_comment.yml
+    - .gitignore
+    - .prettierignore
+    - .github/workflows/branch.yml
+    - .github/workflows/linting.yml
+    - docs/README.md
+    - assets/email_template.html
+    - assets/email_template.txt
+    - assets/sendmail_template.txt
+  # No Seqera Platform / AWS full-test infrastructure for this academic
+  # pipeline, so the awsfulltest trigger/profile checks do not apply.
+  actions_awsfulltest: false
   # README intentionally rewritten as a real project README without the
   # nf-core template badges (no Twitter / Mastodon / YouTube / Slack /
   # Zenodo placeholder / AWS CI badges). The Nextflow minimum-version
