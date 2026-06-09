@@ -8,7 +8,7 @@
     4. CONVERT_MZML            mzML → MGF + scans.pkl + index2scan.pkl
     5. CONVERT_PEAKS           PEAKS db.psms.csv → PIN (uses index2scan)
     6. MS2RESCORE (per engine) rescore PINs with spectrum predictions; runs
-                               mokapot internally (no standalone mokapot pass)
+        mokapot internally (no standalone mokapot pass)
     7. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
 ----------------------------------------------------------------------------------------
 */
@@ -59,8 +59,8 @@ workflow MS_SEARCH {
         ch_versions  = ch_versions.mix(COMBINE_FASTA.out.versions)
     } else {
         error("--db_search_mode '${db_mode}' not implemented yet (separate-search " +
-              "mode is a follow-up; use 'appended' or 'cryptic_only'). " +
-              "See .claude/specs/canonical-db-search.md")
+            "mode is a follow-up; use 'appended' or 'cryptic_only'). " +
+            "See .claude/specs/canonical-db-search.md")
     }
 
     PREPARE_FASTA(ch_search_db)

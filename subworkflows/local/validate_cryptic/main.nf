@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     1. PEPQUERY_PREP      extract cryptic peptide list + canonical-only reference
     2. PEPQUERY           re-match each cryptic candidate against its spectrum,
-                          competing with the canonical proteome (± modifications)
+        competing with the canonical proteome (± modifications)
     3. PEPQUERY_ANNOTATE  write pepquery_status onto the integrated peptide table
 
     Cryptic calls that do not win this competitive re-match are flagged

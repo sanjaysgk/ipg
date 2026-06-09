@@ -259,7 +259,7 @@ results/
 
 | Profile                     | Purpose                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `test`                      | Use the chr22 test bundle (built by `scripts/build_test_bundle.sh`)                                          |
+| `test`                      | Use the chr22 test bundle (built by `scripts/build_test_bundle.sh`)                                      |
 | `pixi`                      | Run every process from the local pixi env, no containers                                                 |
 | `singularity` / `apptainer` | Pull biocontainers via singularity/apptainer (HPC default)                                               |
 | `docker`                    | Pull biocontainers via docker (laptop / cloud / CI default)                                              |
