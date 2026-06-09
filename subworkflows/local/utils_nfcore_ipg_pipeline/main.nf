@@ -251,13 +251,17 @@ def genomeExistsError() {
 // Generate methods description for MultiQC
 //
 def toolCitationText() {
-    // TODO nf-core: Optionally add in-text citation tools to this list.
-    // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "Tool (Foo et al. 2023)" : "",
-    // Uncomment function in methodsDescriptionText to render in MultiQC report
     def citation_text = [
             "Tools used in the workflow included:",
             "FastQC (Andrews 2010),",
-            "MultiQC (Ewels et al. 2016)",
+            "STAR (Dobin et al. 2013),",
+            "SAMtools (Li et al. 2009),",
+            "StringTie (Pertea et al. 2015),",
+            "gffcompare (Pertea and Pertea 2020),",
+            "RSeQC (Wang et al. 2012),",
+            "GATK4 (McKenna et al. 2010),",
+            "the immunopeptidogenomics toolkit (Scull et al. 2021),",
+            "and MultiQC (Ewels et al. 2016)",
             "."
         ].join(' ').trim()
 
@@ -265,12 +269,16 @@ def toolCitationText() {
 }
 
 def toolBibliographyText() {
-    // TODO nf-core: Optionally add bibliographic entries to this list.
-    // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "<li>Author (2023) Pub name, Journal, DOI</li>" : "",
-    // Uncomment function in methodsDescriptionText to render in MultiQC report
     def reference_text = [
-            "<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/).</li>",
-            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"
+            "<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/.</li>",
+            "<li>Dobin A, et al. (2013) STAR: ultrafast universal RNA-seq aligner. Bioinformatics, 29(1):15-21. doi: 10.1093/bioinformatics/bts635</li>",
+            "<li>Li H, et al. (2009) The Sequence Alignment/Map format and SAMtools. Bioinformatics, 25(16):2078-2079. doi: 10.1093/bioinformatics/btp352</li>",
+            "<li>Pertea M, et al. (2015) StringTie enables improved reconstruction of a transcriptome from RNA-seq reads. Nat Biotechnol, 33(3):290-295. doi: 10.1038/nbt.3122</li>",
+            "<li>Pertea G, Pertea M. (2020) GFF Utilities: GffRead and GffCompare. F1000Research, 9:304. doi: 10.12688/f1000research.23297.2</li>",
+            "<li>Wang L, Wang S, Li W. (2012) RSeQC: quality control of RNA-seq experiments. Bioinformatics, 28(16):2184-2185. doi: 10.1093/bioinformatics/bts356</li>",
+            "<li>McKenna A, et al. (2010) The Genome Analysis Toolkit: a MapReduce framework for analyzing next-generation DNA sequencing data. Genome Res, 20(9):1297-1303. doi: 10.1101/gr.107524.110</li>",
+            "<li>Scull KE, et al. (2021) Immunopeptidogenomics: harnessing RNA-seq to illuminate the dark immunopeptidome. Mol Cell Proteomics, 20:100143. doi: 10.1016/j.mcpro.2021.100143</li>",
+            "<li>Ewels P, et al. (2016) MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics, 32(19):3047-3048. doi: 10.1093/bioinformatics/btw354</li>"
         ].join(' ').trim()
 
     return reference_text
@@ -297,12 +305,9 @@ def methodsDescriptionText(mqc_methods_yaml) {
     meta["nodoi_text"] = meta.manifest_map.doi ? "" : "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
 
     // Tool references
-    meta["tool_citations"] = ""
-    meta["tool_bibliography"] = ""
 
-    // TODO nf-core: Only uncomment below if logic in toolCitationText/toolBibliographyText has been filled!
-    // meta["tool_citations"] = toolCitationText().replaceAll(", \\.", ".").replaceAll("\\. \\.", ".").replaceAll(", \\.", ".")
-    // meta["tool_bibliography"] = toolBibliographyText()
+    meta["tool_citations"] = toolCitationText().replaceAll(", \\.", ".").replaceAll("\\. \\.", ".").replaceAll(", \\.", ".")
+    meta["tool_bibliography"] = toolBibliographyText()
 
 
     def methods_text = mqc_methods_yaml.text
