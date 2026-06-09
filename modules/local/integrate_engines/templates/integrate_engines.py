@@ -27,7 +27,8 @@ from Bio import SeqIO
 
 OUT_COLUMNS = [
     "scan_id", "run", "peptide", "length", "immuno", "peptidoform",
-    "protein_list", "class", "gene", "species", "description leftmost",
+    "protein_list", "class", "class_detail", "gene", "species",
+    "description leftmost",
     "engine", "psm_qval", "psm_score", "psm_PEP",
     "peptide_qval", "peptide_score", "peptide_PEP",
     "precursor_mz", "retention_time", "ion_mobility",
@@ -37,7 +38,7 @@ OUT_COLUMNS = [
 
 PEP_COLUMNS = [
     "peptide", "length", "immuno", "peptidoform", "protein_list", "class",
-    "gene", "species", "description leftmost", "engine",
+    "class_detail", "gene", "species", "description leftmost", "engine",
     "peptide_qval", "peptide_score", "peptide_PEP",
     "rescoring:spec_pearson", "rescoring:rt_diff_best",
 ]
@@ -63,6 +64,24 @@ def classify_peptide(protein_list: str, canonical_prefixes: list[str]) -> str:
     proteins = [p[4:] if p.startswith("rev_") else p for p in s.split(";") if p]
     if any(p.startswith(pre) for p in proteins for pre in canonical_prefixes):
         return "canonical"
+    return "cryptic"
+
+
+def classify_peptide_detail(protein_list: str, canonical_prefixes: list[str]) -> str:
+    '''Three-way REPORT label refining the FDR `class` (which stays canonical):
+      canonical_only  every mapped protein is canonical
+      overlap         maps to a canonical AND a cryptic protein
+      cryptic         maps only to cryptic proteins (a true cryptic discovery)
+    A peptide shared with a canonical protein is reported as overlap, never as a
+    cryptic discovery, so the cryptic headline counts only novel sequences.
+    Mirrors classify_peptide (rev_-stripped) so it never disagrees on class.'''
+    s = str(protein_list).strip("[]").replace("'", "").replace(", ", ";")
+    proteins = [p[4:] if p.startswith("rev_") else p for p in s.split(";") if p]
+    is_canon = [any(p.startswith(pre) for pre in canonical_prefixes) for p in proteins]
+    if any(is_canon) and not all(is_canon):
+        return "overlap"
+    if any(is_canon):
+        return "canonical_only"
     return "cryptic"
 
 
@@ -137,6 +156,9 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     df["class"] = df["protein_list"].apply(
         lambda x: classify_peptide(x, canonical_prefixes)
     )
+    df["class_detail"] = df["protein_list"].apply(
+        lambda x: classify_peptide_detail(x, canonical_prefixes)
+    )
     df["_decoy"] = df["is_decoy"].astype(bool)
     df["peptide"] = df["peptidoform"].apply(pepform2seq)
     df = df.rename(columns={
@@ -183,7 +205,7 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     agg = {
         "length": "first", "immuno": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
-        "protein_list": "first", "class": "first",
+        "protein_list": "first", "class": "first", "class_detail": "first",
         "gene": "first", "species": "first",
         "description leftmost": "first", "engine": "first",
         "peptide_qval": "min", "peptide_score": "max", "peptide_PEP": "min",
@@ -257,6 +279,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
         "peptide": lambda x: ";".join(pd.Series.unique(x)),
         "length": "first", "immuno": "first",
         "peptidoform": list, "protein_list": "first", "class": "first",
+        "class_detail": "first",
         "gene": "first", "species": "first",
         "description leftmost": "first",
         "engine": list,
@@ -281,7 +304,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     # Aggregate peptides across engines.
     agg_pep = {
         "length": "first", "immuno": "first",
-        "protein_list": "first", "class": "first",
+        "protein_list": "first", "class": "first", "class_detail": "first",
         "gene": "first", "species": "first",
         "description leftmost": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
@@ -325,6 +348,8 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     peptides = peptides[peptides["PSMs_total"] > 0]
     print(f"[integrate_engines] unique peptides: {len(peptides)}",
           file=sys.stderr)
+    print(f"[integrate_engines] peptides by class_detail: "
+          f"{peptides['class_detail'].value_counts().to_dict()}", file=sys.stderr)
 
     psms.to_csv(outdir / "integrated_psms.tsv", sep="\\t", index=False)
     peptides.to_csv(outdir / "integrated_peptides.tsv", sep="\\t", index=False)
