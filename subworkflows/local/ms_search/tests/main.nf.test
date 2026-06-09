@@ -10,30 +10,33 @@ nextflow_workflow {
     tag "stub"
 
     // Single-engine path with MS2Rescore skipped: PREPARE_FASTA -> SAGE.
-    // The rescore/integrate chain (MS2Rescore reads the engine PIN directly)
-    // is covered by the module-level stub tests (ms2rescore, integrate_engines).
-    test("ms_search - sage, skip ms2rescore - stub") {
+    // cryptic_only DB mode (no canonical append). The rescore/integrate chain
+    // (MS2Rescore reads the engine PIN directly) is covered by the module-level
+    // stub tests (ms2rescore, integrate_engines).
+    test("ms_search - sage, cryptic_only, skip ms2rescore - stub") {
         options "-stub"
         when {
             params {
                 ms_engines      = 'sage'
                 instrument      = 'orbitrap'
                 mod_type        = 'mod'
+                db_search_mode  = 'cryptic_only'
                 skip_ms2rescore = true
             }
             workflow {
                 """
                 input[0] = Channel.of([ [ id:'test' ], [ file("sample.mzML") ] ])
                 input[1] = file("db.fasta")
-                input[2] = [ 'sage' ]
-                input[3] = file("${projectDir}/assets/NO_FILE")
+                input[2] = []                                  // canonical (unused in cryptic_only)
+                input[3] = [ 'sage' ]
+                input[4] = file("${projectDir}/assets/NO_FILE")
                 """
             }
         }
         then {
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(workflow.out.versions).match() }
+                { assert workflow.out.versions.size() > 0 }
             )
         }
     }

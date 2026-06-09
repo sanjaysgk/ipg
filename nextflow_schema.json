@@ -249,8 +249,27 @@
                 "search_fasta": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "FASTA database for MS search (output from --step db_construct).",
+                    "description": "Cryptic FASTA database for MS search (output from --step db_construct).",
                     "fa_icon": "far fa-file-code"
+                },
+                "canonical_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Local canonical proteome FASTA (gzipped or plain). Takes precedence over the download. When unset, DOWNLOAD_UNIPROT_PROTEOME fetches --canonical_proteome_url. Ignored when --db_search_mode is 'cryptic_only'.",
+                    "fa_icon": "fas fa-database"
+                },
+                "canonical_proteome_url": {
+                    "type": "string",
+                    "default": "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606.fasta.gz",
+                    "description": "URL of the gzipped canonical proteome, downloaded and cached by DOWNLOAD_UNIPROT_PROTEOME when --canonical_fasta is not given. Default = UniProt human reference proteome UP000005640.",
+                    "fa_icon": "fas fa-link"
+                },
+                "db_search_mode": {
+                    "type": "string",
+                    "default": "appended",
+                    "enum": ["appended", "separate", "cryptic_only"],
+                    "description": "How canonical and cryptic are searched. 'appended': one combined DB with class-separated FDR (recommended). 'separate': independent searches reconciled downstream (follow-up). 'cryptic_only': cryptic DB alone.",
+                    "fa_icon": "fas fa-layer-group"
                 },
                 "ms_engines": {
                     "type": "string",

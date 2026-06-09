@@ -1,0 +1,30 @@
+nextflow_process {
+
+    name "Test Process DOWNLOAD_UNIPROT_PROTEOME"
+    script "../main.nf"
+    process "DOWNLOAD_UNIPROT_PROTEOME"
+
+    tag "modules"
+    tag "modules_local"
+    tag "download_uniprot_proteome"
+    tag "stub"
+
+    test("download proteome - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = 'https://example.org/UP000005640_9606.fasta.gz'
+                """
+            }
+        }
+        then {
+            def out = path(process.out.fasta.get(0))
+            assertAll(
+                { assert process.success },
+                { assert out.getName() == 'UP000005640_9606.fasta' },
+                { assert out.text.contains('>sp|') },
+            )
+        }
+    }
+}

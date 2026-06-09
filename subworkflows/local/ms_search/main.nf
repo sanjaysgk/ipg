@@ -14,6 +14,7 @@
 */
 
 include { PREPARE_FASTA                } from '../../../modules/local/prepare_fasta/main'
+include { COMBINE_FASTA                } from '../../../modules/local/combine_fasta/main'
 include { MSFRAGGER                    } from '../../../modules/local/msfragger/main'
 include { COMET                        } from '../../../modules/local/comet/main'
 include { SAGE                         } from '../../../modules/local/sage/main'
@@ -28,10 +29,11 @@ include { INTEGRATE_ENGINES            } from '../../../modules/local/integrate_
 workflow MS_SEARCH {
 
     take:
-    ch_ms_data       // channel: [ val(meta), path(ms_files) ]
-    ch_fasta         // path: search FASTA database
-    ch_engines       // val: list of engine names e.g. ['msfragger','comet','sage']
-    ch_msfragger_jar // path: MSFragger JAR (may be empty channel)
+    ch_ms_data         // channel: [ val(meta), path(ms_files) ]
+    ch_fasta           // path: cryptic FASTA database (from db_construct)
+    ch_canonical_fasta // path: canonical proteome FASTA (unused in 'cryptic_only' mode)
+    ch_engines         // val: list of engine names e.g. ['msfragger','comet','sage']
+    ch_msfragger_jar   // path: MSFragger JAR (may be empty channel)
 
     main:
 
@@ -41,9 +43,27 @@ workflow MS_SEARCH {
     def mod_type   = params.mod_type
 
     //
-    // STEP 1: Prepare target-decoy FASTA
+    // STEP 1: Assemble the search DB per --db_search_mode, then build target-decoy.
+    //   cryptic_only : cryptic DB alone (original behaviour)
+    //   appended     : canonical + cryptic in one DB → class-separated FDR in INTEGRATE
+    //   separate     : (follow-up) independent canonical/cryptic searches + reconcile
     //
-    PREPARE_FASTA(ch_fasta)
+    def db_mode = params.db_search_mode ?: 'appended'
+    if (db_mode == 'cryptic_only') {
+        ch_search_db = ch_fasta
+    } else if (db_mode == 'appended') {
+        COMBINE_FASTA(
+            ch_canonical_fasta.combine(ch_fasta).map { canon, cryptic -> [canon, cryptic].flatten() }
+        )
+        ch_search_db = COMBINE_FASTA.out.fasta
+        ch_versions  = ch_versions.mix(COMBINE_FASTA.out.versions)
+    } else {
+        error("--db_search_mode '${db_mode}' not implemented yet (separate-search " +
+              "mode is a follow-up; use 'appended' or 'cryptic_only'). " +
+              "See .claude/specs/canonical-db-search.md")
+    }
+
+    PREPARE_FASTA(ch_search_db)
     ch_versions  = ch_versions.mix(PREPARE_FASTA.out.versions)
     ch_tda_fasta = PREPARE_FASTA.out.fasta
 

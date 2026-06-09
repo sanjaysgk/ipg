@@ -1,0 +1,28 @@
+name: download_uniprot_proteome
+description: Download and gunzip a UniProt reference proteome FASTA (e.g. UP000005640, human)
+keywords:
+  - uniprot
+  - proteome
+  - canonical
+  - fasta
+  - download
+tools:
+  - wget:
+      description: GNU Wget file retrieval utility
+      homepage: https://www.gnu.org/software/wget/
+      licence: ["GPL-3.0-or-later"]
+input:
+  - url:
+      type: string
+      description: URL of the gzipped UniProt proteome FASTA
+output:
+  - fasta:
+      type: file
+      description: Decompressed canonical proteome FASTA
+      pattern: "*.fasta"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"
