@@ -49,6 +49,12 @@
             "fa_icon": "fas fa-dna",
             "description": "Reference genome related files and options required for the workflow.",
             "properties": {
+                "test_bundle": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Path to a pre-built chr22 test data bundle (see scripts/build_test_bundle.sh); used by the test profile to skip large downloads.",
+                    "fa_icon": "fas fa-box"
+                },
                 "genome": {
                     "type": "string",
                     "description": "Name of iGenomes reference.",
@@ -351,6 +357,31 @@
                     "maximum": 1,
                     "description": "mokapot INTERNAL score-calibration FDR (not the reported FDR). Raise toward 0.5 for small or low-ID databases; mokapot aborts with 'no target PSMs below eval_fdr' if it is too tight.",
                     "fa_icon": "fas fa-balance-scale-right"
+                },
+                "msfragger_license": {
+                    "type": "string",
+                    "description": "MSFragger academic license key (required when using the bioconda MSFragger wrapper).",
+                    "fa_icon": "fas fa-key"
+                },
+                "skip_ms2rescore": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Bypass the MS2Rescore step and integrate raw engine scores instead.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "skip_integrate_engines": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Bypass INTEGRATE_ENGINES (implied when skip_ms2rescore is true).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "integrate_fdr": {
+                    "type": "number",
+                    "default": 0.01,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Final per-class FDR threshold applied in INTEGRATE_ENGINES — this is the reported FDR.",
+                    "fa_icon": "fas fa-percent"
                 },
                 "canonical_protein_prefixes": {
                     "type": "string",
