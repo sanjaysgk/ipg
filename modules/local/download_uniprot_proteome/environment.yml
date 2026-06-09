@@ -1,0 +1,6 @@
+name: download_uniprot_proteome
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::wget=1.21.4

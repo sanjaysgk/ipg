@@ -1,0 +1,6 @@
+name: combine_fasta
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::gzip=1.13

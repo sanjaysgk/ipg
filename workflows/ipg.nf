@@ -25,6 +25,7 @@ include { VCF_ANNOTATE_ALL    } from '../subworkflows/local/vcf_annotate_all/mai
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
+include { DOWNLOAD_UNIPROT_PROTEOME } from '../modules/local/download_uniprot_proteome/main'
 include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
 include { ANNOTATE_ORIGIN     } from '../modules/local/annotate_origin/main'
 include { CRYPTIC_REPORT      } from '../modules/local/cryptic_report/main'
@@ -97,6 +98,19 @@ workflow IPG {
 
         ch_search_fasta = channel.fromPath(params.search_fasta, checkIfExists: true).collect()
 
+        // Canonical proteome. Unused in 'cryptic_only'. A local --canonical_fasta
+        // wins; otherwise DOWNLOAD_UNIPROT_PROTEOME fetches canonical_proteome_url
+        // (default UP000005640) and caches it via storeDir.
+        if (params.db_search_mode == 'cryptic_only') {
+            ch_canonical_fasta = channel.value([])
+        } else if (params.canonical_fasta) {
+            ch_canonical_fasta = channel.fromPath(params.canonical_fasta, checkIfExists: true).collect()
+        } else {
+            DOWNLOAD_UNIPROT_PROTEOME(channel.value(params.canonical_proteome_url))
+            ch_versions        = ch_versions.mix(DOWNLOAD_UNIPROT_PROTEOME.out.versions)
+            ch_canonical_fasta = DOWNLOAD_UNIPROT_PROTEOME.out.fasta.collect()
+        }
+
         // When --msfragger_jar isn't provided, pass the NO_FILE sentinel
         // so the MSFRAGGER process still schedules (an empty channel
         // would starve the input and the task never runs). The module
@@ -110,6 +124,7 @@ workflow IPG {
         MS_SEARCH(
             ch_ms_data,
             ch_search_fasta,
+            ch_canonical_fasta,
             channel.value(engine_list),
             ch_msfragger_jar
         )
