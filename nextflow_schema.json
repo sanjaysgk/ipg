@@ -398,6 +398,24 @@
                     "description": "gffcompare .tmap (FPKM/TPM/length) used by --run_annotate_origin.",
                     "fa_icon": "fas fa-file"
                 },
+                "annotate_with_ensembl": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Add rich region/frame/biotype origin calls (5'UTR/3'UTR/CDS/intron, in/out-of-frame, ENSG, Ensembl coords) via the origins Ensembl pass. Set false for a reproducible, network-free run using local annotate_origin only.",
+                    "fa_icon": "fas fa-globe"
+                },
+                "origin_transcriptome": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Reference transcriptome FASTA (origins -n) for the Ensembl region-call pass. Defaults to DB_CONSTRUCT's transcriptome output when run end-to-end.",
+                    "fa_icon": "fas fa-file"
+                },
+                "origin_tracking": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "gffcompare .tracking (origins -r) for the Ensembl region-call pass. Defaults to TRANSCRIPT_ASSEMBLY's tracking output when run end-to-end.",
+                    "fa_icon": "fas fa-file"
+                },
                 "run_cryptic_report": {
                     "type": "boolean",
                     "default": false,
