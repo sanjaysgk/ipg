@@ -26,7 +26,8 @@ process ANNOTATE_ORIGIN {
 
     stub:
     """
-    touch integrated_peptides_origin.tsv cryptic_peptides.txt
+    touch integrated_peptides_origin.tsv
+    echo CRYPTICALLY > cryptic_peptides.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
