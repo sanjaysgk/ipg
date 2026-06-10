@@ -1,0 +1,34 @@
+nextflow_process {
+
+    name "Test Process MERGE_ORIGIN"
+    script "../main.nf"
+    process "MERGE_ORIGIN"
+
+    tag "modules"
+    tag "modules_local"
+    tag "merge_origin"
+    tag "stub"
+
+    test("merge_origin - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def pep = file("\${workDir}/integrated_peptides_origin.tsv")
+                pep.text = "peptide\\tclass\\nCRYPTICALLY\\tcryptic\\n"
+                def csv = file("\${workDir}/test_origins_rna.csv")
+                csv.text = ",,,transcriptome.fa,,,,,,,,,,,\\n" +
+                    "Num,Sequence,Conventional explanation?,Transcript,Mutations,Metadata,Category,Chromosome,Peptide coordinates,Strand,Reference id,Alt genome coordinates,Ensembl coordinates,Biotype,Gene\\n" +
+                    "1,CRYPTICALLY,N,TCONS_00000001,,\\"in 3'UTR\\",3'UTR_in-frame,chr1,100-127,PLUS,ENST00000000001,,200-300,protein_coding,ENSG00000000001\\n"
+                input[0] = [ [ id:'test' ], pep, csv ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
