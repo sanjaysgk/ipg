@@ -14,6 +14,7 @@ origins_rna.csv normal-group columns (origins.c): 0 Num, 1 Sequence, 2 Conventio
 from __future__ import annotations
 
 import csv
+import itertools
 import sys
 
 import pandas as pd
@@ -52,17 +53,17 @@ def parse_origins(path: str) -> dict:
     acc: dict = {}
     with open(path, newline="") as fh:
         reader = csv.reader(fh)
-        rows = list(reader)
-    # Drop the two header rows; tolerate a short/empty file.
-    for row in rows[2:]:
-        if len(row) < MIN_FIELDS:
-            continue
-        seq = row[1].strip()
-        if not seq:
-            continue
-        bucket = acc.setdefault(seq, {c: [] for c in OUT_COLS})
-        for idx, col in COLMAP.items():
-            bucket[col].append(row[idx].strip())
+        # Skip the two header rows, then stream one row at a time so a large
+        # origins_rna.csv is never fully materialized in memory.
+        for row in itertools.islice(reader, 2, None):
+            if len(row) < MIN_FIELDS:
+                continue
+            seq = row[1].strip()
+            if not seq:
+                continue
+            bucket = acc.setdefault(seq, {c: [] for c in OUT_COLS})
+            for idx, col in COLMAP.items():
+                bucket[col].append(row[idx].strip())
     return {seq: {c: joinu(v) for c, v in cols.items()} for seq, cols in acc.items()}
 
 
