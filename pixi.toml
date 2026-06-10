@@ -65,8 +65,18 @@ ms2rescore = "==3.2.1"
 python = ">=3.10,<3.12"
 percolator = ">=3.06"   # optional MS2Rescore rescoring_engine (params.ms2rescore_engine = percolator)
 
+# Dev-only tooling (NOT used by the pipeline). marker-pdf: PDF -> markdown for
+# reading papers during development. Isolated env: `pixi run -e dev ...`.
+[feature.dev.dependencies]
+python = ">=3.10,<3.13"
+pip = "*"
+
+[feature.dev.pypi-dependencies]
+marker-pdf = "*"
+
 [environments]
 ms2rescore = { features = ["ms2rescore"], no-default-feature = true, solve-group = "ms2rescore" }
+dev = { features = ["dev"], no-default-feature = true, solve-group = "dev" }
 
 [pypi-dependencies]
 nf-metro = ">=0.7.1, <0.8"
