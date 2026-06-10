@@ -15,6 +15,7 @@ process ANNOTATE_ORIGIN {
 
     output:
     tuple val(meta), path("integrated_peptides_origin.tsv"), emit: peptides
+    tuple val(meta), path("cryptic_peptides.txt"),           emit: cryptic_list, optional: true
     path "versions.yml",                                     emit: versions
 
     when:
@@ -26,6 +27,7 @@ process ANNOTATE_ORIGIN {
     stub:
     """
     touch integrated_peptides_origin.tsv
+    echo CRYPTICALLY > cryptic_peptides.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -28,6 +28,7 @@ include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
 include { DOWNLOAD_UNIPROT_PROTEOME } from '../modules/local/download_uniprot_proteome/main'
 include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
 include { ANNOTATE_ORIGIN     } from '../modules/local/annotate_origin/main'
+include { ORIGINS as ORIGINS_ENSEMBL } from '../modules/local/origins/main'
 include { CRYPTIC_REPORT      } from '../modules/local/cryptic_report/main'
 include { IMMUNOINFORMATICS   } from '../subworkflows/local/immunoinformatics/main'
 
@@ -159,6 +160,26 @@ workflow IPG {
             )
             ch_versions    = ch_versions.mix(ANNOTATE_ORIGIN.out.versions)
             ch_ms_peptides = ANNOTATE_ORIGIN.out.peptides
+
+            //
+            // Rich region/frame/biotype origin calls (5'/3'UTR, in/out-of-frame,
+            // biotype, ENSG, Ensembl coords) via the origins Ensembl pass — the
+            // default. Set --annotate_with_ensembl false for a network-free run.
+            //
+            if (params.annotate_with_ensembl) {
+                def missing = []
+                if (!params.origin_transcriptome) missing << '--origin_transcriptome (reference transcriptome FASTA)'
+                if (!params.origin_tracking)      missing << '--origin_tracking (gffcompare .tracking)'
+                if (!params.canonical_fasta)      missing << '--canonical_fasta (UniProt proteome)'
+                if (missing) error("--annotate_with_ensembl (default true) needs ${missing.join(', ')} for the rich origins region calls. Provide them, or pass --annotate_with_ensembl false for local-only origin annotation.")
+                ORIGINS_ENSEMBL(
+                    ANNOTATE_ORIGIN.out.cryptic_list.filter { _meta, f -> f.size() > 0 },
+                    file(params.origin_tracking,      checkIfExists: true),
+                    file(params.canonical_fasta,      checkIfExists: true),
+                    file(params.origin_transcriptome, checkIfExists: true)
+                )
+                ch_versions = ch_versions.mix(ORIGINS_ENSEMBL.out.versions)
+            }
         }
 
         //

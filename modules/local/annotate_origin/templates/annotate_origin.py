@@ -135,6 +135,12 @@ print(f"[annotate_origin] cryptic peptides located in ORF set: "
 
 df.to_csv("integrated_peptides_origin.tsv", sep="\\t", index=False)
 
+# Cryptic peptide list (one sequence per line) for the optional origins Ensembl
+# region-call pass.
+with open("cryptic_peptides.txt", "w") as _f:
+    for _pep in pd.Series(df.loc[is_cryptic, "peptide"]).dropna().unique():
+        _f.write(f"{_pep}\\n")
+
 with open("versions.yml", "w") as f:
     f.write(f'"{PROCESS_NAME}":\\n')
     f.write(f"    python: {sys.version.split()[0]}\\n")
