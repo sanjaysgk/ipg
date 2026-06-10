@@ -75,10 +75,14 @@ workflow BAM_PREP {
     )
 
     //
-    // Step 10: mark duplicates, merging a sample's technical reps here.
-    // Group per-rep BAMs by meta.sample; MarkDuplicates takes one --INPUT per
-    // BAM. Single-rep samples group by meta.id into a one-element list, i.e.
-    // the original single-BAM path. fasta/fai are bare paths, not tuples.
+    // Step 10: mark duplicates, merging a sample's technical reps here (rather
+    // than carrying them separately through to BaseRecalibrator). Read groups
+    // were assigned at Step 8 (FastqToSam), so MarkDuplicates can take one
+    // --INPUT per rep BAM and emit a single merged BAM per sample. Group per-rep
+    // BAMs by meta.sample; single-rep samples form a one-element list (the
+    // original single-BAM path). The merged BAM then feeds BOTH transcript
+    // assembly (StringTie) and the variant-calling branch. fasta/fai are bare
+    // paths, not tuples.
     //
     ch_markdup_input = GATK4_MERGEBAMALIGNMENT.out.bam
         .map { meta, bam -> [ meta.sample ?: meta.id, meta, bam ] }
