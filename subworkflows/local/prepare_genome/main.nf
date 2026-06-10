@@ -143,28 +143,28 @@ workflow PREPARE_GENOME {
     if ( r_dbsnp_tbi ) {
         ch_dbsnp_tbi = Channel.value( file(r_dbsnp_tbi) )
     } else {
-        TABIX_DBSNP( Channel.value( tabix_in('dbsnp', r_dbsnp) ) )
+        TABIX_DBSNP( Channel.value( tabix_in.call('dbsnp', r_dbsnp) ) )
         ch_dbsnp_tbi = TABIX_DBSNP.out.index.map { _meta, tbi -> tbi }
     }
 
     if ( r_known_indels_tbi ) {
         ch_known_indels_tbi = Channel.value( file(r_known_indels_tbi) )
     } else {
-        TABIX_KNOWN_INDELS( Channel.value( tabix_in('known_indels', r_known_indels) ) )
+        TABIX_KNOWN_INDELS( Channel.value( tabix_in.call('known_indels', r_known_indels) ) )
         ch_known_indels_tbi = TABIX_KNOWN_INDELS.out.index.map { _meta, tbi -> tbi }
     }
 
     if ( r_mills_tbi ) {
         ch_mills_tbi = Channel.value( file(r_mills_tbi) )
     } else {
-        TABIX_MILLS( Channel.value( tabix_in('mills', r_mills) ) )
+        TABIX_MILLS( Channel.value( tabix_in.call('mills', r_mills) ) )
         ch_mills_tbi = TABIX_MILLS.out.index.map { _meta, tbi -> tbi }
     }
 
     if ( r_germline_resource_tbi ) {
         ch_germline_resource_tbi = Channel.value( file(r_germline_resource_tbi) )
     } else {
-        TABIX_GERMLINE_RESOURCE( Channel.value( tabix_in('germline_resource', r_germline_resource) ) )
+        TABIX_GERMLINE_RESOURCE( Channel.value( tabix_in.call('germline_resource', r_germline_resource) ) )
         ch_germline_resource_tbi = TABIX_GERMLINE_RESOURCE.out.index.map { _meta, tbi -> tbi }
     }
 

@@ -24,7 +24,7 @@ process CONVERT_MZML {
     template 'convert_mzml.py'
 
     stub:
-    def run = mzml.baseName
+    run = mzml.baseName
     """
     touch ${run}.mgf ${run}.scans.pkl ${run}.index2scan.pkl
 
