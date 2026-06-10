@@ -177,19 +177,21 @@ def main() -> int:
                 f.write("".join(r2r))
             rep_files[(cond, rep)] = (p1, p2)
 
+    # rep -> deterministic read group rg<rep>; condition is carried as meta and
+    # must be consistent within a sample id (db_construct guards mixed conditions).
     with open(f"{d}/samplesheet_rnaseq_multirep.csv", "w") as f:
-        f.write("sample,fastq_1,fastq_2,strandedness\n")
+        f.write("sample,fastq_1,fastq_2,strandedness,rep,condition\n")
         for cond in conds:
             for rep in reps:
                 p1, p2 = rep_files[(cond, rep)]
-                f.write(f"SPIKE_{cond},{p1},{p2},forward\n")
+                f.write(f"SPIKE_{cond},{p1},{p2},forward,{rep},cond_{cond}\n")
 
     with open(f"{d}/samplesheet_rnaseq_perrep.csv", "w") as f:
-        f.write("sample,fastq_1,fastq_2,strandedness\n")
+        f.write("sample,fastq_1,fastq_2,strandedness,rep,condition\n")
         for cond in conds:
             for rep in reps:
                 p1, p2 = rep_files[(cond, rep)]
-                f.write(f"SPIKE_{cond}_rep{rep},{p1},{p2},forward\n")
+                f.write(f"SPIKE_{cond}_rep{rep},{p1},{p2},forward,1,cond_{cond}\n")
 
     print(f"[make_synth_genome] contig {CONTIG} {args.contig_len} bp")
     print(f"[make_synth_genome] gene1 CRYPTICALLY exon {g1s}-{g1s + g1_len - 1} "

@@ -54,12 +54,29 @@ workflow SAMPLESHEET_TO_CHANNEL {
             }
             .groupTuple()
             .flatMap { id, metas, reads_list ->
-                def n    = metas.size()
-                def reps = (0..<n)
-                    .collect { [ m: metas[it], reads: reads_list[it] ] }
-                    .sort { it.reads[0].name }
+                def n = metas.size()
+
+                // Condition guard: every rep under one sample id must declare the
+                // same condition. Merge is keyed on `sample`, so two conditions
+                // sharing a sample name would otherwise be pooled into one DB
+                // silently — refuse it here instead.
+                def conds = metas.collect { it.condition }.findAll { it != null }.unique()
+                if ( conds.size() > 1 ) {
+                    error "Sample '${id}' mixes conditions ${conds} across its reps. A sample id is a single condition — give each condition a distinct sample name (merge is keyed on the 'sample' column)."
+                }
+
+                // Read-group numbering: use the explicit `rep` column when every
+                // rep of the sample provides it (deterministic rg<rep>); else fall
+                // back to fastq-name order. rep must be unique within a sample.
+                def haveRep = n > 0 && metas.every { it.rep != null }
+                if ( haveRep && metas.collect { it.rep }.unique().size() != n ) {
+                    error "Sample '${id}' has duplicate rep numbers ${metas.collect { it.rep }.sort()}; each rep within a sample must be unique."
+                }
+                def reps = (0..<n).collect { [ m: metas[it], reads: reads_list[it] ] }
+                reps = haveRep ? reps.sort { it.m.rep } : reps.sort { it.reads[0].name }
+
                 reps.withIndex().collect { rep, i ->
-                    def k = i + 1
+                    def k = haveRep ? rep.m.rep : (i + 1)
                     // Single-rep sample: leave meta untouched (id = sample), so
                     // existing samplesheets produce byte-identical metas. Only
                     // multi-rep samples gain the per-rep tags + unique id.
@@ -69,6 +86,37 @@ workflow SAMPLESHEET_TO_CHANNEL {
                     [ m, rep.reads ]
                 }
             }
+
+        // Merge plan, logged once before any compute. Reps are grouped strictly
+        // by the `sample` column: a shared name is pooled into one DB, distinct
+        // names yield independent DBs. Printing the grouping makes a naming
+        // mistake — e.g. two conditions sharing one sample id, silently merged
+        // into a single DB — visible before a long run, complementing the
+        // db_construct completeness guard.
+        def lines    = file(input).readLines().findAll { it?.trim() }
+        def header   = lines[0].split(',').collect { it.trim() }
+        def iSample  = header.indexOf('sample')
+        def iFq1     = header.indexOf('fastq_1')
+        def iCond    = header.indexOf('condition')
+        def dataRows = lines.drop(1)
+        def repsBySample = [:]
+        def condBySample = [:]
+        dataRows.each { row ->
+            def cols = row.split(',')
+            def s = cols[iSample].trim()
+            repsBySample.get(s, []) << (iFq1 >= 0 && cols.size() > iFq1 ? file(cols[iFq1].trim()).name : '')
+            if ( iCond >= 0 && cols.size() > iCond ) { condBySample[s] = cols[iCond].trim() }
+        }
+        def planLines = repsBySample.collect { s, fqs ->
+            def c = condBySample[s] ? " [condition=${condBySample[s]}]" : ''
+            "    ${s}${c}  <- ${fqs.size()} rep(s)  ${fqs}"
+        }.join('\n')
+        log.info(
+            "db_construct merge plan — ${dataRows.size()} rep-row(s) across ${repsBySample.size()} " +
+            "sample(s) -> ${repsBySample.size()} cryptic DB(s):\n${planLines}\n" +
+            "  reps are grouped by the 'sample' column; distinct names => independent DBs, " +
+            "a shared name => reps pooled into one DB (read groups from the 'rep' column)."
+        )
     } else {
         ch_rnaseq = Channel.empty()
     }

@@ -33,6 +33,18 @@
                 "default": "auto",
                 "errorMessage": "strandedness must be one of: forward, reverse, unstranded, auto",
                 "meta": ["strandedness"]
+            },
+            "rep": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": "rep must be a positive integer replicate number (e.g. 1, 2, 3); reps sharing a sample are merged and numbered rg<rep>",
+                "meta": ["rep"]
+            },
+            "condition": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "condition must be a single token without spaces (e.g. IFN_pos); all reps of one sample must share the same condition",
+                "meta": ["condition"]
             }
         },
         "required": ["sample", "fastq_1"]
