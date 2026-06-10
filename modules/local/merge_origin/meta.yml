@@ -1,0 +1,41 @@
+name: "merge_origin"
+description: Graft origins(Ensembl) region/frame/biotype/ENSG calls onto the integrated peptide table
+keywords:
+  - proteogenomics
+  - cryptic peptides
+  - origin
+  - region annotation
+  - immunopeptidomics
+tools:
+  - python:
+      description: |
+        Parse the kescull origins *_origins_rna.csv (normal-transcriptome group),
+        aggregate per peptide, and append region/frame/biotype/ENSG/coordinate
+        columns (ensembl_* prefix) onto integrated_peptides_origin.tsv by sequence.
+        Canonical and non-matched peptides are left blank.
+      homepage: https://www.python.org/
+      licence: ["PSF"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - peptides_tsv:
+        type: file
+        description: integrated_peptides_origin.tsv from ANNOTATE_ORIGIN (carries peptide + class)
+        pattern: "*.tsv"
+    - origins_csv:
+        type: file
+        description: kescull origins *_origins_rna.csv (region/frame/biotype/ENSG per peptide)
+        pattern: "*_origins_rna.csv"
+output:
+  - peptides:
+      - meta:
+          type: map
+      - "integrated_peptides_origin_region.tsv":
+          type: file
+          description: Integrated peptides with appended ensembl_* region/frame/biotype/ENSG/coordinate columns
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"

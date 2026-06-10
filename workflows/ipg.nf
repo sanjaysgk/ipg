@@ -29,6 +29,7 @@ include { DOWNLOAD_UNIPROT_PROTEOME } from '../modules/local/download_uniprot_pr
 include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
 include { ANNOTATE_ORIGIN     } from '../modules/local/annotate_origin/main'
 include { ORIGINS as ORIGINS_ENSEMBL } from '../modules/local/origins/main'
+include { MERGE_ORIGIN        } from '../modules/local/merge_origin/main'
 include { CRYPTIC_REPORT      } from '../modules/local/cryptic_report/main'
 include { IMMUNOINFORMATICS   } from '../subworkflows/local/immunoinformatics/main'
 
@@ -72,9 +73,18 @@ workflow IPG {
     if (params.step == 'post_ms') {
 
         //
-        // POST-MS ANALYSIS ENTRY POINT
+        // POST-MS ANALYSIS ENTRY POINT (deprecated)
         // Skips all upstream processing; only runs db_compare + origins.
+        // PEAKS is now a first-class engine: prefer `--step ms_search
+        // --ms_engines peaks` so PEAKS results flow through MS2Rescore and the
+        // class-separated FDR like every other engine. db_compare/post_ms is
+        // kept for one release to reproduce the legacy PEAKS-only path.
         //
+        log.warn(
+            "`--step post_ms` (db_compare + origins) is deprecated and will be removed in a future release. " +
+            "Run PEAKS as a search engine instead: `--step ms_search --ms_engines peaks --peaks_psm_csv <db.psms.csv>`."
+        )
+
         ch_post_ms = ch_post_ms_input
 
         ch_tracking            = channel.fromPath(params.prefix_tracking, checkIfExists: true).collect()
@@ -179,6 +189,25 @@ workflow IPG {
                     file(params.origin_transcriptome, checkIfExists: true)
                 )
                 ch_versions = ch_versions.mix(ORIGINS_ENSEMBL.out.versions)
+
+                //
+                // Graft the rich region/frame/biotype/ENSG calls onto the peptide
+                // table. origins emits prot + rna CSVs under origins_csv — pick the
+                // rna one, join to the table, and merge by sequence.
+                //
+                def ch_origins_rna = ORIGINS_ENSEMBL.out.origins_csv
+                    .map { meta, f -> [meta, (f instanceof List ? f : [f]).find { it.name.endsWith('_rna.csv') }] }
+                    .filter { _meta, f -> f != null }
+                MERGE_ORIGIN(ANNOTATE_ORIGIN.out.peptides.join(ch_origins_rna))
+                ch_versions = ch_versions.mix(MERGE_ORIGIN.out.versions)
+
+                // Samples with no cryptic peptides never ran origins; keep their
+                // annotate_origin table (remainder join, as in VALIDATE_CRYPTIC).
+                def ch_no_region = ANNOTATE_ORIGIN.out.peptides
+                    .join(MERGE_ORIGIN.out.peptides, remainder: true)
+                    .filter { it -> it.size() > 2 && it[2] == null }
+                    .map { meta, orig, _merged -> [meta, orig] }
+                ch_ms_peptides = MERGE_ORIGIN.out.peptides.mix(ch_no_region)
             }
         }
 
