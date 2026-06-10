@@ -70,4 +70,68 @@ nextflow_workflow {
             )
         }
     }
+
+    test("samplesheet_to_channel - multi-rep merge: read group from rep column") {
+        when {
+            workflow {
+                """
+                // Three reps of one sample, rep column out of order (2,3,1) to prove
+                // the read group is driven by `rep`, not row/file order.
+                def base = "\${projectDir}/subworkflows/local/samplesheet_to_channel/tests/inputs"
+                def sheet = file("\${workDir}/samplesheet_multirep.csv")
+                sheet.text = "sample,fastq_1,fastq_2,strandedness,rep,condition\\n" +
+                    "MREP,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,forward,2,treated\\n" +
+                    "MREP,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,forward,3,treated\\n" +
+                    "MREP,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,forward,1,treated\\n"
+                input[0] = 'db_construct'
+                input[1] = sheet
+                input[2] = []
+                input[3] = []
+                input[4] = "\${projectDir}/assets/schema_input.json"
+                input[5] = "\${projectDir}/assets/schema_ms_input.json"
+                input[6] = "\${projectDir}/assets/schema_post_ms_input.json"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.rnaseq.size() == 3 },
+                // read group is deterministic from rep: rg<rep>, id = <sample>_rg<rep>
+                { assert workflow.out.rnaseq.every { it[0].read_group == "rg${it[0].rep}" } },
+                { assert workflow.out.rnaseq.every { it[0].id == "MREP_rg${it[0].rep}" } },
+                { assert workflow.out.rnaseq.collect { it[0].read_group }.sort() == ['rg1', 'rg2', 'rg3'] },
+                // sample / num_reps / condition carried on every rep
+                { assert workflow.out.rnaseq.every { it[0].sample == 'MREP' && it[0].num_reps == 3 && it[0].condition == 'treated' } }
+            )
+        }
+    }
+
+    test("samplesheet_to_channel - mixing conditions under one sample errors") {
+        when {
+            workflow {
+                """
+                def base = "\${projectDir}/subworkflows/local/samplesheet_to_channel/tests/inputs"
+                def sheet = file("\${workDir}/samplesheet_mixed.csv")
+                sheet.text = "sample,fastq_1,fastq_2,strandedness,rep,condition\\n" +
+                    "MIX,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,forward,1,treated\\n" +
+                    "MIX,\${base}/test_R1.fastq.gz,\${base}/test_R2.fastq.gz,forward,2,untreated\\n"
+                input[0] = 'db_construct'
+                input[1] = sheet
+                input[2] = []
+                input[3] = []
+                input[4] = "\${projectDir}/assets/schema_input.json"
+                input[5] = "\${projectDir}/assets/schema_ms_input.json"
+                input[6] = "\${projectDir}/assets/schema_post_ms_input.json"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.any { it.contains('mixes conditions') } ||
+                    workflow.errorReport.contains('mixes conditions') }
+            )
+        }
+    }
 }
