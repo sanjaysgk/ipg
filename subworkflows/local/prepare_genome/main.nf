@@ -72,7 +72,7 @@ workflow PREPARE_GENOME {
     // ---- FASTA: decompress if .gz -----------------------------------------------
     if ( r_fasta.toString().endsWith('.gz') ) {
         GUNZIP_FASTA( [ [id: 'genome_fasta'], file(r_fasta) ] )
-        ch_fasta = GUNZIP_FASTA.out.gunzip.map { meta, fasta -> [ ref_meta, fasta ] }
+        ch_fasta = GUNZIP_FASTA.out.gunzip.map { meta, fasta -> [ ref_meta, fasta ] }.first()
         ch_versions = ch_versions.mix(GUNZIP_FASTA.out.versions_gunzip)
     } else {
         ch_fasta = Channel.value( [ ref_meta, file(r_fasta) ] )
@@ -81,7 +81,7 @@ workflow PREPARE_GENOME {
     // ---- GTF: decompress if .gz -------------------------------------------------
     if ( r_gtf.toString().endsWith('.gz') ) {
         GUNZIP_GTF( [ [id: 'genome_gtf'], file(r_gtf) ] )
-        ch_gtf = GUNZIP_GTF.out.gunzip.map { meta, gtf -> [ ref_meta, gtf ] }
+        ch_gtf = GUNZIP_GTF.out.gunzip.map { meta, gtf -> [ ref_meta, gtf ] }.first()
         ch_versions = ch_versions.mix(GUNZIP_GTF.out.versions_gunzip)
     } else {
         ch_gtf = Channel.value( [ ref_meta, file(r_gtf) ] )
@@ -92,7 +92,7 @@ workflow PREPARE_GENOME {
         ch_fai = Channel.value( [ ref_meta, file(r_fasta_fai) ] )
     } else {
         SAMTOOLS_FAIDX( ch_fasta.map { meta, fa -> [ meta, fa, [] ] }, false )
-        ch_fai = SAMTOOLS_FAIDX.out.fai
+        ch_fai = SAMTOOLS_FAIDX.out.fai.first()
         ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions_samtools)
     }
 
@@ -101,7 +101,7 @@ workflow PREPARE_GENOME {
         ch_dict = Channel.value( [ ref_meta, file(r_fasta_dict) ] )
     } else {
         GATK4_CREATESEQUENCEDICTIONARY( ch_fasta )
-        ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
+        ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict.first()
         ch_versions = ch_versions.mix(GATK4_CREATESEQUENCEDICTIONARY.out.versions_gatk4)
     }
 
@@ -110,7 +110,7 @@ workflow PREPARE_GENOME {
         ch_star_index = Channel.value( [ ref_meta, file(r_star_index) ] )
     } else {
         STAR_GENOMEGENERATE( ch_fasta, ch_gtf )
-        ch_star_index = STAR_GENOMEGENERATE.out.index
+        ch_star_index = STAR_GENOMEGENERATE.out.index.first()
         ch_versions = ch_versions.mix(STAR_GENOMEGENERATE.out.versions_star)
     }
 
@@ -165,7 +165,7 @@ workflow PREPARE_GENOME {
         ch_germline_resource_tbi = Channel.value( file(r_germline_resource_tbi) )
     } else {
         TABIX_GERMLINE_RESOURCE( Channel.value( tabix_in.call('germline_resource', r_germline_resource) ) )
-        ch_germline_resource_tbi = TABIX_GERMLINE_RESOURCE.out.index.map { _meta, tbi -> tbi }
+        ch_germline_resource_tbi = TABIX_GERMLINE_RESOURCE.out.index.map { _meta, tbi -> tbi }.first()
     }
 
     // known_sites is a list-channel [meta, [3 VCFs], [3 TBIs]] used by BaseRecalibrator
@@ -174,19 +174,24 @@ workflow PREPARE_GENOME {
         file(r_known_indels),
         file(r_mills),
     ] ] )
-    // Combine .tbi paths (which may be original files or TABIX outputs) into a list channel
+    // Combine .tbi paths (which may be original files or TABIX outputs) into a list channel.
+    // combine() yields a queue channel even from value inputs; .first() restores a value
+    // channel so the known-sites index broadcasts to every per-sample BaseRecalibrator run.
     ch_known_sites_tbi = ch_dbsnp_tbi
         .combine(ch_known_indels_tbi)
         .combine(ch_mills_tbi)
         .map { dbsnp_tbi, known_tbi, mills_tbi ->
             [ ref_meta, [ dbsnp_tbi, known_tbi, mills_tbi ] ]
         }
+        .first()
     ch_germline_resource     = Channel.value( file(r_germline_resource) )
 
     // ---- Composite channel: [meta, fasta, fai] for processes needing both -------
+    // combine() yields a queue channel; .first() restores a value channel so this
+    // broadcasts to every per-sample consumer (e.g. GFFCOMPARE, FastaAlternateReferenceMaker).
     ch_fasta_fai = ch_fasta.combine( ch_fai ).map { fasta_meta, fasta, fai_meta, fai ->
         [ fasta_meta, fasta, fai ]
-    }
+    }.first()
 
     emit:
     fasta                = ch_fasta
