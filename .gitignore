@@ -9,6 +9,7 @@ data/
 tests/data/ms_search/*.mzML
 tests/data/ms_search/*.fasta
 results/
+results_*/
 .DS_Store
 testing/
 testing*/
