@@ -52,8 +52,9 @@ def revcomp(s: str) -> str:
     return s.translate(str.maketrans("ACGT", "TGCA"))[::-1]
 
 
-def reads_for(rng, seq, ridx, rl, fl, cov):
-    """Paired FR reads tiling one exon (sense on +). Returns (r1_list, r2_list, next_idx)."""
+def reads_for(rng, seq, ridx, rl, fl, cov, tag="SPIKE"):
+    """Paired FR reads tiling one exon (sense on +). Returns (r1_list, r2_list, next_idx).
+    `tag` namespaces read IDs so per-rep fastqs carry unique names once merged."""
     ln = len(seq)
     n = max(1, cov * ln // (2 * rl))
     span = max(0, ln - fl)
@@ -63,8 +64,8 @@ def reads_for(rng, seq, ridx, rl, fl, cov):
         frag = seq[off:off + fl] if ln >= fl else seq
         a = frag[:rl]
         b = revcomp(frag[-rl:])
-        r1.append(f"@SPIKE_{ridx}/1\n{a}\n+\n{'I' * len(a)}\n")
-        r2.append(f"@SPIKE_{ridx}/2\n{b}\n+\n{'I' * len(b)}\n")
+        r1.append(f"@{tag}_{ridx}/1\n{a}\n+\n{'I' * len(a)}\n")
+        r2.append(f"@{tag}_{ridx}/2\n{b}\n+\n{'I' * len(b)}\n")
         ridx += 1
     return r1, r2, ridx
 
@@ -148,6 +149,47 @@ def main() -> int:
     with open(f"{d}/samplesheet_rnaseq.csv", "w") as f:
         f.write("sample,fastq_1,fastq_2,strandedness\n")
         f.write(f"SPIKE,{d}/reads_R1.fastq.gz,{d}/reads_R2.fastq.gz,forward\n")
+
+    # ---- multi-sample / multi-rep fixtures (DISTINCT reads per rep) ----------------------
+    # Two conditions (A, B) x three reps. Each rep draws from its own RNG stream and
+    # carries a unique read-name tag, so a merge adds real depth (not pure duplicates)
+    # and read names stay unique once reps are combined at MarkDuplicates. Drives both
+    # styles WITHOUT hard-coding any DB count:
+    #   samplesheet_rnaseq_multirep.csv : same sample id per condition -> reps merge -> 2 DBs
+    #   samplesheet_rnaseq_perrep.csv   : distinct id per rep          -> 6 DBs
+    conds = ("A", "B")
+    reps = (1, 2, 3)
+    rep_files = {}
+    for ci, cond in enumerate(conds, 1):
+        for rep in reps:
+            rrng = random.Random(args.seed + 1000 * ci + rep)
+            r1r, r2r, ri = [], [], 0
+            for _, _, _, _, seq in genes:
+                a, b, ri = reads_for(rrng, seq, ri, args.read_len, args.frag_len,
+                                     args.coverage, tag=f"SPIKE{cond}r{rep}")
+                r1r += a
+                r2r += b
+            p1 = f"{d}/reads_{cond}_rep{rep}_R1.fastq.gz"
+            p2 = f"{d}/reads_{cond}_rep{rep}_R2.fastq.gz"
+            with gzip.open(p1, "wt") as f:
+                f.write("".join(r1r))
+            with gzip.open(p2, "wt") as f:
+                f.write("".join(r2r))
+            rep_files[(cond, rep)] = (p1, p2)
+
+    with open(f"{d}/samplesheet_rnaseq_multirep.csv", "w") as f:
+        f.write("sample,fastq_1,fastq_2,strandedness\n")
+        for cond in conds:
+            for rep in reps:
+                p1, p2 = rep_files[(cond, rep)]
+                f.write(f"SPIKE_{cond},{p1},{p2},forward\n")
+
+    with open(f"{d}/samplesheet_rnaseq_perrep.csv", "w") as f:
+        f.write("sample,fastq_1,fastq_2,strandedness\n")
+        for cond in conds:
+            for rep in reps:
+                p1, p2 = rep_files[(cond, rep)]
+                f.write(f"SPIKE_{cond}_rep{rep},{p1},{p2},forward\n")
 
     print(f"[make_synth_genome] contig {CONTIG} {args.contig_len} bp")
     print(f"[make_synth_genome] gene1 CRYPTICALLY exon {g1s}-{g1s + g1_len - 1} "

@@ -202,6 +202,41 @@ workflow DB_CONSTRUCT {
     SQUISH(ch_squish_input)
     ch_versions = ch_versions.mix(SQUISH.out.versions)
 
+    //
+    // Completeness guard. Every distinct sample in the input samplesheet must
+    // produce a cryptic DB. A non-broadcast reference channel (or any silent
+    // join drop) can starve a sample so the run still "succeeds" with fewer
+    // DBs than samples — this converts that into a hard error. Input-derived,
+    // never hard-coded: expected == distinct `sample` column values, which
+    // equals the SQUISH output ids after the per-sample rep merge, so it holds
+    // for both the merged (same id per condition) and per-rep (distinct id)
+    // samplesheet styles.
+    //
+    def expected_db_ids = file(params.input)
+        .readLines()
+        .drop(1)
+        .findAll { it?.trim() }
+        .collect { it.split(',', 2)[0].trim() }
+        .unique()
+
+    SQUISH.out.fasta
+        .map { meta, _fa -> meta.id }
+        .unique()
+        .collect()
+        .ifEmpty([])          // empty SQUISH (every sample dropped) must still trigger the check
+        .subscribe { produced ->
+            def missing = expected_db_ids.findAll { !(it in produced) }
+            if (missing) {
+                error(
+                    "db_construct completeness check FAILED: ${missing.size()} of " +
+                    "${expected_db_ids.size()} sample(s) produced no cryptic DB — silently " +
+                    "dropped upstream (likely a non-broadcast reference channel): ${missing}. " +
+                    "Produced ${produced.sort()}; expected ${expected_db_ids.sort()}."
+                )
+            }
+            log.info("db_construct: all ${expected_db_ids.size()} sample(s) produced a cryptic DB ${produced.sort()}")
+        }
+
     emit:
     cryptic_fasta       = SQUISH.out.fasta                      // [meta, fasta]  — THE DELIVERABLE
     alt_fasta_unmasked  = REVERT_UNMASKED.out.fasta

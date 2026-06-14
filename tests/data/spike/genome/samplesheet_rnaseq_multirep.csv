@@ -1,0 +1,7 @@
+sample,fastq_1,fastq_2,strandedness
+SPIKE_A,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_A_rep1_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_A_rep1_R2.fastq.gz,forward
+SPIKE_A,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_A_rep2_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_A_rep2_R2.fastq.gz,forward
+SPIKE_A,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_A_rep3_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_A_rep3_R2.fastq.gz,forward
+SPIKE_B,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_B_rep1_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_B_rep1_R2.fastq.gz,forward
+SPIKE_B,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_B_rep2_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_B_rep2_R2.fastq.gz,forward
+SPIKE_B,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_B_rep3_R1.fastq.gz,/fs04/scratch2/xy86/sanjay/ATLANTIS/RNAseq/Analysis/Cryptic/ipg/tests/data/spike/genome/reads_B_rep3_R2.fastq.gz,forward
