@@ -70,6 +70,18 @@ process CURATE_VCF {
         mv "\${stem}_unmasked.vcf" ${prefix}_unmasked.vcf
     fi
 
+    # curate_vcf can emit a header-less/empty VCF when its curation drops every
+    # record (e.g. a sample with no indels in the analysed region) — GATK
+    # IndexFeatureFile then fails with "no suitable codecs found". Normalise:
+    # any output missing the #CHROM line is reseeded with the input header,
+    # yielding a valid variant-less VCF that downstream GATK tools can read.
+    for out in ${prefix}_indel.vcf ${prefix}_unmasked.vcf; do
+        if ! grep -q '^#CHROM' "\${out}" 2>/dev/null; then
+            rm -f "\${out}"
+            grep '^#' "\${input_vcf}" > "\${out}"
+        fi
+    done
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         curate_vcf: "kescull/immunopeptidogenomics@fef8e68"
