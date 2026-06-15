@@ -36,7 +36,9 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.out.versions.size() > 0 }
+                // linear stub chain (PREPARE_FASTA -> SAGE) -> deterministic versions;
+                // snapshot pins the version-emission baseline for the subworkflow
+                { assert snapshot(workflow.out.versions).match() }
             )
         }
     }

@@ -25,6 +25,7 @@ include { MSCONVERT                    } from '../../../modules/local/msconvert/
 include { PREPARE_FASTA                } from '../../../modules/local/prepare_fasta/main'
 include { COMBINE_FASTA                } from '../../../modules/local/combine_fasta/main'
 include { MSFRAGGER                    } from '../../../modules/local/msfragger/main'
+include { FRAGGER_SPLIT_SEARCH         } from '../fragger_split_search/main'
 include { COMET                        } from '../../../modules/local/comet/main'
 include { SAGE                         } from '../../../modules/local/sage/main'
 include { CONVERT_MZML                 } from '../../../modules/local/convert_mzml/main'
@@ -134,20 +135,36 @@ workflow MS_SEARCH {
 
     if (engines.contains('msfragger')) {
         ch_msfragger_params = Channel.fromPath(
-            "${projectDir}/assets/ms_search_params/${instrument}_${mod_type}.params",
+            "${projectDir}/assets/ms_search_params/msfragger/${instrument}_${mod_type}.params",
             checkIfExists: true
         ).collect()
-        MSFRAGGER(
-            ch_search.map { meta, files, _tda -> [ meta, files ] },
-            ch_search.map { _meta, _files, tda -> tda },
-            ch_msfragger_jar,
-            ch_msfragger_params
-        )
-        ch_versions        = ch_versions.mix(MSFRAGGER.out.versions)
-        ch_calibrated_mzml = MSFRAGGER.out.mzml
-        ch_msfragger_log   = MSFRAGGER.out.log
 
-        ch_pin_msfragger = MSFRAGGER.out.pin
+        def msfragger_split = (params.msfragger_split ?: 1) as int
+        if (msfragger_split > 1) {
+            // Split-database search: large no-enzyme cryptic DBs (~200K seqs) OOM
+            // MSFragger's in-memory fragment index. Split into N chunks, search each
+            // --partial, then merge with full-DB e-value recompute (statistically
+            // identical to an unsplit search). Needs the REAL MSFragger (--partial +
+            // --generate_expect_functions): a user JAR or bioconda + --key.
+            if (!params.msfragger_jar && !params.msfragger_license) {
+                error("--msfragger_split > 1 needs the real MSFragger for --partial / the e-value " +
+                    "merge: pass --msfragger_jar <MSFragger.jar> or --msfragger_license <key>.")
+            }
+            FRAGGER_SPLIT_SEARCH(ch_search, ch_msfragger_jar, ch_msfragger_params, msfragger_split)
+            ch_versions      = ch_versions.mix(FRAGGER_SPLIT_SEARCH.out.versions)
+            ch_pin_msfragger = FRAGGER_SPLIT_SEARCH.out.pin
+        } else {
+            MSFRAGGER(
+                ch_search.map { meta, files, _tda -> [ meta, files ] },
+                ch_search.map { _meta, _files, tda -> tda },
+                ch_msfragger_jar,
+                ch_msfragger_params
+            )
+            ch_versions        = ch_versions.mix(MSFRAGGER.out.versions)
+            ch_calibrated_mzml = MSFRAGGER.out.mzml
+            ch_msfragger_log   = MSFRAGGER.out.log
+            ch_pin_msfragger   = MSFRAGGER.out.pin
+        }
     }
 
     // Always feed raw input to Comet/Sage — they handle their own calibration.
