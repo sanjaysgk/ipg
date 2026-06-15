@@ -1,0 +1,39 @@
+name: split_fasta
+description: Split a FASTA database into N chunks at protein boundaries for MSFragger split-database search
+keywords:
+  - fasta
+  - split
+  - database
+  - msfragger
+  - proteomics
+tools:
+  - split_fasta:
+      description: Standalone FASTA splitter (port of FragPipe msfragger_pep_split.py get_fasta_offsets)
+      homepage: https://github.com/sanjaysgk/ipg
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map keyed to the database (id required)
+    - fasta:
+        type: file
+        description: Protein FASTA database
+        pattern: "*.{fa,fasta}"
+  - num_chunks:
+      type: integer
+      description: Number of chunks to split into (>= 1)
+output:
+  - fasta_chunks:
+      - meta:
+          type: map
+      - "split_db/*/*.fasta":
+          type: file
+          description: Chunk FASTA files under split_db/<chunk_index>/
+          pattern: "split_db/*/*.fasta"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"

@@ -1,0 +1,14 @@
+{
+    "split into 3 chunks - stub": {
+        "content": [
+            [
+                "versions.yml:md5,6bee751c0905a0703e1c77f3edacf5f5"
+            ]
+        ],
+        "timestamp": "2026-06-15T15:11:26.997942074",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
