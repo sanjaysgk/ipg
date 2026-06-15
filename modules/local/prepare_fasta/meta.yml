@@ -11,12 +11,18 @@ tools:
       homepage: https://github.com/sanjaysgk/ipg
       licence: ["MIT"]
 input:
-  - - fasta:
+  - - meta:
+        type: map
+        description: Groovy map keyed to the database (id = db basename, key = db path)
+    - fasta:
         type: file
         description: Input FASTA database (from db_construct or external)
         pattern: "*.{fa,fasta}"
 output:
   - fasta:
+      - meta:
+          type: map
+          description: Groovy map keyed to the database
       - "*_tda.fasta":
           type: file
           description: Target-decoy concatenated FASTA

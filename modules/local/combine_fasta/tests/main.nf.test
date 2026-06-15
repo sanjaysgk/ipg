@@ -20,12 +20,12 @@ nextflow_process {
                 canon.text = ">sp|P12345|TEST_HUMAN canonical\\nMAAAKLDEKR\\n"
                 def cryptic = file("\${workDir}/cryptic.fasta")
                 cryptic.text = ">TCONS_00000001_f1p1_1 cryptic\\nPEPTIDESTUBKR\\n"
-                input[0] = [ canon, cryptic ]
+                input[0] = [ [ id:'test' ], [ canon, cryptic ] ]
                 """
             }
         }
         then {
-            def out = path(process.out.fasta.get(0))
+            def out = path(process.out.fasta.get(0).get(1))
             assertAll(
                 { assert process.success },
                 { assert out.readLines().findAll { it.startsWith('>') }.size() == 2 },
