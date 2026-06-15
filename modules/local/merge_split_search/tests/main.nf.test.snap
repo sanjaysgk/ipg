@@ -1,0 +1,14 @@
+{
+    "merge 2 chunk dirs -> run PIN - stub": {
+        "content": [
+            [
+                "versions.yml:md5,d2fb50ae510dc6ede8aef9e541736d76"
+            ]
+        ],
+        "timestamp": "2026-06-15T15:10:51.489291729",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
