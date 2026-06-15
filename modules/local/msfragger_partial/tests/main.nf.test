@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process MSFRAGGER_PARTIAL"
+    script "../main.nf"
+    process "MSFRAGGER_PARTIAL"
+
+    tag "modules"
+    tag "modules_local"
+    tag "msfragger_partial"
+    tag "stub"
+
+    // One (run x chunk) partial search. Stub emits chunk_<id>/ holding the run's
+    // pepXML/pin/histogram (real run needs the MSFragger licence). meta.chunk_id
+    // drives the --partial flag and the output dir name.
+    test("partial search emits chunk_<id> dir - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def mz = file("\${workDir}/run1.mzML"); mz.text = "stub-spectra"
+                def fa = file("\${workDir}/chunk.fasta"); fa.text = ">x\\nPEPTIDEK\\n"
+                input[0] = [ [ id:'samp__run1__c0', chunk_id:0, original_id:'samp', run:'run1' ], mz ]
+                input[1] = fa
+                input[2] = file("\${projectDir}/assets/NO_FILE")
+                input[3] = file("\${projectDir}/assets/ms_search_params/msfragger/orbitrap_mod.params")
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // a chunk_0 directory is emitted, holding the run's outputs
+                { assert process.out.chunk_dir.get(0).get(1) ==~ /.*chunk_0$/ },
+                // versions.yml is deterministic -> snapshot pins the emission contract
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+}
