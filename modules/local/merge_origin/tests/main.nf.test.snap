@@ -1,0 +1,35 @@
+{
+    "merge_origin - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "integrated_peptides_origin_region.tsv:md5,775e7e941c1bc22fd04345302e1fc50e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,e67c75c2628b8e30af68b8c60637ce21"
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "integrated_peptides_origin_region.tsv:md5,775e7e941c1bc22fd04345302e1fc50e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e67c75c2628b8e30af68b8c60637ce21"
+                ]
+            }
+        ],
+        "timestamp": "2026-06-15T15:09:52.813347853",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
