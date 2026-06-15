@@ -2,7 +2,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     MS_SEARCH — open-source MS database search subworkflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    1. PREPARE_FASTA           target/decoy database
+    1. PREPARE_FASTA           target/decoy database (once per distinct db)
     2. MSFRAGGER               → calibrated mzMLs + PIN
     3. COMET + SAGE            parallel on calibrated mzMLs → PIN
     4. CONVERT_MZML            mzML → MGF + scans.pkl + index2scan.pkl
@@ -10,6 +10,13 @@
     6. MS2RESCORE (per engine) rescore PINs with spectrum predictions; runs
         mokapot internally (no standalone mokapot pass)
     7. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
+
+    Per-sample DB routing: each input carries [meta, [ms_files], db]. All of a
+    sample's MS files (fractions + replicates) are pooled into ONE search against
+    that sample's ONE database — pooling maximises mokapot's target/decoy training
+    data, and every PSM keeps its source `run` so per-replicate results stay
+    recoverable downstream. The db is prepared (target-decoy, optional canonical
+    append) ONCE per distinct database, then joined back to each sample by db path.
 ----------------------------------------------------------------------------------------
 */
 
@@ -29,8 +36,7 @@ include { INTEGRATE_ENGINES            } from '../../../modules/local/integrate_
 workflow MS_SEARCH {
 
     take:
-    ch_ms_data         // channel: [ val(meta), path(ms_files) ]
-    ch_fasta           // path: cryptic FASTA database (from db_construct)
+    ch_ms_db           // channel: [ val(meta), [ms_files], path(db) ]  meta.db = resolved db path
     ch_canonical_fasta // path: canonical proteome FASTA (unused in 'cryptic_only' mode)
     ch_engines         // val: list of engine names e.g. ['msfragger','comet','sage']
     ch_msfragger_jar   // path: MSFragger JAR (may be empty channel)
@@ -42,32 +48,53 @@ workflow MS_SEARCH {
     def instrument = params.instrument ?: 'orbitrap'
     def mod_type   = params.mod_type
 
+    // [meta, files] view for spectrum-side processes (engines, convert, peaks).
+    ch_ms_data = ch_ms_db.map { meta, files, _db -> [ meta, files ] }
+
     //
-    // STEP 1: Assemble the search DB per --db_search_mode, then build target-decoy.
-    //   cryptic_only : cryptic DB alone (original behaviour)
-    //   appended     : canonical + cryptic in one DB → class-separated FDR in INTEGRATE
+    // STEP 1: Build a target-decoy search DB per DISTINCT database, then pair it
+    // back to each sample. Key on the db path so samples sharing a db prep once.
+    //   cryptic_only : cryptic DB alone
+    //   appended     : canonical + cryptic in one DB → class-separated FDR
     //   separate     : (follow-up) independent canonical/cryptic searches + reconcile
     //
     def db_mode = params.db_search_mode ?: 'appended'
+
+    ch_db_distinct = ch_ms_db
+        .map { _meta, _files, db -> [ db.toString(), db ] }
+        .unique { it[0] }
+
     if (db_mode == 'cryptic_only') {
-        ch_search_db = ch_fasta
+        ch_prep_in = ch_db_distinct.map { key, db -> [ [id: db.baseName, key: key], db ] }
     } else if (db_mode == 'appended') {
         COMBINE_FASTA(
-            ch_canonical_fasta.combine(ch_fasta).map { canon, cryptic -> [canon, cryptic].flatten() }
+            ch_db_distinct.combine(ch_canonical_fasta).map { key, db, canon ->
+                [ [id: db.baseName, key: key], [canon, db].flatten() ]
+            }
         )
-        ch_search_db = COMBINE_FASTA.out.fasta
-        ch_versions  = ch_versions.mix(COMBINE_FASTA.out.versions)
+        ch_versions = ch_versions.mix(COMBINE_FASTA.out.versions)
+        ch_prep_in  = COMBINE_FASTA.out.fasta
     } else {
         error("--db_search_mode '${db_mode}' not implemented yet (separate-search " +
             "mode is a follow-up; use 'appended' or 'cryptic_only').")
     }
 
-    PREPARE_FASTA(ch_search_db)
+    PREPARE_FASTA(ch_prep_in)
     ch_versions  = ch_versions.mix(PREPARE_FASTA.out.versions)
-    ch_tda_fasta = PREPARE_FASTA.out.fasta
+    ch_tda_keyed = PREPARE_FASTA.out.fasta.map { meta, tda -> [ meta.key, tda ] }   // [dbPathKey, tda]
+
+    // Pair every sample group to its prepared target-decoy db (N samples : 1 db).
+    ch_search = ch_ms_db
+        .map { meta, files, db -> [ db.toString(), meta, files ] }
+        .combine( ch_tda_keyed, by: 0 )
+        .map { _key, meta, files, tda -> [ meta, files, tda ] }
+
+    // [meta.id, tda] lookup for per-sample consumers downstream (INTEGRATE).
+    ch_tda_by_id = ch_search.map { meta, _files, tda -> [ meta.id, tda ] }
 
     //
-    // STEP 2a: MSFragger → calibrated mzMLs + PIN
+    // STEP 2a: MSFragger → calibrated mzMLs + PIN. Each sample's pooled files are
+    // searched against its own target-decoy db (fork the joined channel by field).
     //
     ch_calibrated_mzml = Channel.empty()
     ch_msfragger_log   = Channel.empty()
@@ -78,7 +105,12 @@ workflow MS_SEARCH {
             "${projectDir}/assets/ms_search_params/${instrument}_${mod_type}.params",
             checkIfExists: true
         ).collect()
-        MSFRAGGER(ch_ms_data, ch_tda_fasta, ch_msfragger_jar, ch_msfragger_params)
+        MSFRAGGER(
+            ch_search.map { meta, files, _tda -> [ meta, files ] },
+            ch_search.map { _meta, _files, tda -> tda },
+            ch_msfragger_jar,
+            ch_msfragger_params
+        )
         ch_versions        = ch_versions.mix(MSFRAGGER.out.versions)
         ch_calibrated_mzml = MSFRAGGER.out.mzml
         ch_msfragger_log   = MSFRAGGER.out.log
@@ -99,7 +131,11 @@ workflow MS_SEARCH {
             "${projectDir}/assets/ms_search_params/comet/${instrument}_${mod_type}.params",
             checkIfExists: true
         ).collect()
-        COMET(ch_engine_input, ch_tda_fasta, ch_comet_params)
+        COMET(
+            ch_search.map { meta, files, _tda -> [ meta, files ] },
+            ch_search.map { _meta, _files, tda -> tda },
+            ch_comet_params
+        )
         ch_versions = ch_versions.mix(COMET.out.versions)
 
         ch_pin_comet = COMET.out.pin
@@ -117,7 +153,12 @@ workflow MS_SEARCH {
         ch_sage_log = engines.contains('msfragger')
             ? ch_msfragger_log.collect()
             : Channel.value(file("${projectDir}/assets/NO_FILE", checkIfExists: false))
-        SAGE(ch_engine_input, ch_tda_fasta, ch_sage_params, ch_sage_log)
+        SAGE(
+            ch_search.map { meta, files, _tda -> [ meta, files ] },
+            ch_search.map { _meta, _files, tda -> tda },
+            ch_sage_params,
+            ch_sage_log
+        )
         ch_versions = ch_versions.mix(SAGE.out.versions)
 
         ch_pin_sage = SAGE.out.pin
@@ -213,7 +254,8 @@ workflow MS_SEARCH {
 
     //
     // STEP 5: INTEGRATE_ENGINES — merge per-engine MS2Rescore TSVs into one.
-    // Skipped when --skip_ms2rescore is set (no rescored TSVs to merge).
+    // Skipped when --skip_ms2rescore is set (no rescored TSVs to merge). Each
+    // sample integrates against its own target-decoy db (joined by meta.id).
     //
     ch_integrated_psms     = Channel.empty()
     ch_integrated_peptides = Channel.empty()
@@ -222,12 +264,13 @@ workflow MS_SEARCH {
     if (!params.skip_ms2rescore && !params.skip_integrate_engines) {
         ch_integrate_in = ch_rescored
             .groupTuple(by: 0)   // [meta, [engines...], [tsvs...]]
-            .map { meta, eng_list, tsv_list -> [meta, tsv_list, eng_list] }
+            .map { meta, eng_list, tsv_list -> [ meta.id, meta, tsv_list, eng_list ] }
+            .join( ch_tda_by_id )   // [id, meta, tsvs, engines, tda]
 
         INTEGRATE_ENGINES(
-            ch_integrate_in.map { meta, tsvs, engs -> [meta, tsvs] },
-            ch_integrate_in.map { meta, tsvs, engs -> engs },
-            ch_tda_fasta
+            ch_integrate_in.map { _id, meta, tsvs, _engs, _tda -> [meta, tsvs] },
+            ch_integrate_in.map { _id, _meta, _tsvs, engs, _tda -> engs },
+            ch_integrate_in.map { _id, _meta, _tsvs, _engs, tda -> tda }
         )
         ch_versions            = ch_versions.mix(INTEGRATE_ENGINES.out.versions)
         ch_integrated_psms     = INTEGRATE_ENGINES.out.psms
@@ -242,5 +285,6 @@ workflow MS_SEARCH {
     calibrated_mzml   = ch_calibrated_mzml
     mgf               = ch_mgf_per_sample
     rescored_per_eng  = ch_rescored
+    search_db         = ch_search.map { meta, _files, tda -> [ meta, tda ] }   // [meta, tda] per sample
     versions          = ch_versions
 }

@@ -105,9 +105,42 @@ workflow IPG {
         // MS SEARCH ENTRY POINT
         // Runs search engines on MS data against a FASTA database.
         //
-        ch_ms_data = ch_ms_input
+        // Per-sample DB routing. Each MS file declares its database via the `db`
+        // column (e.g. results/db_construct/<sample>/<sample>_cryptic.fasta), or
+        // falls back to a single --search_fasta for every sample. A sample's MS
+        // files (fractions + replicates) are pooled into ONE search against its
+        // ONE db; per-rep stays recoverable via the `run` column downstream.
+        def fallback_db = params.search_fasta ? file(params.search_fasta, checkIfExists: true) : null
 
-        ch_search_fasta = channel.fromPath(params.search_fasta, checkIfExists: true).collect()
+        ch_ms_db = ch_ms_input
+            .map { meta, ms_file ->
+                def raw = meta.db ?: fallback_db
+                if (!raw) {
+                    error("ms_search: MS sample '${meta.id}' has no 'db' column and --search_fasta is not set; " +
+                        "cannot route this file to a database. Add a 'db' column per row, or pass --search_fasta.")
+                }
+                [ meta.id, meta, ms_file, file(raw, checkIfExists: true) ]
+            }
+            .groupTuple(by: 0)
+            .map { id, metas, files, dbs ->
+                def udb = dbs.collect { it.toString() }.unique()
+                if (udb.size() > 1) {
+                    error("ms_search: sample '${id}' rows name different databases ${udb}; all MS files of one " +
+                        "sample must share a single db (search is keyed on the 'sample' column).")
+                }
+                def conds = metas.collect { it.condition }.findAll { it }.unique()
+                def base  = metas[0] + [ id: id, db: dbs[0].toString(), num_ms_files: files.size() ]
+                if (conds.size() == 1) { base = base + [ condition: conds[0] ] }
+                [ base, files, dbs[0] ]
+            }
+
+        // Log the MS->DB plan once, before any search.
+        ch_ms_db
+            .map { meta, files, db -> "    ${meta.id}  <- ${files.size()} MS file(s)  vs  ${db.name}" }
+            .collect()
+            .subscribe { plan ->
+                log.info("ms_search DB mapping — ${plan.size()} sample(s) -> ${plan.size()} search(es):\n${plan.sort().join('\n')}")
+            }
 
         // Canonical proteome. Unused in 'cryptic_only'. A local --canonical_fasta
         // wins; otherwise DOWNLOAD_UNIPROT_PROTEOME fetches canonical_proteome_url
@@ -133,8 +166,7 @@ workflow IPG {
         def engine_list = params.ms_engines.tokenize(',')
 
         MS_SEARCH(
-            ch_ms_data,
-            ch_search_fasta,
+            ch_ms_db,
             ch_canonical_fasta,
             channel.value(engine_list),
             ch_msfragger_jar
@@ -144,11 +176,12 @@ workflow IPG {
         //
         // Optional PepQuery2 spectrum-level validation of the cryptic subset.
         // Annotates pepquery_status onto the integrated peptides before any
-        // downstream analysis consumes them.
+        // downstream analysis consumes them. Each sample validates against its
+        // own search db (joined by meta), matching the per-sample search.
         //
         ch_ms_peptides = MS_SEARCH.out.peptides
         if (params.run_pepquery) {
-            VALIDATE_CRYPTIC(MS_SEARCH.out.peptides, MS_SEARCH.out.mgf, ch_search_fasta)
+            VALIDATE_CRYPTIC(MS_SEARCH.out.peptides, MS_SEARCH.out.mgf, MS_SEARCH.out.search_db)
             ch_versions    = ch_versions.mix(VALIDATE_CRYPTIC.out.versions)
             ch_ms_peptides = VALIDATE_CRYPTIC.out.peptides
         }

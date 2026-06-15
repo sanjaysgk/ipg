@@ -22,16 +22,21 @@ workflow VALIDATE_CRYPTIC {
     take:
     ch_peptides      // channel: [ val(meta), path(integrated_peptides.tsv) ]
     ch_mgf           // channel: [ val(meta), path(mgf_files) ] from CONVERT_MZML
-    ch_search_fasta  // path:    target search FASTA (canonical + cryptic)
+    ch_search_db     // channel: [ val(meta), path(target search FASTA) ] per sample
 
     main:
 
     ch_versions = Channel.empty()
 
     //
-    // STEP 1: cryptic peptide list + canonical-only reference DB.
+    // STEP 1: cryptic peptide list + canonical-only reference DB. Each sample's
+    // peptides are prepped against ITS own search db (joined by meta).
     //
-    PEPQUERY_PREP(ch_peptides, ch_search_fasta)
+    ch_prep_in = ch_peptides.join(ch_search_db)   // [meta, peptides, fasta]
+    PEPQUERY_PREP(
+        ch_prep_in.map { meta, pep, _fa -> [meta, pep] },
+        ch_prep_in.map { _meta, _pep, fa -> fa }
+    )
     ch_versions = ch_versions.mix(PEPQUERY_PREP.out.versions)
 
     // Only run PepQuery where cryptic peptides actually exist.

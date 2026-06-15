@@ -22,7 +22,8 @@
             "condition": {
                 "type": "string",
                 "default": "",
-                "errorMessage": "Optional condition label for FlashLFQ grouping"
+                "errorMessage": "Optional condition label for FlashLFQ grouping",
+                "meta": ["condition"]
             },
             "fraction": {
                 "type": "integer",
@@ -34,6 +35,13 @@
                 "type": "string",
                 "default": "",
                 "errorMessage": "Optional replicate label (e.g. rep1, rep2). Useful when one sample has multiple biological replicates."
+            },
+            "db": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "errorMessage": "Optional path to the cryptic FASTA database this MS file is searched against (e.g. results/db_construct/<sample>/<sample>_cryptic.fasta). All rows of one sample must name the same db. When omitted, --search_fasta is used for every sample.",
+                "meta": ["db"]
             }
         },
         "required": ["sample", "ms_file"]

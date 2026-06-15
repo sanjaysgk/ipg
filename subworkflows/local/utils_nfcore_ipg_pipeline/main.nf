@@ -174,7 +174,17 @@ def validateInputParameters() {
             error("--ms_input is required when --step ms_search")
         }
         if (!params.search_fasta) {
-            error("--search_fasta is required when --step ms_search")
+            // search_fasta is the FALLBACK database; it is optional when every MS
+            // row declares its own database via the samplesheet 'db' column.
+            // Require it only when the samplesheet has no 'db' column (per-row
+            // resolution then has nothing to fall back to). The per-sample guard
+            // in the ms_search workflow still errors on any row that resolves to
+            // no database.
+            def header     = file(params.ms_input).readLines().find { it?.trim() }
+            def has_db_col = header ? header.split(',').collect { it.trim() }.contains('db') : false
+            if (!has_db_col) {
+                error("--search_fasta is required when --step ms_search unless the MS samplesheet has a 'db' column (per-row database).")
+            }
         }
         def engines = params.ms_engines.tokenize(',')
         def valid_engines = ['msfragger', 'comet', 'sage', 'peaks']

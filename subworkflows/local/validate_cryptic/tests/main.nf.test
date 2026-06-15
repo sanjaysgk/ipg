@@ -21,7 +21,7 @@ nextflow_workflow {
                 """
                 input[0] = Channel.of([ [ id:'test' ], file("integrated_peptides.tsv") ])
                 input[1] = Channel.of([ [ id:'test' ], [ file("synth.mgf") ] ])
-                input[2] = file("search.fasta")
+                input[2] = Channel.of([ [ id:'test' ], file("search.fasta") ])
                 """
             }
         }
