@@ -29,9 +29,15 @@ process COMBINE_FASTA {
     """
     zcat -f ${fastas} > ${prefix}.fasta
 
+    # Capture first, default later. Doing the version grep inline in the heredoc with
+    # `|| echo NA` is racy: pipefail + the trailing `head -1` closing the pipe makes the
+    # pipeline exit non-zero even after grep printed the version, so `|| echo NA` appends
+    # a stray second line ("1.12\\nNA") and breaks versions.yml parsing.
+    zcat_version=\$(zcat --version 2>/dev/null | head -1 | grep -oE '[0-9]+\\.[0-9]+' | head -1 || true)
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        zcat: \$(zcat --version 2>/dev/null | head -1 | grep -oE '[0-9]+\\.[0-9]+' | head -1 || echo NA)
+        zcat: \${zcat_version:-NA}
     END_VERSIONS
     """
 
