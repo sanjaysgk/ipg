@@ -3,10 +3,12 @@ process MSFRAGGER_PARTIAL {
     label 'process_high'
 
     // Standalone bioconda MSFragger (same calling convention as modules/local/msfragger):
-    //   bioconda `msfragger --key <license>`, or a user JAR via --msfragger_jar.
+    //   bioconda msfragger with the key from the MSFRAGGER_LICENSE secret, or a user
+    //   JAR via --msfragger_jar.
     // NOT FragPipe — split-database search is an MSFragger feature (--partial), so we
     // call MSFragger directly. One invocation searches a sample's spectra against ONE
     // database chunk in partial mode.
+    secret 'MSFRAGGER_LICENSE'
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/msfragger:4.2--py311hdfd78af_0' :
@@ -33,7 +35,9 @@ process MSFRAGGER_PARTIAL {
     script:
     def mem     = task.ext.msfragger_mem ?: params.msfragger_mem ?: 8
     def use_jar = msfragger_jar && msfragger_jar.size() > 0
-    def key_arg = (!use_jar && params.msfragger_license) ? "--key ${params.msfragger_license}" : ''
+    // licence key from the MSFRAGGER_LICENSE secret env var (single-quoted so Groovy
+    // leaves $MSFRAGGER_LICENSE literal; shell resolves it at runtime, not in .command.sh).
+    def key_arg = use_jar ? '' : '--key $MSFRAGGER_LICENSE'
     def run_cmd = use_jar
         ? "java -Dfile.encoding=UTF-8 -Xmx${mem}g -jar ${msfragger_jar}"
         : "msfragger ${key_arg}"
