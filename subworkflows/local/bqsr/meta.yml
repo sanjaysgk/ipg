@@ -1,0 +1,47 @@
+name: bqsr
+description: |
+  Base Quality Score Recalibration (steps 13-16). Builds a recalibration table
+  from known sites, applies it, then builds a second table and plots covariates
+  before/after for QC.
+keywords:
+  - gatk4
+  - bqsr
+  - recalibration
+  - variant-calling-prep
+components:
+  - gatk4/baserecalibrator
+  - gatk4/applybqsr
+  - gatk4/analyzecovariates
+  - samtools/index
+input:
+  - ch_input_bam:
+      description: SplitNCigarReads BAM from BAM_PREP [ val(meta), path(bam) ]
+  - ch_fasta:
+      description: Reference FASTA [ val(meta), path(fasta) ]
+  - ch_fai:
+      description: Reference FASTA index [ val(meta), path(fai) ]
+  - ch_dict:
+      description: Reference sequence dictionary [ val(meta), path(dict) ]
+  - ch_known_sites:
+      description: Known-variant VCFs for recalibration [ val(meta), [ path(vcf) ] ]
+  - ch_known_sites_tbi:
+      description: Indexes for the known-sites VCFs [ val(meta), [ path(tbi) ] ]
+output:
+  - recal_bam:
+      description: Recalibrated BAM [ val(meta), path(bam) ]
+  - recal_bai:
+      description: Index for the recalibrated BAM [ val(meta), path(bai) ]
+  - recal_bam_bai:
+      description: Recalibrated BAM + index, input to Mutect2 calling [ val(meta), path(bam), path(bai) ]
+  - before_table:
+      description: First-pass recalibration table [ val(meta), path(table) ]
+  - after_table:
+      description: Second-pass recalibration table [ val(meta), path(table) ]
+  - covariates_pdf:
+      description: AnalyzeCovariates before/after plots [ val(meta), path(pdf) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

@@ -1,0 +1,58 @@
+name: ms_search
+description: |
+  Immunopeptidomics database search. Per MS sample: auto-convert vendor spectra
+  (.raw, Bruker .d) to mzML, prepare the per-sample search database, run the
+  selected engines (MSFragger — single or split-database — plus Comet and Sage),
+  rescore each engine with MS2Rescore, and integrate engines with class-separated
+  (cryptic vs canonical) FDR.
+keywords:
+  - immunopeptidomics
+  - database-search
+  - msfragger
+  - comet
+  - sage
+  - ms2rescore
+  - rescoring
+components:
+  - thermorawfileparser
+  - msconvert
+  - prepare_fasta
+  - combine_fasta
+  - msfragger
+  - fragger_split_search
+  - comet
+  - sage
+  - convert_mzml
+  - convert_peaks
+  - ms2rescore
+  - integrate_engines
+input:
+  - ch_ms_db:
+      description: Per-sample spectra and resolved search db [ val(meta), [ path(ms_files) ], path(db) ]
+  - ch_canonical_fasta:
+      description: Canonical proteome FASTA, unused in cryptic_only mode [ path(fasta) ]
+  - ch_engines:
+      description: List of engine names, e.g. ['msfragger','comet','sage'] [ val(list) ]
+  - ch_msfragger_jar:
+      description: MSFragger JAR, or empty/NO_FILE to use the bioconda binary [ path(jar) ]
+output:
+  - psms:
+      description: Integrated PSM table per sample [ val(meta), path(tsv) ]
+  - peptides:
+      description: Integrated peptide table per sample [ val(meta), path(tsv) ]
+  - chimeric:
+      description: Integrated chimeric-spectrum PSMs [ val(meta), path(tsv) ]
+  - calibrated_mzml:
+      description: Mass-calibrated mzML [ val(meta), path(mzml) ]
+  - mgf:
+      description: MGF spectra per sample for PepQuery validation [ val(meta), path(mgf) ]
+  - rescored_per_eng:
+      description: MS2Rescore output per engine [ val(meta), val(engine), path(tsv) ]
+  - search_db:
+      description: Per-sample target-decoy search FASTA [ val(meta), path(tda) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

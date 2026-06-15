@@ -1,0 +1,44 @@
+name: immunoinformatics
+description: |
+  Optional downstream immunoinformatics on integrated peptides. Each analysis is
+  gated by its own --run_* flag: NetMHCpan (class I) / NetMHCIIpan (class II)
+  binding prediction, GibbsCluster motif deconvolution, FlashLFQ label-free
+  quantification, BLASTp host-proteome screening, and an HTML summary report.
+keywords:
+  - immunoinformatics
+  - netmhcpan
+  - gibbscluster
+  - flashlfq
+  - blastp
+  - hla-binding
+components:
+  - netmhcpan
+  - netmhciipan
+  - gibbscluster
+  - flashlfq
+  - blastp_host
+  - immunoinformatics_report
+input:
+  - ch_peptides:
+      description: Integrated peptide table [ val(meta), path(integrated_peptides.tsv) ]
+  - ch_ms_files:
+      description: MS files for FlashLFQ quantification [ val(meta), [ path(ms_files) ] ]
+output:
+  - netmhcpan_best:
+      description: Best NetMHCpan (class I) binding calls [ val(meta), path(tsv) ]
+  - netmhciipan_best:
+      description: Best NetMHCIIpan (class II) binding calls [ val(meta), path(tsv) ]
+  - gibbs_clusters:
+      description: GibbsCluster motif deconvolution output [ val(meta), path(clusters) ]
+  - flashlfq_peptides:
+      description: FlashLFQ label-free quantities [ val(meta), path(tsv) ]
+  - blastp_peptides:
+      description: BLASTp host-proteome screen results [ val(meta), path(tsv) ]
+  - report:
+      description: Immunoinformatics HTML summary [ val(meta), path(html) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

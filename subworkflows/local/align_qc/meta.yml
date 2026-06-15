@@ -1,0 +1,46 @@
+name: align_qc
+description: |
+  STAR alignment + post-alignment QC (steps 1-3 of the legacy cryptic pipeline).
+  Aligns reads with STAR, coordinate-sorts and indexes the BAM, and infers
+  strandedness with RSeQC infer_experiment.
+keywords:
+  - rnaseq
+  - alignment
+  - star
+  - qc
+  - strandedness
+components:
+  - star/align
+  - samtools/sort
+  - samtools/index
+  - rseqc/inferexperiment
+input:
+  - ch_reads:
+      description: Trimmed reads [ val(meta), [ path(reads) ] ]
+  - ch_star_index:
+      description: STAR genome index directory [ val(meta2), path(star_index) ]
+  - ch_gtf:
+      description: Reference annotation GTF [ val(meta3), path(gtf) ]
+  - ch_fasta:
+      description: Reference FASTA + index for optional samtools sort ref [ val(meta4), path(fasta), path(fai) ]
+  - ch_rseqc_bed:
+      description: Gene-model BED for RSeQC, shared across samples [ path(bed) ]
+output:
+  - star_bam_unsorted:
+      description: STAR-aligned BAM, consumed by BAM_PREP [ val(meta), path(bam) ]
+  - sorted_bam:
+      description: Coordinate-sorted BAM for transcript assembly [ val(meta), path(bam) ]
+  - sorted_bai:
+      description: Index for the sorted BAM [ val(meta), path(bai) ]
+  - sorted_bam_bai:
+      description: Sorted BAM + index bundled [ val(meta), path(bam), path(bai) ]
+  - strandedness_txt:
+      description: RSeQC infer_experiment strandedness report [ val(meta), path(txt) ]
+  - star_log:
+      description: STAR Log.final.out [ val(meta), path(log) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"
