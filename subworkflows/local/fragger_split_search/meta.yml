@@ -1,0 +1,38 @@
+name: fragger_split_search
+description: |
+  MSFragger split-database search (bioconda MSFragger, no FragPipe). Large
+  no-enzyme cryptic DBs (~200K seqs) OOM MSFragger's in-memory fragment index.
+  Split the target-decoy DB into N chunks, search each in --partial mode, then
+  merge with full-DB e-value recompute (sum per-chunk score histograms) so the
+  result is statistically identical to an unsplit search — no FDR inflation.
+  Drop-in for the single MSFragger arm of ms_search.
+keywords:
+  - proteomics
+  - msfragger
+  - database-search
+  - split-database
+  - immunopeptidomics
+components:
+  - split_fasta
+  - msfragger_partial
+  - merge_split_search
+input:
+  - ch_ms_db_tda:
+      description: |
+        Per-sample spectra and the sample's target-decoy database
+        [ val(meta), [ path(mzml) ], path(tda_fasta) ]
+  - ch_msfragger_jar:
+      description: MSFragger JAR, or assets/NO_FILE to use the bioconda binary + licence key [ path(jar) ]
+  - ch_msfragger_params:
+      description: MSFragger native parameters file [ path(params) ]
+  - num_slices:
+      description: Number of database chunks to split into (plain int, > 1) [ val(int) ]
+output:
+  - pin:
+      description: One merged Percolator PIN per run, collected per sample [ val(meta), [ path(*.pin) ] ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

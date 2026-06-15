@@ -1,0 +1,22 @@
+{
+    "1 sample x 1 run x 3 chunks -> 1 merged PIN per sample - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "samp",
+                        "db": "cryptic.fasta"
+                    },
+                    [
+                        "run1.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-06-15T15:11:38.995640182",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
