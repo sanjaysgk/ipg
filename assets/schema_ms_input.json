@@ -15,9 +15,9 @@
             },
             "ms_file": {
                 "type": "string",
-                "format": "file-path",
+                "format": "path",
                 "exists": true,
-                "errorMessage": "Path to MS data file (.raw, .mzML, or .d directory)"
+                "errorMessage": "Path to MS data file (.raw, .mzML, .mgf) or a Bruker .d directory"
             },
             "condition": {
                 "type": "string",

@@ -20,6 +20,8 @@
 ----------------------------------------------------------------------------------------
 */
 
+include { THERMORAWFILEPARSER          } from '../../../modules/nf-core/thermorawfileparser/main'
+include { MSCONVERT                    } from '../../../modules/local/msconvert/main'
 include { PREPARE_FASTA                } from '../../../modules/local/prepare_fasta/main'
 include { COMBINE_FASTA                } from '../../../modules/local/combine_fasta/main'
 include { MSFRAGGER                    } from '../../../modules/local/msfragger/main'
@@ -47,6 +49,36 @@ workflow MS_SEARCH {
     def engines    = params.ms_engines.tokenize(',').collect { it.trim() }
     def instrument = params.instrument ?: 'orbitrap'
     def mod_type   = params.mod_type
+
+    //
+    // STEP 0: normalise spectra to mzML. Every engine (MSFragger/Comet/Sage) reads
+    // mzML; Comet/Sage cannot read vendor formats. Detect format by extension per
+    // file and convert the vendor ones:
+    //   .raw (Thermo)  -> THERMORAWFILEPARSER -> mzML
+    //   .d   (Bruker)  -> MSCONVERT           -> mzML
+    //   .mzML/.mgf     -> passthrough
+    // Convert per-file (unique id = basename, so outputs don't collide), carrying
+    // the sample meta + db, then regroup by sample so the rest of the subworkflow
+    // sees [meta, [mzML...], db] exactly as before.
+    //
+    ch_one = ch_ms_db.flatMap { meta, files, db ->
+        (files instanceof List ? files : [files]).collect { f -> [ meta, db, f ] }
+    }
+    ch_fmt = ch_one.branch { _meta, _db, f ->
+        raw:    f.name.toLowerCase().endsWith('.raw')
+        bruker: f.name.toLowerCase().endsWith('.d')
+        ready:  true
+    }
+    THERMORAWFILEPARSER( ch_fmt.raw.map    { meta, db, f -> [ [id: f.baseName, orig: meta, db: db], f ] } )
+    MSCONVERT(           ch_fmt.bruker.map { meta, db, f -> [ [id: f.baseName, orig: meta, db: db], f ] } )
+    ch_versions = ch_versions.mix(MSCONVERT.out.versions)
+    ch_converted = THERMORAWFILEPARSER.out.spectra.map { m, mz -> [ m.orig, m.db, mz ] }
+        .mix( MSCONVERT.out.spectra.map { m, mz -> [ m.orig, m.db, mz ] } )
+    ch_ms_db = ch_converted
+        .mix( ch_fmt.ready.map { meta, db, f -> [ meta, db, f ] } )
+        .map { meta, db, f -> [ meta.id, meta, db, f ] }
+        .groupTuple( by: 0 )
+        .map { _id, metas, dbs, fs -> [ metas[0], fs, dbs[0] ] }   // [meta, [mzML files], db]
 
     // [meta, files] view for spectrum-side processes (engines, convert, peaks).
     ch_ms_data = ch_ms_db.map { meta, files, _db -> [ meta, files ] }

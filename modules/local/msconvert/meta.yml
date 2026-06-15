@@ -1,0 +1,39 @@
+name: msconvert
+description: Convert vendor MS data (Bruker timsTOF .d) to mzML with ProteoWizard msconvert
+keywords:
+  - proteomics
+  - mass spectrometry
+  - msconvert
+  - proteowizard
+  - bruker
+  - timsTOF
+  - mzML
+tools:
+  - msconvert:
+      description: ProteoWizard msconvert with vendor readers (Wine on Linux)
+      homepage: https://proteowizard.sourceforge.io/
+      documentation: https://proteowizard.sourceforge.io/tools/msconvert.html
+      licence: ["Apache-2.0", "vendor licences accepted via image tag"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample metadata (id required)
+    - spectra:
+        type: file
+        description: Vendor MS data, e.g. a Bruker timsTOF .d directory
+        pattern: "*.d"
+output:
+  - spectra:
+      - meta:
+          type: map
+      - "*.mzML":
+          type: file
+          description: Converted spectra in mzML
+          pattern: "*.mzML"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"

@@ -1,0 +1,7 @@
+name: msconvert
+# No conda package: ProteoWizard vendor-reader builds are container-only
+# (the chambm pwiz "i-agree-to-the-vendor-licenses" image, run via Wine).
+channels:
+  - conda-forge
+  - bioconda
+dependencies: []
