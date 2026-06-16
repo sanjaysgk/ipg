@@ -47,9 +47,10 @@ workflow MS_SEARCH {
     main:
 
     ch_versions = Channel.empty()
-    def engines    = params.ms_engines.tokenize(',').collect { it.trim() }
-    def instrument = params.instrument ?: 'orbitrap'
-    def mod_type   = params.mod_type
+    def engines         = params.ms_engines.tokenize(',').collect { it.trim() }
+    def instrument      = params.instrument ?: 'orbitrap'
+    def mod_type        = params.mod_type
+    def msfragger_split = (params.msfragger_split ?: 1) as int
 
     //
     // STEP 0: normalise spectra to mzML. Every engine (MSFragger/Comet/Sage) reads
@@ -139,17 +140,14 @@ workflow MS_SEARCH {
             checkIfExists: true
         ).collect()
 
-        def msfragger_split = (params.msfragger_split ?: 1) as int
         if (msfragger_split > 1) {
             // Split-database search: large no-enzyme cryptic DBs (~200K seqs) OOM
             // MSFragger's in-memory fragment index. Split into N chunks, search each
             // --partial, then merge with full-DB e-value recompute (statistically
             // identical to an unsplit search). Needs the REAL MSFragger (--partial +
-            // --generate_expect_functions): a user JAR or bioconda + --key.
-            if (!params.msfragger_jar && !params.msfragger_license) {
-                error("--msfragger_split > 1 needs the real MSFragger for --partial / the e-value " +
-                    "merge: pass --msfragger_jar <MSFragger.jar> or --msfragger_license <key>.")
-            }
+            // --generate_expect_functions): a user JAR, or bioconda with the
+            // MSFRAGGER_LICENSE secret (the modules' `secret` directive errors clearly
+            // if it is unset).
             FRAGGER_SPLIT_SEARCH(ch_search, ch_msfragger_jar, ch_msfragger_params, msfragger_split)
             ch_versions      = ch_versions.mix(FRAGGER_SPLIT_SEARCH.out.versions)
             ch_pin_msfragger = FRAGGER_SPLIT_SEARCH.out.pin
@@ -199,14 +197,21 @@ workflow MS_SEARCH {
             "${projectDir}/assets/ms_search_params/sage/${instrument}_${mod_type}.json",
             checkIfExists: true
         ).collect()
-        ch_sage_log = engines.contains('msfragger')
-            ? ch_msfragger_log.collect()
-            : Channel.value(file("${projectDir}/assets/NO_FILE", checkIfExists: false))
+        // SAGE optionally reuses THIS sample's MSFragger calibration (fragment tol /
+        // topN) when MSFragger ran un-split. Join the log per sample by meta.id — never
+        // collect() across samples: every MSFragger emits a log named search_log.txt, so
+        // collecting >1 sample's logs into one SAGE input collides on filename.
+        def no_file = file("${projectDir}/assets/NO_FILE", checkIfExists: false)
+        ch_sage_in = (engines.contains('msfragger') && msfragger_split == 1)
+            ? ch_search.map { meta, files, tda -> [ meta.id, meta, files, tda ] }
+                .join( ch_msfragger_log.map { meta, log -> [ meta.id, log ] } )
+                .map { _id, meta, files, tda, log -> [ meta, files, tda, log ] }
+            : ch_search.map { meta, files, tda -> [ meta, files, tda, no_file ] }
         SAGE(
-            ch_search.map { meta, files, _tda -> [ meta, files ] },
-            ch_search.map { _meta, _files, tda -> tda },
+            ch_sage_in.map { meta, files, _tda, _log -> [ meta, files ] },
+            ch_sage_in.map { _meta, _files, tda, _log -> tda },
             ch_sage_params,
-            ch_sage_log
+            ch_sage_in.map { _meta, _files, _tda, log -> log }
         )
         ch_versions = ch_versions.mix(SAGE.out.versions)
 

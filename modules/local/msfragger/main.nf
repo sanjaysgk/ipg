@@ -4,10 +4,14 @@ process MSFRAGGER {
 
     // Two paths supported:
     //   1. Bioconda: `msfragger` wrapper (PATH) — default under -profile pixi
-    //      when pixi.toml includes `msfragger`. Needs a one-time license
-    //      activation: `pixi run msfragger --key <license-key>`.
+    //      when pixi.toml includes `msfragger`. The academic licence key is read
+    //      from the MSFRAGGER_LICENSE Nextflow secret (injected as an env var at
+    //      runtime, never written to .command.sh). MSFragger does not persist
+    //      activation, so the key must be supplied on every run. Set it once with:
+    //          nextflow secrets set MSFRAGGER_LICENSE '<key>'
     //   2. User-supplied JAR via --msfragger_jar — for containerised runs
     //      or when the bioconda package isn't wanted.
+    secret 'MSFRAGGER_LICENSE'
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/msfragger:4.2--py311hdfd78af_0' :
@@ -28,7 +32,7 @@ process MSFRAGGER {
     // `ch_engine_input = engines.contains('msfragger') ? ch_calibrated_mzml : ch_ms_data`
     // in the subworkflow — left as-is, and COMET/SAGE receive ch_ms_data.
     tuple val(meta), path("*.mzML"),           emit: mzml, optional: true
-    path("search_log.txt"),                    emit: log
+    tuple val(meta), path("search_log.txt"),   emit: log
     path "versions.yml",                       emit: versions
 
     when:
@@ -37,7 +41,10 @@ process MSFRAGGER {
     script:
     def mem = task.ext.msfragger_mem ?: params.msfragger_mem ?: 8
     def use_jar = msfragger_jar && msfragger_jar.size() > 0
-    def key_arg = (!use_jar && params.msfragger_license) ? "--key ${params.msfragger_license}" : ''
+    // licence key from the MSFRAGGER_LICENSE secret as an env var — single-quoted
+    // so Groovy leaves $MSFRAGGER_LICENSE literal; the shell resolves it at runtime,
+    // keeping the key out of .command.sh.
+    def key_arg = use_jar ? '' : '--key $MSFRAGGER_LICENSE'
     def run_cmd = use_jar
         ? "java -Dfile.encoding=UTF-8 -Xmx${mem}g -jar ${msfragger_jar}"
         : "msfragger ${key_arg}"

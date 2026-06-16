@@ -6,6 +6,8 @@ process MERGE_SPLIT_SEARCH {
     // histogram) AND numpy (histogram math) — so it runs in the msfragger
     // environment with numpy added. NOTE for singularity: confirm the image
     // ships numpy, or supply a mulled msfragger+numpy image via ext.container.
+    // Licence key from the MSFRAGGER_LICENSE secret (env var, not in .command.sh).
+    secret 'MSFRAGGER_LICENSE'
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/msfragger:4.2--py311hdfd78af_0' :
@@ -35,7 +37,9 @@ process MERGE_SPLIT_SEARCH {
     script:
     def mem         = task.ext.msfragger_mem ?: params.msfragger_mem ?: 8
     def use_jar     = msfragger_jar && msfragger_jar.size() > 0
-    def key_arg     = (!use_jar && params.msfragger_license) ? "--key ${params.msfragger_license}" : ''
+    // licence key from the MSFRAGGER_LICENSE secret env var (single-quoted: Groovy
+    // leaves $MSFRAGGER_LICENSE literal, shell resolves at runtime, not in .command.sh).
+    def key_arg     = use_jar ? '' : '--key $MSFRAGGER_LICENSE'
     def msfragger_cmd = use_jar ? "java -Xmx${mem}g -jar ${msfragger_jar}" : "msfragger ${key_arg}"
     def sample_name = meta.run ?: meta.id
     def topN        = task.ext.output_report_topN ?: 1
