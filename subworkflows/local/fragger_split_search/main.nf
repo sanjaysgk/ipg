@@ -60,7 +60,7 @@ workflow FRAGGER_SPLIT_SEARCH {
         .map { _dbKey, meta, run_file, chunk_id, chunk_fasta ->
             def run   = run_file.baseName
             def pmeta = meta + [ original_id: meta.id, run: run, chunk_id: chunk_id,
-                                 id: "${meta.id}__${run}__c${chunk_id}" ]
+                id: "${meta.id}__${run}__c${chunk_id}" ]
             [ pmeta, run_file, chunk_fasta ]
         }
 
