@@ -24,8 +24,16 @@ process TRIPLE_TRANSLATE {
     # locally to make the output land here (where the *_3translate.fasta
     # glob can find it).
     cp -L ${transcriptome_fasta} ${prefix}.fasta
-    triple_translate -c ${tracking} ${prefix}.fasta > ${prefix}_tt.log 2>&1
-    rm ${prefix}.fasta
+
+    # Normalise the gffcompare .tracking column 1: newer gffcompare writes it as
+    # TCONS_xxxxxxxx|<isoforms>|<length>, but triple_translate matches the bare
+    # TCONS id (from the transcriptome header) against col1 with an exact strcmp,
+    # so the suffix silently disables all ENSG|ENST gene/class annotation. Strip
+    # it (idempotent: already-bare col1 is left unchanged).
+    sed 's/^\\(TCONS_[0-9][0-9]*\\)|[^[:space:]]*/\\1/' ${tracking} > tracking_norm.tracking
+
+    triple_translate -c tracking_norm.tracking ${prefix}.fasta > ${prefix}_tt.log 2>&1
+    rm ${prefix}.fasta tracking_norm.tracking
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
