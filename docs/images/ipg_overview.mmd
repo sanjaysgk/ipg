@@ -59,5 +59,9 @@ flowchart TB
     end
 
     %% ─────────────── single cross-step handoff (S1 → S2) ───────────────
-    %% post_ms (S3) is an independent --step entry, so it has no edge to S1/S2.
     CF ==>|per-sample search db| PF
+
+    %% Layout-only: a hidden link (no arrowhead, transparent stroke) ranks the
+    %% deprecated post_ms lane at the bottom. Standard syntax; carries no meaning.
+    PEP --- P3
+    linkStyle 22 stroke:transparent,stroke-width:0px;
