@@ -685,6 +685,10 @@ tracking_info *get_tracking(FILE *f, int cnt)
         while(fgets(line,MAXSTR - 1,f) != NULL) {
            	ref[0] = '\0';
                 sscanf(line, "%s %*[^\t] %s %c", tmp[i].cuff_transcript, ref, &tmp[i].class_code);
+                // gffcompare 0.12.6 writes col1 as TCONS_xxxxxxxx|<isoforms>|<length>;
+                // matching below is against the bare TCONS id, so trim at the first '|'.
+                if ((ptr = strchr(tmp[i].cuff_transcript, '|')) != NULL)
+                        *ptr = '\0';
                 if (ref[0] != '-') {
 			ptr = ref;
 			pnt = move_ptr(ref,'|');

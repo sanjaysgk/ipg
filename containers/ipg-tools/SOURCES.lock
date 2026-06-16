@@ -13,14 +13,14 @@
 # both here and in the upstream repo, so they are verified against the same commit.
 
 UPSTREAM_REPO    https://github.com/sanjaysgk/immunopeptidogenomics
-UPSTREAM_COMMIT  5368abfa3ccfc0884a91541043c544e0ab2b5474
-# NOTE: pinned to the PR-#1 branch tip; after sanjaysgk/immunopeptidogenomics PR #1
-# merges, bump UPSTREAM_COMMIT to the resulting main commit (content is identical).
+UPSTREAM_COMMIT  c0f3a8f95ec7d147e7bada328170ede0280f7a31
+# NOTE: immunopeptidogenomics main after PR #2 (origins tracking col1 trim) and
+# PR #1 (curate_vcf write-loop + portable cJSON include).
 
 # file                role                       sha256
 curate_vcf.c          kescull-modified           e4744090dbf6ba6b4cca85e78994d288de5895382d7aed4976df8fbdadb548f4
 revert_headers.c      kescull-modified           08c1149e622b6b6a849b251ed63d14b21e2b47ea6390d47adfca8ff6d8cade8c
-origins.c             kescull-modified           861f72af68d8e02a358c573a6235fb730ac3c24f5b87a835fe02e31662dc581d
+origins.c             kescull-modified           35ba7f73a2689f5fbdff2a8e8237fade990ead191a1f97c3c236097a8985d6f3
 alt_liftover.c        kescull-unmodified         e556a5de1b92a2e28fa2bb3147b2338e1ea0cd003a7948c25bc4c12ad5c3a000
 triple_translate.c    kescull-unmodified         5333886fb9fcffd4c336163ee58b709a77be1e3d6e017b41bd0264a84d0969c7
 squish.c              kescull-unmodified         1829beba861b4743d31e45161a1755b1682f37c911b2b4c7fde24c2a6056851e
