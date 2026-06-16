@@ -1,0 +1,37 @@
+name: instanovo_predict
+description: De novo peptide sequencing from MS/MS spectra with the InstaNovo transformer model
+keywords:
+  - de novo
+  - peptide sequencing
+  - proteomics
+  - immunopeptidomics
+  - instanovo
+tools:
+  - instanovo:
+      description: Transformer-based de novo peptide sequencing (predicts peptide sequences directly from spectra, no database)
+      homepage: https://github.com/instadeepai/InstaNovo
+      documentation: https://instadeepai.github.io/InstaNovo/
+      licence: ["Apache-2.0"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample information (id required)
+    - spectra:
+        type: file
+        description: MS/MS spectra (InstaNovo reads mzML/mzXML/MGF directly)
+        pattern: "*.{mzML,mzXML,mgf}"
+output:
+  - predictions:
+      - meta:
+          type: map
+      - "*.denovo.csv":
+          type: file
+          description: De novo predictions with beam columns (predictions, log_probs, predictions_beam_*)
+          pattern: "*.denovo.csv"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"

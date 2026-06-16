@@ -25,6 +25,7 @@ include { VCF_ANNOTATE_ALL    } from '../subworkflows/local/vcf_annotate_all/mai
 include { DB_CONSTRUCT        } from '../subworkflows/local/db_construct/main'
 include { POST_MS_ANALYSIS    } from '../subworkflows/local/post_ms_analysis/main'
 include { MS_SEARCH           } from '../subworkflows/local/ms_search/main'
+include { DENOVO              } from '../subworkflows/local/denovo/main'
 include { DOWNLOAD_UNIPROT_PROTEOME } from '../modules/local/download_uniprot_proteome/main'
 include { VALIDATE_CRYPTIC    } from '../subworkflows/local/validate_cryptic/main'
 include { ANNOTATE_ORIGIN     } from '../modules/local/annotate_origin/main'
@@ -172,6 +173,17 @@ workflow IPG {
             ch_msfragger_jar
         )
         ch_versions = ch_versions.mix(MS_SEARCH.out.versions)
+
+        // De novo discovery lane (Phase 1a) — parallel to the DB-search engines, same
+        // spectra + per-sample cryptic DB. One de novo task per spectra file (unique
+        // meta.id) so predictions join 1:1 to their DB for classification.
+        if (params.run_denovo) {
+            ch_denovo_in = ch_ms_db
+                .transpose()
+                .map { meta, ms_file, db -> [meta + [id: "${meta.id}_${ms_file.baseName}"], ms_file, db] }
+            DENOVO(ch_denovo_in, ch_canonical_fasta)
+            ch_versions = ch_versions.mix(DENOVO.out.versions)
+        }
 
         //
         // Optional PepQuery2 spectrum-level validation of the cryptic subset.
