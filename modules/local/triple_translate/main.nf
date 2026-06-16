@@ -2,7 +2,7 @@ process TRIPLE_TRANSLATE {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "ghcr.io/sanjaysgk/ipg-tools:sha-97c9c7e"
+    container "ghcr.io/sanjaysgk/ipg-tools@sha256:e6999bae43e9a2b1b85497bbf02c3e0ba9f40c53a266d00a4270e2aa4fc7e7d5"
 
     input:
     tuple val(meta), path(transcriptome_fasta), path(tracking)
