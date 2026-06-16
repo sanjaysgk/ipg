@@ -1,0 +1,28 @@
+# Provenance lock for the C sources bundled in containers/ipg-tools/src/.
+#
+# Every bundled source is byte-pinned (sha256) to a commit of the canonical
+# upstream repo. The verify-sources CI job (.github/workflows/build-ipg-tools.yml)
+# re-clones that commit and fails the build if any bundled file drifts — this is
+# what guarantees the container is built from exactly the upstream source, with
+# no submodule (nf-core does not support submodules).
+#
+# RULE: whenever you edit a file in src/, mirror the identical change to the
+# upstream repo, then update UPSTREAM_COMMIT + the file's sha256 here.
+#
+# cJSON.c / cJSON.h are third-party (DaveGamble/cJSON, MIT); they are vendored
+# both here and in the upstream repo, so they are verified against the same commit.
+
+UPSTREAM_REPO    https://github.com/sanjaysgk/immunopeptidogenomics
+UPSTREAM_COMMIT  5368abfa3ccfc0884a91541043c544e0ab2b5474
+# NOTE: pinned to the PR-#1 branch tip; after sanjaysgk/immunopeptidogenomics PR #1
+# merges, bump UPSTREAM_COMMIT to the resulting main commit (content is identical).
+
+# file                role                       sha256
+curate_vcf.c          kescull-modified           e4744090dbf6ba6b4cca85e78994d288de5895382d7aed4976df8fbdadb548f4
+revert_headers.c      kescull-modified           08c1149e622b6b6a849b251ed63d14b21e2b47ea6390d47adfca8ff6d8cade8c
+origins.c             kescull-modified           861f72af68d8e02a358c573a6235fb730ac3c24f5b87a835fe02e31662dc581d
+alt_liftover.c        kescull-unmodified         e556a5de1b92a2e28fa2bb3147b2338e1ea0cd003a7948c25bc4c12ad5c3a000
+triple_translate.c    kescull-unmodified         5333886fb9fcffd4c336163ee58b709a77be1e3d6e017b41bd0264a84d0969c7
+squish.c              kescull-unmodified         1829beba861b4743d31e45161a1755b1682f37c911b2b4c7fde24c2a6056851e
+cJSON.c               vendored:DaveGamble/cJSON  de63e951ce3bc9b6938c7635575a6c90c3b364595b0b0f4c5ae8f9c83a43c17d
+cJSON.h               vendored:DaveGamble/cJSON  c01a8ca5609bb2c956dd1ae836d5d926ec68153ecebc5a75ea0febc2e076da8d
