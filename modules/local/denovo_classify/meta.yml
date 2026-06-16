@@ -1,0 +1,44 @@
+name: denovo_classify
+description: Classify de novo peptide predictions against a cryptic + canonical database (canonical/cryptic/novel)
+keywords:
+  - de novo
+  - peptide
+  - classification
+  - cryptic
+  - proteomics
+tools:
+  - denovo_classify:
+      description: I/L-aware substring lookup of de novo peptides against cryptic and canonical FASTA, with raw log-prob confidence filtering
+      homepage: https://github.com/sanjaysgk/ipg
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map with sample information (id required)
+    - predictions:
+        type: file
+        description: De novo predictions CSV (e.g. InstaNovo output)
+        pattern: "*.csv"
+    - cryptic_fasta:
+        type: file
+        description: Cryptic ORF database FASTA
+        pattern: "*.{fa,fasta}"
+  - canonical_fasta:
+      type: file
+      description: Canonical proteome FASTA (optional; pass [] to skip)
+      pattern: "*.{fa,fasta}"
+output:
+  - classified:
+      - meta:
+          type: map
+      - "*.denovo_classified.tsv":
+          type: file
+          description: Per-peptide classification (spectrum_id, peptide, length, log_prob, class, engine)
+          pattern: "*.denovo_classified.tsv"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"
