@@ -70,12 +70,12 @@ See [`docs/output.md`](docs/output.md) for the full output description.
 
 ## Profiles
 
-| Profile                  | Purpose                                                        |
-| ------------------------ | ------------------------------------------------------------- |
-| `pixi`                   | Run every tool from the local pixi env (no containers)        |
-| `singularity` / `docker` | Pull biocontainers (HPC / cloud)                              |
-| `monash`                 | SLURM on the Monash M3 `comp` partition (`xy86` account)      |
-| `test`                   | Use the bundled chr22 test data                               |
+| Profile                  | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `pixi`                   | Run every tool from the local pixi env (no containers)   |
+| `singularity` / `docker` | Pull biocontainers (HPC / cloud)                         |
+| `monash`                 | SLURM on the Monash M3 `comp` partition (`xy86` account) |
+| `test`                   | Use the bundled chr22 test data                          |
 
 ## Credits
 
