@@ -102,8 +102,20 @@ void main(int argc,char **argv)
 	for (i = 0; i < lines_cnt; i++)
 		if (!vcf_lines[i].dont_print)
 			print_vcf_line(g, vcf_lines[i]);
+
+	// Detect write errors (e.g. full filesystem) so a failed/truncated write
+	// is not silently emitted as a valid-looking VCF.
+	if (ferror(g)) {
+		fprintf(stderr, "curate_vcf: error writing output VCF %s\n", output);
+		fclose(f);
+		fclose(g);
+		exit(1);
+	}
 	fclose(f);
-	fclose(g);
+	if (fclose(g) == EOF) {
+		fprintf(stderr, "curate_vcf: error closing output VCF %s\n", output);
+		exit(1);
+	}
 
 	// free header
 	for (i = 0; i < header_cnt; ++i) {
