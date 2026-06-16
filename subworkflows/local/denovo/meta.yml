@@ -1,0 +1,32 @@
+name: denovo
+description: |
+  De novo peptide sequencing discovery lane (Phase 1a). Predicts peptides directly
+  from spectra with InstaNovo (no database), then classifies each prediction against
+  the sample's cryptic ORF DB and the canonical proteome (canonical/cryptic/novel)
+  using an I/L-aware substring lookup. Confidence is the raw de novo log-probability;
+  calibrated Winnow FDR is a separate, later step. Runs in parallel to the
+  database-search engines and never feeds them.
+keywords:
+  - de novo
+  - peptide sequencing
+  - instanovo
+  - cryptic
+  - immunopeptidomics
+  - discovery
+components:
+  - instanovo_predict
+  - denovo_classify
+input:
+  - ch_spectra_db:
+      description: Per-file spectra and the sample's cryptic db [ val(meta), path(spectra), path(cryptic_fasta) ]
+  - ch_canonical_fasta:
+      description: Canonical proteome FASTA, or [] to skip canonical classification [ path(fasta) ]
+output:
+  - classified:
+      description: Per-peptide classification table [ val(meta), path(tsv) ]
+  - predictions:
+      description: Raw de novo predictions with beam columns [ val(meta), path(csv) ]
+  - versions:
+      description: Files containing software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
