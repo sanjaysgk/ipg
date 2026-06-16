@@ -23,8 +23,34 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/ipg-tools
 
 jobs:
+  verify-sources:
+    name: Verify bundled sources match upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify SOURCES.lock (sha256 + byte-identity to pinned upstream commit)
+        run: |
+          set -euo pipefail
+          cd containers/ipg-tools
+          repo=$(awk '$1=="UPSTREAM_REPO"{print $2}' SOURCES.lock)
+          commit=$(awk '$1=="UPSTREAM_COMMIT"{print $2}' SOURCES.lock)
+          echo "Pinned upstream: $repo @ $commit"
+          # 1) bundled files match their recorded sha256
+          awk 'NF==3 && $1 ~ /\.(c|h)$/ {print $3"  src/"$1}' SOURCES.lock | sha256sum -c -
+          # 2) bundled files are byte-identical to the pinned upstream commit
+          tmp=$(mktemp -d)
+          git clone --quiet "$repo" "$tmp/up"
+          git -C "$tmp/up" checkout --quiet "$commit"
+          for f in $(awk 'NF==3 && $1 ~ /\.(c|h)$/{print $1}' SOURCES.lock); do
+            cmp -s "src/$f" "$tmp/up/$f" || { echo "::error::DRIFT: src/$f differs from $repo@$commit"; exit 1; }
+          done
+          echo "All bundled sources verified against $repo @ $commit"
+
   build-and-push:
     name: Build & publish
+    needs: verify-sources
     runs-on: ubuntu-latest
     permissions:
       contents: read
