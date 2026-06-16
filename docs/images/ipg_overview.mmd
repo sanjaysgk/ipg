@@ -1,130 +1,76 @@
-%%metro title: sanjaysgk/ipg — cryptic peptide discovery
+%%metro title: sanjaysgk/ipg — cryptic immunopeptidogenomics
 %%metro logo: docs/images/nf-core-ipg_logo_dark.png
 %%metro style: dark
 %%metro file: fastq_in           | FASTQ
 %%metro file: ms_in              | mzML
-%%metro file: post_in            | psms
 %%metro file: cryptic_fasta      | FASTA
-%%metro file: annotation_out     | VCF
-%%metro file: integrated_psms    | TSV
+%%metro file: peptides_out       | TSV
 %%metro file: report             | HTML
-%%metro file: post_out           | TXT
-%%metro line: db_construct       | RNAseq to cryptic peptide FASTA             | #0570b0
-%%metro line: ms_search          | MS search + integrate + immunoinformatics   | #e63946
-%%metro line: post_ms            | Post-MS two-phase db_compare + origins       | #2db572
+%%metro line: db_construct       | RNA-seq to cryptic peptide database         | #0570b0
+%%metro line: ms_search          | MS search, de novo and integration          | #e63946
 %%metro legend: bl
 
 graph LR
-    subgraph genome_prep ["Input parsing and reference prep"]
-        %%metro exit: right | db_construct, ms_search, post_ms
+    subgraph input_section ["Input"]
+        %%metro exit: right | db_construct, ms_search
         samplesheet["SAMPLESHEET_TO_CHANNEL"]
-        prepare_genome["PREPARE_GENOME<br/>fasta + indices + STAR + known-sites"]
         fastq_in[" "]
         ms_in[" "]
-        post_in[" "]
 
         fastq_in -->|db_construct| samplesheet
         ms_in -->|ms_search| samplesheet
-        post_in -->|post_ms| samplesheet
-        samplesheet -->|db_construct| prepare_genome
     end
 
-    subgraph db_construct_section ["DB construct — cryptic peptide discovery from RNAseq"]
+    subgraph db_construct_section ["--step db_construct — RNA-seq to cryptic peptide FASTA"]
         %%metro direction: TB
         %%metro entry: left | db_construct
         %%metro exit: right | db_construct
-        align_qc["ALIGN_QC<br/>STAR + samtools + RSeQC"]
-        transcript_assembly["TRANSCRIPT_ASSEMBLY<br/>StringTie + GFFCompare"]
-        bam_prep["BAM_PREP<br/>MarkDuplicates + SplitNCigarReads"]
-        bqsr["BQSR<br/>BaseRecalibrator then ApplyBQSR"]
-        mutect["BAM_VARIANT_CALLING_MUTECT2<br/>Mutect2, FilterMutectCalls, SelectVariants"]
-        vcf_curate["VCF_CURATE<br/>curate_vcf to unmasked + indel VCFs"]
-        vcf_annotate["VCF_ANNOTATE_ALL<br/>VEP + SnpEff + AlphaMissense<br/>optional leaf via --tools"]
-        db_construct["DB_CONSTRUCT<br/>gff3sort, gffread, triple_translate, squish<br/>variant branch via --include_variant_peptides"]
+        align["ALIGN_QC<br/>STAR two-pass + RSeQC"]
+        assembly["TRANSCRIPT_ASSEMBLY<br/>StringTie + gffcompare"]
+        variants["BAM_PREP + BQSR + MUTECT2<br/>somatic variant calling"]
+        db["DB_CONSTRUCT<br/>triple-translate + squish"]
         cryptic_fasta[" "]
-        annotation_out[" "]
 
-        align_qc -->|db_construct| transcript_assembly
-        align_qc -->|db_construct| bam_prep
-        bam_prep -->|db_construct| bqsr
-        bqsr -->|db_construct| mutect
-        mutect -->|db_construct| vcf_curate
-        mutect -->|db_construct| vcf_annotate
-        vcf_curate -->|db_construct| db_construct
-        vcf_annotate -->|db_construct| annotation_out
-        transcript_assembly -->|db_construct| db_construct
-        db_construct -->|db_construct| cryptic_fasta
+        align -->|db_construct| assembly
+        align -->|db_construct| variants
+        assembly -->|db_construct| db
+        variants -->|db_construct| db
+        db -->|db_construct| cryptic_fasta
     end
 
-    subgraph ms_search_section ["MS search — engines + rescoring + integration"]
+    subgraph ms_search_section ["--step ms_search — identify cryptic peptides"]
         %%metro direction: TB
         %%metro entry: left | ms_search
         %%metro exit: right | ms_search
-        prepare_fasta["PREPARE_FASTA<br/>target-decoy concat"]
-        convert_mzml["CONVERT_MZML<br/>mzML to MGF + scans"]
-        msfragger["MSFRAGGER"]
-        comet["COMET"]
-        sage["SAGE"]
-        mokapot["MOKAPOT<br/>per engine, FDR"]
-        ms2rescore["MS2RESCORE<br/>per engine"]
-        integrate["INTEGRATE_ENGINES<br/>1pct peptide-level FDR"]
-        integrated_psms[" "]
+        prepare_fasta["PREPARE_FASTA<br/>target-decoy database"]
+        engines["MSFRAGGER + COMET + SAGE<br/>database search"]
+        rescore["MS2RESCORE<br/>rescore + mokapot FDR"]
+        integrate["INTEGRATE_ENGINES<br/>1% peptide-level FDR"]
+        denovo["INSTANOVO + DENOVO_CLASSIFY<br/>de novo discovery (--run_denovo)"]
+        peptides_out[" "]
 
-        prepare_fasta -->|ms_search| msfragger
-        prepare_fasta -->|ms_search| comet
-        prepare_fasta -->|ms_search| sage
-        msfragger -->|ms_search| mokapot
-        comet -->|ms_search| mokapot
-        sage -->|ms_search| mokapot
-        mokapot -->|ms_search| ms2rescore
-        convert_mzml -->|ms_search| ms2rescore
-        ms2rescore -->|ms_search| integrate
-        integrate -->|ms_search| integrated_psms
+        prepare_fasta -->|ms_search| engines
+        engines -->|ms_search| rescore
+        rescore -->|ms_search| integrate
+        integrate -->|ms_search| peptides_out
+        denovo -->|ms_search| peptides_out
     end
 
-    subgraph immuno_section ["Immunoinformatics — optional, per-tool --run_ gates"]
+    subgraph downstream_section ["Optional downstream"]
         %%metro direction: TB
         %%metro entry: left | ms_search
         %%metro exit: right | ms_search
-        netmhcpan["NETMHCPAN<br/>MHC-I binding"]
-        netmhciipan["NETMHCIIPAN<br/>MHC-II binding"]
-        gibbscluster["GIBBSCLUSTER<br/>binding-motif clustering"]
-        flashlfq["FLASHLFQ<br/>label-free quantification"]
-        blastp_host["BLASTP_HOST<br/>host-contaminant check"]
-        immuno_report["IMMUNOINFORMATICS_REPORT<br/>per-sample HTML"]
+        immuno["IMMUNOINFORMATICS<br/>HLA binding + motifs + quant"]
+        report_node["CRYPTIC REPORT<br/>per-sample HTML"]
         report[" "]
 
-        netmhcpan -->|ms_search| immuno_report
-        netmhciipan -->|ms_search| immuno_report
-        gibbscluster -->|ms_search| immuno_report
-        flashlfq -->|ms_search| immuno_report
-        blastp_host -->|ms_search| immuno_report
-        immuno_report -->|ms_search| report
+        immuno -->|ms_search| report_node
+        report_node -->|ms_search| report
     end
 
-    subgraph post_ms_section ["Post-MS — two-phase db_compare + origins"]
-        %%metro direction: TB
-        %%metro entry: left | post_ms
-        %%metro exit: right | post_ms
-        db_compare_p1["DB_COMPARE Phase 1<br/>both-DB vs cryptic-only"]
-        origins_simple["ORIGINS simple<br/>unconventional + discard lists"]
-        db_compare_p2["DB_COMPARE Phase 2<br/>plus unconventional and discard"]
-        origins_full["ORIGINS full<br/>unambiguous_unconventional"]
-        post_out[" "]
-
-        db_compare_p1 -->|post_ms| origins_simple
-        origins_simple -->|post_ms| db_compare_p2
-        db_compare_p2 -->|post_ms| origins_full
-        origins_full -->|post_ms| post_out
-    end
-
-    %% Inter-section edges (cross-step handoffs)
-    prepare_genome -->|db_construct| align_qc
+    %% Cross-section handoffs
+    samplesheet -->|db_construct| align
     cryptic_fasta -->|ms_search| prepare_fasta
-    samplesheet -->|ms_search| convert_mzml
-    integrate -->|ms_search| netmhcpan
-    integrate -->|ms_search| netmhciipan
-    integrate -->|ms_search| gibbscluster
-    integrate -->|ms_search| flashlfq
-    integrate -->|ms_search| blastp_host
-    samplesheet -->|post_ms| db_compare_p1
+    cryptic_fasta -->|ms_search| denovo
+    samplesheet -->|ms_search| denovo
+    peptides_out -->|ms_search| immuno

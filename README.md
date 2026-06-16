@@ -5,336 +5,93 @@
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A525.10.4-23aa62.svg)](https://www.nextflow.io/)
 [![pixi](https://img.shields.io/badge/dev_env-pixi-yellow.svg)](https://pixi.sh)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Immunopeptidogenomics — cryptic peptide database construction from RNA-seq.**
-> An [nf-core](https://nf-co.re)-style port of the 31-step bash pipeline used by the
-> [Li Lab](https://research.monash.edu/en/persons/chen-li) and
-> [Purcell Lab](https://research.monash.edu/en/persons/anthony-purcell) at Monash University,
-> implementing the cryptic peptide discovery method described in
-> [Scull et al. _Mol Cell Proteomics_ 2021](https://doi.org/10.1016/j.mcpro.2021.100143).
+## Introduction
 
-## What this pipeline does
-
-`sanjaysgk/ipg` turns paired-end RNA-seq reads into a **cryptic peptide search database**
-suitable for downstream MS/MS immunopeptidomics searches. Starting from FASTQs, it:
-
-1. Aligns reads with **STAR** (two-pass) and infers strandedness with **RSeQC**.
-2. Assembles novel transcripts with **StringTie** and reconciles them with the reference
-   annotation via **gffcompare** (`-R -V -C` for the consensus combined GTF).
-3. Builds a variant-calling-ready BAM via the GATK4 RNA-seq Best Practices chain
-   (FastqToSam → MergeBamAlignment → MarkDuplicates → SplitNCigarReads).
-4. Recalibrates base qualities with two passes of **BaseRecalibrator + ApplyBQSR**.
-5. Calls somatic variants with **Mutect2** in tumour-only mode against a gnomAD-style
-   germline allele-frequency database, then **CalculateContamination** /
-   **FilterMutectCalls** / **SelectVariants** for clean PASS-only sites-only VCFs.
-6. Builds the cryptic peptide FASTA database via the IPG custom C tools
-   ([`curate_vcf`](https://github.com/sanjaysgk/immunopeptidogenomics),
-   [`revert_headers`](https://github.com/sanjaysgk/immunopeptidogenomics),
-   [`alt_liftover`](https://github.com/sanjaysgk/immunopeptidogenomics),
-   [`triple_translate`](https://github.com/sanjaysgk/immunopeptidogenomics),
-   [`squish`](https://github.com/sanjaysgk/immunopeptidogenomics)) plus
-   `gff3sort` and `gffread` from bioconda.
-
-Optionally, a **post-MS analysis** step (`--step post_ms`) runs the two-phase
-`db_compare` + `origins` workflow on PEAKS (or other search engine) results to
-identify and annotate cryptic-only peptides.
-
-An **MS search** step (`--step ms_search`) runs up to four open-source search
-engines (**MSFragger**, **Comet**, **Sage**, **PEAKS**) in parallel against the
-cryptic FASTA, applies **mokapot** FDR control per engine, rescores PSMs with
-**MS2Rescore**, and merges results at 1% peptide-level FDR. Optional
-immunoinformatics gates — `--run_netmhcpan`, `--run_netmhciipan`,
-`--run_gibbscluster`, `--run_flashlfq`, `--run_blastp_host` — pick up the
-integrated peptide table and emit a per-sample HTML report summarising HLA
-binding, motif clusters, quantification, and host-background hits. See
-[`docs/usage.md`](docs/usage.md) for the full invocation.
-
-The 31 legacy steps span **three pipeline modes** (`--step db_construct | ms_search | post_ms`) selected per run; the metro map below colours each mode as a separate transit line.
+**sanjaysgk/ipg** is a bioinformatics pipeline for **immunopeptidogenomics**: it builds a personalised **cryptic peptide search database** from RNA-seq, then searches it against immunopeptidomics MS/MS data to identify non-canonical (cryptic) peptides. It implements the method of [Scull et al. (2021)](https://doi.org/10.1016/j.mcpro.2021.100143) as a reproducible [nf-core](https://nf-co.re)-style Nextflow pipeline.
 
 ![ipg pipeline overview](docs/images/ipg_overview.svg)
 
-> Diagram source: [`docs/images/ipg_overview.mmd`](docs/images/ipg_overview.mmd) — re-render with `pixi run nf-metro render docs/images/ipg_overview.mmd -o docs/images/ipg_overview.svg`.
+The pipeline runs in independent steps selected with `--step`:
 
-## Quick start
+**`--step db_construct` — RNA-seq → cryptic peptide FASTA**
 
-### 1. Install the dev environment
+1. Align reads with two-pass [STAR](https://github.com/alexdobin/STAR) and infer strandedness with [RSeQC](http://rseqc.sourceforge.net/).
+2. Assemble transcripts with [StringTie](https://ccb.jhu.edu/software/stringtie/) and reconcile with the reference annotation via [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml).
+3. GATK4 RNA-seq best-practice BAM preparation (MarkDuplicates → SplitNCigarReads → two-pass BQSR).
+4. Call somatic variants with [Mutect2](https://gatk.broadinstitute.org/) in tumour-only mode.
+5. Build the cryptic peptide database with the IPG custom C tools (`curate_vcf`, `alt_liftover`, `triple_translate`, `squish`).
 
-The repository ships a [pixi](https://pixi.sh) project that pins every tool
-(nextflow 25.10.4, nf-core 3.5.2, nf-test 0.9.5, GATK4, STAR, samtools, bcftools,
-stringtie, gffcompare, gffread, RSeQC, FastQC, MultiQC, OpenJDK 17, plus the
-linting toolchain) to bit-for-bit reproducible versions via `pixi.lock`.
+**`--step ms_search` — MS/MS → identified cryptic peptides**
 
-```bash
-git clone https://github.com/sanjaysgk/ipg.git
-cd ipg
-pixi install
-```
+6. Search each sample's spectra against its cryptic database with [MSFragger](https://msfragger.nesvilab.org/), [Comet](https://uwpr.github.io/Comet/) and [Sage](https://github.com/lazear/sage).
+7. Rescore PSMs with [MS2Rescore](https://github.com/compomics/ms2rescore) + [mokapot](https://github.com/wfondrie/mokapot) FDR and integrate engines at 1% peptide-level FDR.
+8. _Optional_ **de novo** discovery lane (`--run_denovo`, [InstaNovo](https://github.com/instadeepai/InstaNovo)) — predicts peptides directly from spectra and classifies them canonical / cryptic / novel.
+9. _Optional_ immunoinformatics (HLA binding, motif clustering, quantification) and a cryptic-discovery report.
 
-If you don't have pixi: `curl -fsSL https://pixi.sh/install.sh | bash`.
+## Usage
 
-### 2. Build the chr22 test bundle (~5 minutes, one time)
+> [!NOTE]
+> New to Nextflow? See the [nf-core installation docs](https://nf-co.re/docs/usage/installation). The repository ships a [pixi](https://pixi.sh) environment that pins every tool — install it with `pixi install` (`curl -fsSL https://pixi.sh/install.sh | bash` if you don't have pixi).
 
-```bash
-pixi run bash scripts/build_test_bundle.sh
-```
+Prepare a samplesheet:
 
-By default this writes to `/fs04/scratch2/xy86/sanjay/ipg-test-data/`. Override
-on a non-Monash machine:
-
-```bash
-TEST_BUNDLE_DIR=/some/path \
-REFERENCE_DIR=/path/to/GRCh38 \
-VARIANT_DIR=/path/to/variant-resources \
-FASTQ_R1=/path/to/sample_R1.fq.gz \
-FASTQ_R2=/path/to/sample_R2.fq.gz \
-pixi run bash scripts/build_test_bundle.sh
-```
-
-The bundle is **never committed to git** — only the build script is. See
-[`scripts/build_test_bundle.sh`](scripts/build_test_bundle.sh) for the exact recipe.
-
-### 3. Run the pipeline against the test bundle
-
-| Profile combination                | Container engine             | Use when                                                                                  |
-| ---------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------- |
-| `-profile test,pixi`               | none — tools from local PATH | Fastest iteration on a workstation/HPC compute node where pixi can run all tools natively |
-| `-profile test,singularity`        | apptainer / singularity      | Standard HPC; pulls biocontainers from `community.wave.seqera.io`                         |
-| `-profile test,docker`             | docker                       | Laptops, cloud, GitHub Actions CI                                                         |
-| `-profile test,monash,singularity` | singularity                  | Monash M3 SLURM cluster (`comp` partition, `xy86` account)                                |
-
-```bash
-# Fastest (no containers, all tools from pixi):
-pixi run nextflow run . -profile test,pixi --outdir results
-```
-
-The pipeline takes **~2 minutes** end-to-end against the chr22 test bundle on a
-single Linux box and produces the cryptic peptide database at
-`results/squish/<sample>_cryptic.fasta`.
-
-### 4. Run on real data
-
-Create a samplesheet `samplesheet.csv`:
+**samplesheet.csv**
 
 ```csv
 sample,fastq_1,fastq_2,strandedness
-D100_liver,/path/to/D100-liver_R1.fastq.gz,/path/to/D100-liver_R2.fastq.gz,reverse
-D101_pancreas,/path/to/D101-pancreas_R1.fastq.gz,/path/to/D101-pancreas_R2.fastq.gz,reverse
+SAMPLE,/path/to/R1.fastq.gz,/path/to/R2.fastq.gz,reverse
 ```
 
-Then run with explicit reference paths:
+Build the cryptic peptide database:
 
 ```bash
 pixi run nextflow run . \
-    -profile monash,singularity \
-    --input            samplesheet.csv \
-    --outdir           /fs04/scratch2/xy86/sanjay/ipg-results \
-    --fasta            /path/to/GRCh38.primary_assembly.genome.fa \
-    --fasta_fai        /path/to/GRCh38.primary_assembly.genome.fa.fai \
-    --fasta_dict       /path/to/GRCh38.primary_assembly.genome.dict \
-    --gtf              /path/to/gencode.v44.primary_assembly.annotation.gtf \
-    --star_index       /path/to/human_genome_index_GRCh38 \
-    --rseqc_bed        /path/to/gencode_assembly.bed \
-    --dbsnp            /path/to/dbsnp138.vcf \
-    --dbsnp_tbi        /path/to/dbsnp138.vcf.idx \
-    --known_indels     /path/to/Homo_sapiens_assembly38.known_indels.vcf.gz \
-    --known_indels_tbi /path/to/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi \
-    --mills            /path/to/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz \
-    --mills_tbi        /path/to/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi \
-    --germline_resource     /path/to/small_exac_common_3.hg38.vcf.gz \
-    --germline_resource_tbi /path/to/small_exac_common_3.hg38.vcf.gz.tbi
-```
-
-## The `--include_variant_peptides` flag
-
-By default the cryptic peptide DB is built from the **reference assembly only**,
-matching the legacy Scull et al. 2021 / D122_Lung run (verified empirically by
-inspecting the legacy `squish.log`). Pass `--include_variant_peptides true` to
-also fold the alt-reference variant-derived peptide branches (unmasked + indel)
-into the final database:
-
-```bash
-pixi run nextflow run . -profile monash,singularity \
+    -profile singularity \
+    --step db_construct \
     --input samplesheet.csv \
-    --include_variant_peptides true \
-    [other reference args]
+    --outdir results \
+    -params-file reference.yaml
 ```
 
-> [!IMPORTANT] > `--include_variant_peptides` does **not** switch the variant caller to matched
-> tumour-normal mode. Variant calling is **always** performed in tumour-only
-> Mutect2 mode against a gnomAD-style germline allele-frequency database; this
-> pipeline does **not** support matched tumour-normal calling. The flag controls
-> only whether the discovered variants get folded into the final cryptic peptide
-> DB. Set `true` only when the sample is expected to harbour biologically
-> meaningful somatic variants (e.g. tumour tissue, hypermutated cell lines,
-> MMR-deficient samples). Leave at `false` for normal tissue, cell lines, or any
-> sample where variant peptides would mostly add noise. This is a pipeline-level
-> flag — to mix modes for a heterogeneous cohort, run the pipeline twice.
+> [!WARNING]
+> Provide parameters via the CLI or a `-params-file`, not via a custom `-c` config file.
 
-## Post-MS analysis (`--step post_ms`)
+To try the pipeline on the bundled chr22 test data, run with `-profile test,pixi`. For the full reference-genome parameters, the MS-search samplesheet, the `--step ms_search` and `--step post_ms` workflows, and all options, see [`docs/usage.md`](docs/usage.md).
 
-After running the DB construction pipeline, the cryptic peptide FASTA is searched
-against MS/MS data using PEAKS Online (or another search engine such as
-MSFragger, Comet, or Sage). The resulting PSM CSVs are then analysed with the
-two-phase `db_compare` + `origins` workflow
-([Scull et al. 2021](https://doi.org/10.1016/j.mcpro.2021.100143)):
+## Pipeline output
 
-```
-Phase 1: db_compare_v2.R  →  cryptic_only.txt
-         origins -s        →  origins_discard.txt + origins_unconventional.txt
+- **Database construction:** `results/db_construct/<sample>/<sample>_cryptic.fasta`
+- **MS search:** the integrated peptide table under `results/ms_search/<sample>/`
+- A [MultiQC](http://multiqc.info/) report and Nextflow execution reports under `results/pipeline_info/`
 
-Phase 2: db_compare_v2.R (with -j discard -u unconventional)
-         →  unambiguous_unconventional.txt
-         origins (full Ensembl mode)  →  deep origin annotation
-```
-
-### Post-MS samplesheet
-
-Create a CSV with one row per sample:
-
-```csv
-sample,cryptic_psm_csv,uniprot_psm_csv,cryptic_decoy_score,uniprot_decoy_score
-D122_liver,/path/to/D122_Liver_Cryptic_DB.db.psms.csv,/path/to/D122_Liver_Uniprot_DB.db.psms.csv,44.43,36.48
-D101_heart,/path/to/D101_Heart_Cryptic_DB.db.psms.csv,/path/to/D101_Heart_Uniprot_DB.db.psms.csv,3.64,3.25
-```
-
-The `cryptic_decoy_score` and `uniprot_decoy_score` columns are the `-10lgP`
-decoy thresholds from the respective PEAKS searches.
-
-### Running post-MS analysis
-
-```bash
-pixi run nextflow run . -profile pixi,monash \
-    --step post_ms \
-    --post_ms_input       post_ms_samplesheet.csv \
-    --uniprot_fasta       /path/to/uniprotkb_human_canonical_isoform.fasta \
-    --transcriptome_fasta /path/to/D122_liver_transcriptome.fa \
-    --prefix_tracking     /path/to/prefix.tracking \
-    --outdir              results_post_ms
-```
-
-The `--transcriptome_fasta` and `--prefix_tracking` files are outputs from the
-DB construction step (`gffread` and `gffcompare` respectively). You can find them
-in the pipeline output directory from the previous run.
-
-### Post-MS output
-
-```
-results_post_ms/
-├── post_ms/
-│   ├── phase1/
-│   │   ├── db_compare/     Phase 1 cryptic-only peptide lists + plots
-│   │   └── origins/        Phase 1 origins (simple mode) — discard + unconventional lists
-│   └── phase2/
-│       ├── db_compare/     Phase 2 refined unambiguous unconventional peptides
-│       └── origins/        Phase 2 origins (full Ensembl annotation)
-└── pipeline_info/
-```
-
-## Output
-
-```
-results/
-├── star/                    STAR alignment BAMs + .Log.final.out
-├── samtools/                sorted/indexed BAMs
-├── rseqc/                   strandedness inference reports
-├── stringtie/               assembled transcript GTFs
-├── gffcompare/              prefix.combined.gtf, prefix.tracking, .stats
-├── gatk4/                   Mutect2 / BQSR / contamination tables
-├── revert/                  alt-reference FASTAs (only when --include_variant_peptides=true)
-├── gff3sort/                sorted assembly GTF
-├── tt/                      triple_translate per-branch peptide FASTAs
-├── squish/
-│   └── <sample>_cryptic.fasta   ← THE DELIVERABLE
-├── multiqc/
-│   └── multiqc_report.html      aggregated QC report
-└── pipeline_info/
-    ├── execution_report_<timestamp>.html
-    ├── execution_timeline_<timestamp>.html
-    └── pipeline_dag_<timestamp>.html
-```
+See [`docs/output.md`](docs/output.md) for the full output description.
 
 ## Profiles
 
-| Profile                     | Purpose                                                                                                  |
-| --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `test`                      | Use the chr22 test bundle (built by `scripts/build_test_bundle.sh`)                                      |
-| `pixi`                      | Run every process from the local pixi env, no containers                                                 |
-| `singularity` / `apptainer` | Pull biocontainers via singularity/apptainer (HPC default)                                               |
-| `docker`                    | Pull biocontainers via docker (laptop / cloud / CI default)                                              |
-| `monash`                    | SLURM executor on the Monash M3 `comp` partition under the `xy86` project, with shared singularity cache |
+| Profile                  | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `pixi`                   | Run every tool from the local pixi env (no containers)   |
+| `singularity` / `docker` | Pull biocontainers (HPC / cloud)                         |
+| `monash`                 | SLURM on the Monash M3 `comp` partition (`xy86` account) |
+| `test`                   | Use the bundled chr22 test data                          |
 
-## Architecture
+## Credits
 
-```
-sanjaysgk/ipg/
-├── main.nf                              entry point
-├── workflows/ipg.nf                     main workflow — chains the 6 subworkflows
-├── subworkflows/local/
-│   ├── align_qc/                        steps 1-3
-│   ├── transcript_assembly/             steps 4-5
-│   ├── bam_prep/                        steps 6-12
-│   ├── bqsr/                            steps 13-16
-│   ├── mutect_calling/                  steps 17-23
-│   ├── db_construct/                    steps 24-31 (branches on --include_variant_peptides)
-│   └── post_ms_analysis/               --step post_ms: 2-phase db_compare + origins
-├── modules/
-│   ├── nf-core/                         23 upstream nf-core modules (STAR, samtools, GATK4, etc.)
-│   └── local/                           10 local modules:
-│       ├── curate_vcf/                  IPG custom C tool (kescull)
-│       ├── revert_headers/              IPG custom C tool (kescull)
-│       ├── alt_liftover/                IPG custom C tool (kescull)
-│       ├── triple_translate/            IPG custom C tool (kescull)
-│       ├── squish/                      IPG custom C tool (kescull)
-│       ├── origins/                     IPG custom C tool — peptide origin annotation (kescull)
-│       ├── db_compare/                  R script — cryptic vs UniProt PSM comparison (kescull)
-│       ├── gff3sort/                    bioconda gff3sort wrapper
-│       ├── gatk4_validatesamfile/       missing-from-upstream wrapper
-│       └── gatk4_fastaalternatereferencemaker/  missing-from-upstream wrapper
-├── containers/
-│   └── ipg-tools/                       Reproducible Docker build of the kescull C tools
-│                                        from a pinned commit SHA → ghcr.io/sanjaysgk/ipg-tools
-├── conf/
-│   ├── base.config
-│   ├── modules.config                   per-process ext.args / ext.prefix / errorStrategy
-│   ├── test.config                      chr22 test bundle paths
-│   └── monash.config                    Monash M3 SLURM
-├── bin/                                 runtime scripts staged onto PATH by modules
-├── scripts/
-│   └── build_test_bundle.sh             reproducible chr22 test bundle builder (dev/CI helper)
-├── tests/                               nf-test pipeline-level tests
-├── pixi.toml                            dev env definition (committed)
-└── pixi.lock                            dev env lockfile (committed, bit-reproducible)
-```
+`sanjaysgk/ipg` was written by **Sanjay SG Krishna** ([@sanjaysgk](https://github.com/sanjaysgk)), Li Lab, Monash University, porting the immunopeptidogenomics method and custom C tools developed by **Kate Scull** (Purcell Lab; [kescull/immunopeptidogenomics](https://github.com/kescull/immunopeptidogenomics)). Supervised by **Chen Li** (Li Lab) and **Anthony W. Purcell** (Purcell Lab), Monash University.
 
-## Authors
+## Contributions and support
 
-- **Sanjay SG Krishna** ([@sanjaysgk](https://github.com/sanjaysgk)) — pipeline port,
-  Li Lab, Monash University
-- **Kate Scull** — original IPG method + custom C tools, Purcell Lab, Monash University
-  (see [`kescull/immunopeptidogenomics`](https://github.com/kescull/immunopeptidogenomics))
-- **Chen Li** — supervision, Li Lab, Monash University
-- **Anthony W. Purcell** — supervision, Purcell Lab, Monash University
+Contributions and bug reports are welcome — please open a [GitHub issue](https://github.com/sanjaysgk/ipg/issues) or a [pull request](https://github.com/sanjaysgk/ipg/pulls).
 
-## Citation
+## Citations
 
-If you use `sanjaysgk/ipg` in your research, please cite the original method paper:
+If you use `sanjaysgk/ipg`, please cite the method paper:
 
-> **Scull KE, Pandey K, Ramarathinam SH, Purcell AW.** > _Immunopeptidogenomics: harnessing RNA-seq to illuminate the dark immunopeptidome._
-> Mol Cell Proteomics. 2021;20:100143.
-> doi: [10.1016/j.mcpro.2021.100143](https://doi.org/10.1016/j.mcpro.2021.100143)
+> Scull KE, Pandey K, Ramarathinam SH, Purcell AW. _Immunopeptidogenomics: harnessing RNA-seq to illuminate the dark immunopeptidome._ Mol Cell Proteomics. 2021;20:100143. doi:[10.1016/j.mcpro.2021.100143](https://doi.org/10.1016/j.mcpro.2021.100143)
 
-A full reference list for every tool in the pipeline lives in [`CITATIONS.md`](CITATIONS.md).
-
-This pipeline is built on top of [Nextflow](https://www.nextflow.io) and the
-[nf-core](https://nf-co.re) framework:
-
-> **The nf-core framework for community-curated bioinformatics pipelines.**
-> Ewels PA, Peltzer A, Fillinger S, Patel H, Alneberg J, Wilm A, Garcia MU,
-> Di Tommaso P, Nahnsen S.
-> _Nat Biotechnol._ 2020 Mar;38(3):276-278.
-> doi: [10.1038/s41587-020-0439-x](https://doi.org/10.1038/s41587-020-0439-x).
+A reference list for every tool in the pipeline is in [`CITATIONS.md`](CITATIONS.md). This pipeline is built with [Nextflow](https://www.nextflow.io) and the [nf-core](https://nf-co.re) framework (Ewels _et al._, _Nat Biotechnol._ 2020, doi:[10.1038/s41587-020-0439-x](https://doi.org/10.1038/s41587-020-0439-x)).
 
 ## License
 
