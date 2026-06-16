@@ -459,6 +459,30 @@
                     "default": false,
                     "description": "Generate a self-contained cryptic-discovery HTML report (class breakdown, cross-engine corroboration, PepQuery/spectral confidence, novelty class, origin, rescore shift).",
                     "fa_icon": "fas fa-chart-bar"
+                },
+                "run_denovo": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable the de novo sequencing discovery lane (Phase 1a: InstaNovo predict -> classify vs cryptic+canonical). Runs in parallel to the database-search engines.",
+                    "fa_icon": "fas fa-search-plus"
+                },
+                "denovo_engines": {
+                    "type": "string",
+                    "default": "instanovo",
+                    "description": "Comma-separated de novo engines (Phase 1a supports: instanovo).",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "denovo_min_logprob": {
+                    "type": "number",
+                    "default": -0.5,
+                    "description": "Drop de novo predictions with a raw log-probability below this (Phase 1a confidence filter; Winnow FDR added later).",
+                    "fa_icon": "fas fa-filter"
+                },
+                "denovo_min_length": {
+                    "type": "integer",
+                    "default": 7,
+                    "description": "Drop de novo peptides shorter than this length.",
+                    "fa_icon": "fas fa-ruler-horizontal"
                 }
             }
         },
