@@ -93,6 +93,18 @@ void main(int argc,char **argv)
 	remove_duplicates(vcf_lines, lines_cnt);
 	check_indels(vcf_lines, lines_cnt, deprioritise_del);
 
+	// write curated output: all header lines, then every retained variant.
+	// Restored: this output loop was dropped in an earlier cleanup refactor,
+	// which left curate_vcf processing the VCF but writing an empty file.
+	for (i = 0; i < header_cnt; ++i)
+		if (header[i] != NULL)
+			fprintf(g, "%s", header[i]);
+	for (i = 0; i < lines_cnt; i++)
+		if (!vcf_lines[i].dont_print)
+			print_vcf_line(g, vcf_lines[i]);
+	fclose(f);
+	fclose(g);
+
 	// free header
 	for (i = 0; i < header_cnt; ++i) {
 		if (header[i] != NULL)
