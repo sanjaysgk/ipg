@@ -65,6 +65,19 @@ ms2rescore = "==3.2.1"
 python = ">=3.10,<3.12"
 percolator = ">=3.06"   # optional MS2Rescore rescoring_engine (params.ms2rescore_engine = percolator)
 
+# De novo lane (Phase 1: InstaNovo + Winnow). PyPI-only, isolated env to avoid
+# torch/dependency conflicts with the main env. CPU torch is fine for the spike;
+# GPU singularity images come later for real data. Casanovo (Noble-Lab) is added
+# in Phase 2, in its own env if its torch pins conflict with InstaNovo's.
+# Nextflow modules activate via: beforeScript 'eval "$(pixi shell-hook -e denovo)"'
+[feature.denovo.dependencies]
+python = ">=3.10,<3.12"
+pip = "*"
+
+[feature.denovo.pypi-dependencies]
+instanovo = "*"
+winnow-fdr = "*"
+
 # Dev-only tooling (NOT used by the pipeline). marker-pdf: PDF -> markdown for
 # reading papers during development. Isolated env: `pixi run -e dev ...`.
 [feature.dev.dependencies]
@@ -77,6 +90,7 @@ marker-pdf = "*"
 [environments]
 ms2rescore = { features = ["ms2rescore"], no-default-feature = true, solve-group = "ms2rescore" }
 dev = { features = ["dev"], no-default-feature = true, solve-group = "dev" }
+denovo = { features = ["denovo"], no-default-feature = true, solve-group = "denovo" }
 
 [pypi-dependencies]
 nf-metro = ">=0.7.1, <0.8"
