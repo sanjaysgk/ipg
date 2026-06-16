@@ -1,0 +1,15 @@
+{
+    "ms_search - sage, cryptic_only, skip ms2rescore - stub": {
+        "content": [
+            [
+                "versions.yml:md5,3a220a754a65c22f5abc47debd30d305",
+                "versions.yml:md5,6b94c68fa674bf8b2292b14365587a68"
+            ]
+        ],
+        "timestamp": "2026-06-15T15:11:52.23899626",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

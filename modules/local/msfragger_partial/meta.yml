@@ -1,0 +1,55 @@
+name: msfragger_partial
+description: Search a sample's spectra against ONE database chunk with MSFragger --partial (for split-database search)
+keywords:
+  - msfragger
+  - database search
+  - split database
+  - partial
+  - immunopeptidomics
+  - proteomics
+tools:
+  - msfragger:
+      description: Ultrafast and comprehensive peptide identification (run standalone via bioconda or a user JAR)
+      homepage: https://msfragger.nesvilab.org/
+      documentation: https://github.com/Nesvilab/MSFragger/wiki
+      licence: ["MSFragger academic licence (key via --msfragger_license)"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map; meta.chunk_id (this chunk index) and meta.original_id (sample) required
+    - ms_files:
+        type: file
+        description: Spectra (mzML) for one sample
+        pattern: "*.{mzML,mzML.gz}"
+  - fasta:
+      type: file
+      description: One database chunk FASTA
+      pattern: "*.{fa,fasta}"
+  - msfragger_jar:
+      type: file
+      description: Optional MSFragger JAR; pass file('NO_FILE') to use the bioconda wrapper + --key
+  - params_file:
+      type: file
+      description: MSFragger native params file (your_fasta placeholder for the database)
+      pattern: "*.params"
+output:
+  - chunk_dir:
+      - meta:
+          type: map
+      - "chunk_*":
+          type: directory
+          description: |
+            One directory per chunk (chunk_<id>) holding this chunk's partial pepXML,
+            PIN and score histogram named by run basename. Consumed as a --chunk_dirs
+            entry by MERGE_SPLIT_SEARCH (summed across chunks for full-DB e-value recompute).
+  - log:
+      - "search_log.txt":
+          type: file
+          description: MSFragger search log
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"

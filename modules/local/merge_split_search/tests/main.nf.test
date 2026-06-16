@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process MERGE_SPLIT_SEARCH"
+    script "../main.nf"
+    process "MERGE_SPLIT_SEARCH"
+
+    tag "modules"
+    tag "modules_local"
+    tag "merge_split_search"
+    tag "stub"
+
+    // Merge the N chunk dirs for one run into a single PIN. Stub writes
+    // merged/<sample_name>.pin (sample_name = meta.run). The real merge sums
+    // histograms + recomputes full-DB e-values (needs the MSFragger licence).
+    test("merge 2 chunk dirs -> run PIN - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def c0 = file("\${workDir}/chunk_0"); c0.mkdirs()
+                def c1 = file("\${workDir}/chunk_1"); c1.mkdirs()
+                input[0] = [ [ id:'run1', run:'run1', original_id:'samp' ], [ c0, c1 ] ]
+                input[1] = 2
+                input[2] = file("\${projectDir}/assets/NO_FILE")
+                input[3] = file("\${projectDir}/assets/ms_search_params/msfragger/orbitrap_mod.params")
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // one merged PIN per run, named by the run basename
+                { assert process.out.pin.get(0).get(1) ==~ /.*run1\.pin/ },
+                // versions.yml is deterministic -> snapshot pins the emission contract
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+}

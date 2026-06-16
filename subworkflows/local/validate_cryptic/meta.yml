@@ -1,0 +1,33 @@
+name: validate_cryptic
+description: |
+  Optional PepQuery2 spectrum-level validation of the cryptic peptide subset.
+  Prepares the spectra and reference, runs PepQuery against each sample's own
+  search database, and annotates pepquery_status onto the integrated peptide
+  table before downstream analysis consumes it.
+keywords:
+  - pepquery
+  - validation
+  - spectrum-level
+  - cryptic-peptides
+components:
+  - pepquery_prep
+  - pepquery
+  - pepquery_annotate
+input:
+  - ch_peptides:
+      description: Integrated peptide table [ val(meta), path(integrated_peptides.tsv) ]
+  - ch_mgf:
+      description: MGF spectra from CONVERT_MZML [ val(meta), path(mgf) ]
+  - ch_search_db:
+      description: Per-sample target search FASTA [ val(meta), path(fasta) ]
+output:
+  - peptides:
+      description: Peptide table with pepquery_status annotated [ val(meta), path(tsv) ]
+  - psm_rank:
+      description: PepQuery PSM rank output [ val(meta), path(psm_rank.txt) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

@@ -1,0 +1,49 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGGER_SPLIT_SEARCH"
+    script "../main.nf"
+    workflow "FRAGGER_SPLIT_SEARCH"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragger_split_search"
+    tag "stub"
+
+    // One sample, one run (mzML), db split into 3 chunks:
+    //   SPLIT_FASTA(db, 3) -> 3 chunks
+    //   MSFRAGGER_PARTIAL  -> 3x chunk_<id>/   (1 run x 3 chunks)
+    //   MERGE_SPLIT_SEARCH -> 1 merged run PIN (groupTuple size=3)
+    //   collect per sample -> [meta, [pins]]
+    // The real partial search + histogram-sum + e-value recompute is licence-gated
+    // (MSFragger key), so the stub exercises the FORK/JOIN topology only: that the
+    // (run x chunk) fan-out regroups to exactly one merged PIN per run per sample.
+    test("1 sample x 1 run x 3 chunks -> 1 merged PIN per sample - stub") {
+        options "-stub"
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([ [ id:'samp', db:'cryptic.fasta' ], [ file("run1.mzML") ], file("cryptic.fasta") ])
+                input[1] = file("\${projectDir}/assets/NO_FILE")  // no JAR -> bioconda+key arm (stub ignores)
+                input[2] = file("\${projectDir}/assets/ms_search_params/msfragger/orbitrap_mod.params")
+                input[3] = 3                                      // num_slices (plain int, > 1)
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                // one sample -> one [meta, [pins]] entry
+                { assert workflow.out.pin.size() == 1 },
+                // its single run merges to exactly one PIN, named by the run basename
+                { assert workflow.out.pin.get(0).get(1).size() == 1 },
+                { assert workflow.out.pin.get(0).get(1).first() ==~ /.*run1\.pin/ },
+                // pin output is deterministic (fixed basename + empty stub md5 + meta)
+                // -> snapshot pins the fork/join contract. versions are NOT snapshot:
+                // the 3 partial searches run in parallel, so the mixed versions channel
+                // has non-deterministic ORDER (would be flaky to freeze).
+                { assert snapshot(workflow.out.pin).match() },
+                { assert workflow.out.versions.size() > 0 }
+            )
+        }
+    }
+}

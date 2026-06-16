@@ -296,6 +296,13 @@
                     "description": "Memory in GB for MSFragger JVM heap.",
                     "fa_icon": "fas fa-memory"
                 },
+                "msfragger_split": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Number of MSFragger split-database chunks. 1 = standard single search; >1 = split-database search (for large no-enzyme cryptic DBs that OOM the fragment index), with full-DB e-value recompute so results are statistically identical to an unsplit search. Requires the real MSFragger (--msfragger_jar or --msfragger_license).",
+                    "fa_icon": "fas fa-puzzle-piece"
+                },
                 "instrument": {
                     "type": "string",
                     "enum": ["orbitrap", "timsTOF"],

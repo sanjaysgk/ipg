@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process SPLIT_FASTA"
+    script "../main.nf"
+    process "SPLIT_FASTA"
+
+    tag "modules"
+    tag "modules_local"
+    tag "split_fasta"
+    tag "stub"
+
+    // Split a small DB into 3 chunks. Stub writes split_db/{0,1,2}/<db>.fasta;
+    // the fasta_chunks glob (split_db/*/*.fasta) must emit all 3.
+    test("split into 3 chunks - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def db = file("\${workDir}/cryptic.fasta")
+                db.text = ">TCONS_00000001\\nPEPTIDEKMSFRAGGER\\n>TCONS_00000002\\nCRYPTICALLYKPEPTIDE\\n"
+                input[0] = [ [ id:'cryptic' ], db ]
+                input[1] = 3
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // 3 chunk FASTAs emitted, one per split_db/<idx>/
+                { assert process.out.fasta_chunks.get(0).get(1).size() == 3 },
+                // versions.yml is deterministic -> snapshot pins the emission contract
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+}

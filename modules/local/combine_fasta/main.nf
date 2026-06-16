@@ -8,17 +8,20 @@ process COMBINE_FASTA {
         'nf-core/ubuntu:22.04' }"
 
     input:
-    path(fastas, stageAs: 'input/*')   // 2+ FASTAs concatenated in order; .gz or plain
+    tuple val(meta), path(fastas, stageAs: 'input/*')   // 2+ FASTAs concatenated in order; .gz or plain
 
     output:
-    path("${prefix}.fasta"), emit: fasta
-    path "versions.yml",     emit: versions
+    tuple val(meta), path("${prefix}.fasta"), emit: fasta
+    path "versions.yml",                      emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    prefix = task.ext.prefix ?: 'search_db'
+    // Strip a single trailing extension off the db key so the per-db combined
+    // file is named after the database (e.g. RVcondA_cryptic.fasta), not
+    // double-extended (RVcondA_cryptic.fasta.fasta).
+    prefix = task.ext.prefix ?: (meta.id ? meta.id.replaceFirst(/\.[^.\/]+$/, '') : 'search_db')
     // Plain concatenation (NOT a dedup-merge): a peptide present in both the
     // canonical and cryptic FASTA must keep both records so INTEGRATE_ENGINES
     // can class it canonical by sp|/tr| prefix. zcat -f transparently passes
@@ -26,14 +29,20 @@ process COMBINE_FASTA {
     """
     zcat -f ${fastas} > ${prefix}.fasta
 
+    # Capture first, default later. Doing the version grep inline in the heredoc with
+    # `|| echo NA` is racy: pipefail + the trailing `head -1` closing the pipe makes the
+    # pipeline exit non-zero even after grep printed the version, so `|| echo NA` appends
+    # a stray second line ("1.12\\nNA") and breaks versions.yml parsing.
+    zcat_version=\$(zcat --version 2>/dev/null | head -1 | grep -oE '[0-9]+\\.[0-9]+' | head -1 || true)
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        zcat: \$(zcat --version 2>/dev/null | head -1 | grep -oE '[0-9]+\\.[0-9]+' | head -1 || echo NA)
+        zcat: \${zcat_version:-NA}
     END_VERSIONS
     """
 
     stub:
-    prefix = task.ext.prefix ?: 'search_db'
+    prefix = task.ext.prefix ?: (meta.id ? meta.id.replaceFirst(/\.[^.\/]+$/, '') : 'search_db')
     """
     zcat -f ${fastas} > ${prefix}.fasta
 

@@ -1,0 +1,46 @@
+name: bam_prep
+description: |
+  GATK BAM preparation (steps 6-12). STAR-aligned replicates are merged at
+  MarkDuplicates; the merged, coord-sorted, dup-marked BAM feeds transcript
+  assembly, and a SplitNCigarReads BAM feeds variant calling. Includes
+  FastqToSam/MergeBamAlignment to carry read-group metadata and ValidateSamFile.
+keywords:
+  - gatk4
+  - markduplicates
+  - splitncigarreads
+  - bam
+  - merge-replicates
+components:
+  - gatk4/fastqtosam
+  - gatk4/mergebamalignment
+  - gatk4/markduplicates
+  - gatk4/splitncigarreads
+  - gatk4_validatesamfile
+  - samtools/sort
+  - samtools/index
+input:
+  - ch_star_bam:
+      description: STAR-aligned BAM from ALIGN_QC [ val(meta), path(bam) ]
+  - ch_reads:
+      description: Trimmed reads for read-group reconstruction [ val(meta), [ path(r1), path(r2) ] ]
+  - ch_fasta:
+      description: Reference FASTA [ val(meta), path(fasta) ]
+  - ch_fai:
+      description: Reference FASTA index [ val(meta), path(fai) ]
+  - ch_dict:
+      description: Reference sequence dictionary [ val(meta), path(dict) ]
+output:
+  - splitncigar_bam:
+      description: SplitNCigarReads BAM, input to BQSR [ val(meta), path(bam) ]
+  - markdup_bam:
+      description: Merged, coord-sorted, dup-marked BAM for transcript assembly [ val(meta), path(bam) ]
+  - markdup_metrics:
+      description: MarkDuplicates metrics [ val(meta), path(metrics) ]
+  - validate_report:
+      description: ValidateSamFile summary [ val(meta), path(txt) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

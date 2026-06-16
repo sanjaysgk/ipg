@@ -1,0 +1,38 @@
+name: post_ms_analysis
+description: |
+  Deprecated PEAKS-only post-MS path (db_compare + origins). Reproduces the
+  legacy two-phase cryptic-vs-canonical comparison and origin annotation from
+  external PEAKS PSM exports. Prefer running PEAKS as a first-class search engine
+  (--step ms_search --ms_engines peaks) so results flow through the standard
+  rescore + class-separated FDR instead.
+keywords:
+  - post-ms
+  - peaks
+  - db_compare
+  - origins
+  - deprecated
+components:
+  - db_compare
+  - origins
+input:
+  - ch_post_ms:
+      description: Cryptic + UniProt PEAKS PSM exports; meta carries decoy-score thresholds [ val(meta), path(cryptic_psm), path(uniprot_psm) ]
+  - ch_tracking:
+      description: gffcompare .tracking file [ path(tracking) ]
+  - ch_uniprot_fasta:
+      description: UniProt proteome FASTA [ path(fasta) ]
+  - ch_transcriptome_fasta:
+      description: Transcriptome FASTA from DB construction [ path(fasta) ]
+output:
+  - phase1_cryptic_only:
+      description: Phase-1 cryptic-only PSMs [ val(meta), path(tsv) ]
+  - phase2_unconventional:
+      description: Phase-2 unambiguous unconventional peptides [ val(meta), path(tsv) ]
+  - origins_full:
+      description: Full origin annotation table [ val(meta), path(txt) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

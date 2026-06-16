@@ -110,8 +110,11 @@ def prepare_tsv(psms: pd.DataFrame, scans: dict, engine: str) -> pd.DataFrame:
     return tsv
 
 
-def build_features(pin_path: Path, engine: str, scans: dict) -> pd.DataFrame:
-    f = pd.read_csv(pin_path, sep="\t", dtype=str)
+def build_features(pin_paths: list, engine: str, scans: dict) -> pd.DataFrame:
+    # A pooled multi-rep sample passes one PIN per spectrum file — concatenate
+    # (identical percolator columns) so features cover every rep's PSMs.
+    f = pd.concat([pd.read_csv(p, sep="\t", dtype=str) for p in pin_paths],
+                  ignore_index=True)
     f = _extract_run_specid(f, engine)
     # _extract_run_specid already stripped flanking residues for
     # msfragger/comet/peaks — just normalise to A-Z here. Sage leaves
@@ -133,8 +136,9 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--engine", required=True,
                    choices=["msfragger", "comet", "sage", "peaks"])
-    p.add_argument("--pin", required=True,
-                   help="combined search-engine PIN (percolator format)")
+    p.add_argument("--pin", required=True, nargs="+",
+                   help="search-engine PIN(s), percolator format. A pooled multi-rep "
+                        "sample passes one PIN per spectrum file; they are concatenated.")
     p.add_argument("--scans", required=True, nargs="+",
                    help="scans.pkl file(s) from CONVERT_MZML")
     p.add_argument("--mod", default="mod",
@@ -160,8 +164,11 @@ def main() -> int:
     print(f"[prepare_ms2rescore] merged {len(scans)} MS2 scans from "
           f"{len(pkl_paths)} pickle(s)", file=sys.stderr)
 
-    # Read all PSMs straight from the PIN (target+decoy, percolator labels).
-    psms = pd.read_csv(args.pin, sep="\t", dtype=str)
+    # Read all PSMs straight from the PIN(s) (target+decoy, percolator labels).
+    # Pooled multi-rep sample -> one PIN per spectrum file; concatenate (run-qualified
+    # specid keeps reps distinct, so the per-spectrum dedup below stays per (run, scan)).
+    psms = pd.concat([pd.read_csv(pin, sep="\t", dtype=str) for pin in args.pin],
+                     ignore_index=True)
     psms = _extract_run_specid(psms, args.engine)
 
     # Keep the best PSM per spectrum, matching mokapot's per-spectrum dedup:
@@ -190,7 +197,7 @@ def main() -> int:
         )
 
     # Join percolator features (prefixed rescoring:).
-    features = build_features(Path(args.pin), args.engine, scans)
+    features = build_features(args.pin, args.engine, scans)
     features = features.set_index("spectrum_id").add_prefix("rescoring:")
     if "rescoring:rank" in features.columns:
         features = features.drop(columns=["rescoring:rank"])

@@ -1,0 +1,60 @@
+name: db_construct
+description: |
+  Cryptic peptide database construction (steps 24-31). Substitutes curated
+  variants into the reference (FastaAlternateReferenceMaker), lifts the assembled
+  transcript GTF onto the variant-substituted genome, extracts transcript
+  sequences, 3-frame translates, and curates the final cryptic ORF FASTA. The
+  cryptic FASTA is the pipeline deliverable.
+keywords:
+  - cryptic-peptides
+  - database
+  - three-frame-translation
+  - variant-substitution
+  - immunopeptidomics
+components:
+  - gatk4/fastaalternatereferencemaker
+  - gatk4/indexfeaturefile
+  - revert_headers
+  - alt_liftover
+  - gff3sort
+  - gffread
+  - triple_translate
+  - squish
+input:
+  - ch_unmasked_vcf:
+      description: Deletion-deprioritised SNV VCF from VCF_CURATE [ val(meta), path(vcf) ]
+  - ch_indel_vcf:
+      description: Indel-preserving VCF from VCF_CURATE [ val(meta), path(vcf) ]
+  - ch_assembly_gtf:
+      description: gffcompare combined GTF from TRANSCRIPT_ASSEMBLY [ val(meta), path(gtf) ]
+  - ch_tracking:
+      description: gffcompare .tracking from TRANSCRIPT_ASSEMBLY [ val(meta), path(tracking) ]
+  - ch_fasta:
+      description: Reference FASTA [ val(meta), path(fasta) ]
+  - ch_fai:
+      description: Reference FASTA index [ val(meta), path(fai) ]
+  - ch_dict:
+      description: Reference sequence dictionary [ val(meta), path(dict) ]
+output:
+  - cryptic_fasta:
+      description: Curated cryptic ORF FASTA — the deliverable [ val(meta), path(fasta) ]
+  - alt_fasta_unmasked:
+      description: Variant-substituted reference (SNV track) [ val(meta), path(fasta) ]
+  - alt_fasta_indel:
+      description: Variant-substituted reference (indel track) [ val(meta), path(fasta) ]
+  - sorted_gtf:
+      description: gff3sort-ordered assembly GTF [ val(meta), path(gtf) ]
+  - lifted_gtf_unmasked:
+      description: Assembly GTF lifted onto the SNV-substituted genome [ val(meta), path(gtf) ]
+  - lifted_gtf_indel:
+      description: Assembly GTF lifted onto the indel-substituted genome [ val(meta), path(gtf) ]
+  - transcriptome_fasta:
+      description: Reference transcript sequences for origin backtrack [ val(meta), path(fasta) ]
+  - orf_fasta:
+      description: 3-frame ORF database for annotate_origin [ val(meta), path(fasta) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

@@ -1,0 +1,14 @@
+{
+    "partial search emits chunk_<id> dir - stub": {
+        "content": [
+            [
+                "versions.yml:md5,45ff81500baa51bca4fcecf36ced69cb"
+            ]
+        ],
+        "timestamp": "2026-06-15T15:11:13.931483842",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

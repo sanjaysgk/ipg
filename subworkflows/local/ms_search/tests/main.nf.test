@@ -12,7 +12,8 @@ nextflow_workflow {
     // Single-engine path with MS2Rescore skipped: PREPARE_FASTA -> SAGE.
     // cryptic_only DB mode (no canonical append). The rescore/integrate chain
     // (MS2Rescore reads the engine PIN directly) is covered by the module-level
-    // stub tests (ms2rescore, integrate_engines).
+    // stub tests (ms2rescore, integrate_engines). Input carries the per-sample db:
+    // [meta, [ms_files], db].
     test("ms_search - sage, cryptic_only, skip ms2rescore - stub") {
         options "-stub"
         when {
@@ -25,18 +26,54 @@ nextflow_workflow {
             }
             workflow {
                 """
-                input[0] = Channel.of([ [ id:'test' ], [ file("sample.mzML") ] ])
-                input[1] = file("db.fasta")
-                input[2] = []                                  // canonical (unused in cryptic_only)
-                input[3] = [ 'sage' ]
-                input[4] = file("${projectDir}/assets/NO_FILE")
+                input[0] = Channel.of([ [ id:'test', db:'db.fasta' ], [ file("sample.mzML") ], file("db.fasta") ])
+                input[1] = []                                  // canonical (unused in cryptic_only)
+                input[2] = [ 'sage' ]
+                input[3] = file("${projectDir}/assets/NO_FILE")
                 """
             }
         }
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.out.versions.size() > 0 }
+                // linear stub chain (PREPARE_FASTA -> SAGE) -> deterministic versions;
+                // snapshot pins the version-emission baseline for the subworkflow
+                { assert snapshot(workflow.out.versions).match() }
+            )
+        }
+    }
+
+    // Two samples, two DISTINCT databases: each sample must be searched against
+    // its OWN db (per-sample routing), so SAGE runs twice and search_db emits one
+    // [meta, tda] per sample. Proves the keyed join, not a single broadcast db.
+    test("ms_search - two samples route to two distinct dbs - stub") {
+        options "-stub"
+        when {
+            params {
+                ms_engines      = 'sage'
+                instrument      = 'orbitrap'
+                mod_type        = 'mod'
+                db_search_mode  = 'cryptic_only'
+                skip_ms2rescore = true
+            }
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [ [ id:'condA', db:'condA_cryptic.fasta' ], [ file("a1.mzML"), file("a2.mzML") ], file("condA_cryptic.fasta") ],
+                    [ [ id:'condB', db:'condB_cryptic.fasta' ], [ file("b1.mzML") ],                  file("condB_cryptic.fasta") ]
+                )
+                input[1] = []
+                input[2] = [ 'sage' ]
+                input[3] = file("${projectDir}/assets/NO_FILE")
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                // one prepared search db per sample, each keyed to its own meta
+                { assert workflow.out.search_db.size() == 2 },
+                { assert workflow.out.search_db.collect { it[0].id }.sort() == ['condA', 'condB'] }
             )
         }
     }

@@ -1,0 +1,54 @@
+name: merge_split_search
+description: Merge MSFragger split-database (--partial) results per spectrum-file with full-DB e-value recompute
+keywords:
+  - msfragger
+  - split database
+  - merge
+  - e-value
+  - proteomics
+tools:
+  - merge_split_search:
+      description: Faithful port of FragPipe msfragger_pep_split.py merge (histogram-sum + e-value refit + per-spectrum re-rank)
+      homepage: https://github.com/sanjaysgk/ipg
+      licence: ["MIT"]
+  - msfragger:
+      description: Used for --generate_expect_functions on the combined histogram
+      homepage: https://msfragger.nesvilab.org/
+      licence: ["MSFragger academic licence"]
+input:
+  - - meta:
+        type: map
+        description: Groovy map; meta.run (the spectrum-file basename = sample_name) required
+    - chunk_dirs:
+        type: directory
+        description: The N chunk_<id> directories for one run (each with <run>.pepXML/.pin/_scores_histogram.tsv)
+  - num_chunks:
+      type: integer
+      description: Number of database chunks (= number of chunk dirs)
+  - msfragger_jar:
+      type: file
+      description: Optional MSFragger JAR; pass file('NO_FILE') to use the bioconda wrapper + --key
+  - params_file:
+      type: file
+      description: MSFragger params (for topN / max_expect context)
+      pattern: "*.params"
+output:
+  - pin:
+      - meta:
+          type: map
+      - "merged/*.pin":
+          type: file
+          description: Merged PIN with full-DB-recomputed e-values (statistically identical to an unsplit search)
+  - pepxml:
+      - meta:
+          type: map
+      - "merged/*.pepXML":
+          type: file
+          description: Merged pepXML (optional; not used downstream — we consume the PIN)
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"

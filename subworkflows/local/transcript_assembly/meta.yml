@@ -1,0 +1,38 @@
+name: transcript_assembly
+description: |
+  Reference-guided transcript assembly (steps 4-5). StringTie assembles
+  transcripts from the dup-marked BAM; gffcompare compares the assembly to the
+  reference annotation, emitting the combined GTF, .tmap, and .tracking consumed
+  downstream by DB_CONSTRUCT.
+keywords:
+  - rnaseq
+  - transcript-assembly
+  - stringtie
+  - gffcompare
+components:
+  - stringtie/stringtie
+  - gffcompare
+input:
+  - ch_sorted_bam:
+      description: Coordinate-sorted BAM; meta.strandedness must be set [ val(meta), path(bam) ]
+  - ch_reference_gtf:
+      description: Reference annotation GTF [ val(meta), path(gtf) ]
+  - ch_fasta_fai:
+      description: Reference FASTA + index [ val(meta), path(fasta), path(fai) ]
+output:
+  - assembly_gtf:
+      description: StringTie transcript GTF [ val(meta), path(gtf) ]
+  - combined_gtf:
+      description: gffcompare combined GTF, input to DB_CONSTRUCT [ val(meta), path(gtf) ]
+  - tmap:
+      description: gffcompare .tmap with transcript expression for origin annotation [ val(meta), path(tmap) ]
+  - tracking:
+      description: gffcompare .tracking, input to triple_translate [ val(meta), path(tracking) ]
+  - stats:
+      description: gffcompare summary stats [ val(meta), path(stats) ]
+  - versions:
+      description: Software versions [ path(versions.yml) ]
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"
