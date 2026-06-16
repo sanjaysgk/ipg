@@ -83,7 +83,7 @@ See [`docs/output.md`](docs/output.md) for the full output description.
 
 ## Contributions and support
 
-Contributions are welcome via [issues and pull requests](https://github.com/sanjaysgk/ipg).
+Contributions and bug reports are welcome — please open a [GitHub issue](https://github.com/sanjaysgk/ipg/issues) or a [pull request](https://github.com/sanjaysgk/ipg/pulls).
 
 ## Citations
 
