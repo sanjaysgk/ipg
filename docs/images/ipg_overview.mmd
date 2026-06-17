@@ -4,7 +4,7 @@
 %%       -o docs/images/ipg_overview.svg -t dark -b transparent
 %% Three independent entry points selected by --step. Solid = core path,
 %% dashed = optional (--run_* flag), bold ==> = the cross-step database handoff.
-%%{init: {"theme":"dark","flowchart":{"curve":"basis","nodeSpacing":36,"rankSpacing":44,"padding":6}}}%%
+%%{init: {"theme":"dark","flowchart":{"curve":"basis","nodeSpacing":60,"rankSpacing":72,"padding":24,"diagramPadding":28,"subGraphTitleMargin":{"top":8,"bottom":14}}}%%
 flowchart TB
     classDef data fill:#082b45,stroke:#7fb3d5,stroke-width:1px,color:#eaf2f8;
     classDef proc fill:#0f3a57,stroke:#5dade2,stroke-width:1px,color:#eaf2f8;
@@ -52,7 +52,7 @@ flowchart TB
     end
 
     %% ─────────────────── STEP 3 : post_ms (deprecated) ───────────────────
-    subgraph S3 ["3 &nbsp;·&nbsp; --step post_ms &nbsp;—&nbsp; legacy PEAKS-only path (deprecated)"]
+    subgraph S3 ["3 &nbsp;·&nbsp; --step post_ms &nbsp;—&nbsp; deprecated"]
         P3(["PEAKS PSMs +<br/>provided references"]):::data
         PM["POST_MS_ANALYSIS<br/><i>db_compare ⇄ origins · two-phase</i>"]:::dep
         P3 --> PM
