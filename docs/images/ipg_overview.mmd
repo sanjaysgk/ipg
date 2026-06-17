@@ -1,76 +1,67 @@
-%%metro title: sanjaysgk/ipg — cryptic immunopeptidogenomics
-%%metro logo: docs/images/nf-core-ipg_logo_dark.png
-%%metro style: dark
-%%metro file: fastq_in           | FASTQ
-%%metro file: ms_in              | mzML
-%%metro file: cryptic_fasta      | FASTA
-%%metro file: peptides_out       | TSV
-%%metro file: report             | HTML
-%%metro line: db_construct       | RNA-seq to cryptic peptide database         | #0570b0
-%%metro line: ms_search          | MS search, de novo and integration          | #e63946
-%%metro legend: bl
+%% sanjaysgk/ipg — cryptic immunopeptidogenomics pipeline overview
+%% Source of truth for docs/images/ipg_overview.svg. Regenerate the SVG with:
+%%   npx -y @mermaid-js/mermaid-cli -i docs/images/ipg_overview.mmd \
+%%       -o docs/images/ipg_overview.svg -t dark -b transparent
+%% Three independent entry points selected by --step. Solid = core path,
+%% dashed = optional (--run_* flag), bold ==> = the cross-step database handoff.
+%%{init: {"theme":"dark","flowchart":{"curve":"basis","nodeSpacing":60,"rankSpacing":72,"padding":24,"diagramPadding":28,"subGraphTitleMargin":{"top":8,"bottom":14}}}%%
+flowchart TB
+    classDef data fill:#082b45,stroke:#7fb3d5,stroke-width:1px,color:#eaf2f8;
+    classDef proc fill:#0f3a57,stroke:#5dade2,stroke-width:1px,color:#eaf2f8;
+    classDef opt  fill:#3d3210,stroke:#d4ac0d,stroke-width:1px,color:#fdf6e3,stroke-dasharray:5 3;
+    classDef out  fill:#0e3b2e,stroke:#52be80,stroke-width:1.5px,color:#eafaf1;
+    classDef dep  fill:#2b2b2b,stroke:#888,stroke-width:1px,color:#cccccc,stroke-dasharray:2 3;
 
-graph LR
-    subgraph input_section ["Input"]
-        %%metro exit: right | db_construct, ms_search
-        samplesheet["SAMPLESHEET_TO_CHANNEL"]
-        fastq_in[" "]
-        ms_in[" "]
+    %% ─────────────────── STEP 1 : db_construct ───────────────────
+    subgraph S1 ["1 &nbsp;·&nbsp; --step db_construct &nbsp;—&nbsp; RNA-seq → cryptic peptide FASTA"]
+        FQ(["RNA-seq FASTQ<br/>samplesheet"]):::data
+        PG["PREPARE_GENOME<br/><i>resolve · index reference</i>"]:::proc
+        AQ["ALIGN_QC<br/><i>STAR 2-pass · RSeQC strand</i>"]:::proc
+        BP["BAM_PREP<br/><i>merge reps @MarkDuplicates · SplitNCigar</i>"]:::proc
+        TA["TRANSCRIPT_ASSEMBLY<br/><i>StringTie · gffcompare</i>"]:::proc
+        BQ["BQSR<br/><i>base recalibration</i>"]:::proc
+        MT["MUTECT2<br/><i>somatic variant calling</i>"]:::proc
+        VC["VCF_CURATE<br/><i>SNV + indel VCFs</i>"]:::proc
+        VEP["VCF_ANNOTATE_ALL<br/><i>VEP / snpEff · published only</i>"]:::opt
+        DBC["DB_CONSTRUCT<br/><i>mask variants · 3-frame translate · squish</i>"]:::proc
+        CF[("cryptic.fasta")]:::out
 
-        fastq_in -->|db_construct| samplesheet
-        ms_in -->|ms_search| samplesheet
+        FQ --> PG --> AQ --> BP
+        BP --> TA --> DBC
+        BP --> BQ --> MT --> VC --> DBC
+        MT -.-> VEP
+        DBC --> CF
     end
 
-    subgraph db_construct_section ["--step db_construct — RNA-seq to cryptic peptide FASTA"]
-        %%metro direction: TB
-        %%metro entry: left | db_construct
-        %%metro exit: right | db_construct
-        align["ALIGN_QC<br/>STAR two-pass + RSeQC"]
-        assembly["TRANSCRIPT_ASSEMBLY<br/>StringTie + gffcompare"]
-        variants["BAM_PREP + BQSR + MUTECT2<br/>somatic variant calling"]
-        db["DB_CONSTRUCT<br/>triple-translate + squish"]
-        cryptic_fasta[" "]
+    %% ─────────────────── STEP 2 : ms_search ───────────────────
+    subgraph S2 ["2 &nbsp;·&nbsp; --step ms_search &nbsp;—&nbsp; identify cryptic peptides"]
+        MZ(["Immunopeptidome<br/>mzML / .raw + db"]):::data
+        CV["Format convert<br/><i>ThermoRawFileParser / msconvert</i>"]:::proc
+        PF["PREPARE_FASTA<br/><i>cryptic + canonical · target-decoy</i>"]:::proc
+        EN["Search engines<br/><i>MSFragger · Comet · SAGE · PEAKS</i>"]:::proc
+        RS["MS2RESCORE<br/><i>MS2PIP + DeepLC → mokapot</i>"]:::proc
+        IN["INTEGRATE_ENGINES<br/><i>class-separated 1% FDR</i>"]:::proc
+        PEP[("cryptic peptides")]:::out
+        DN["DENOVO <i>(optional)</i><br/><i>InstaNovo → classify · uses cryptic db</i>"]:::opt
+        VO["Validation &amp; origin <i>(optional)</i><br/><i>PepQuery2 · ANNOTATE_ORIGIN · ORIGINS</i>"]:::opt
+        RI["Reports &amp; immuno <i>(optional)</i><br/><i>CRYPTIC_REPORT · netMHCpan · GibbsCluster · FlashLFQ</i>"]:::opt
 
-        align -->|db_construct| assembly
-        align -->|db_construct| variants
-        assembly -->|db_construct| db
-        variants -->|db_construct| db
-        db -->|db_construct| cryptic_fasta
+        MZ --> CV --> PF --> EN --> RS --> IN --> PEP
+        CV -.-> DN
+        PEP -.-> VO --> RI
     end
 
-    subgraph ms_search_section ["--step ms_search — identify cryptic peptides"]
-        %%metro direction: TB
-        %%metro entry: left | ms_search
-        %%metro exit: right | ms_search
-        prepare_fasta["PREPARE_FASTA<br/>target-decoy database"]
-        engines["MSFRAGGER + COMET + SAGE<br/>database search"]
-        rescore["MS2RESCORE<br/>rescore + mokapot FDR"]
-        integrate["INTEGRATE_ENGINES<br/>1% peptide-level FDR"]
-        denovo["INSTANOVO + DENOVO_CLASSIFY<br/>de novo discovery (--run_denovo)"]
-        peptides_out[" "]
-
-        prepare_fasta -->|ms_search| engines
-        engines -->|ms_search| rescore
-        rescore -->|ms_search| integrate
-        integrate -->|ms_search| peptides_out
-        denovo -->|ms_search| peptides_out
+    %% ─────────────────── STEP 3 : post_ms (deprecated) ───────────────────
+    subgraph S3 ["3 &nbsp;·&nbsp; --step post_ms &nbsp;—&nbsp; deprecated"]
+        P3(["PEAKS PSMs +<br/>provided references"]):::data
+        PM["POST_MS_ANALYSIS<br/><i>db_compare ⇄ origins · two-phase</i>"]:::dep
+        P3 --> PM
     end
 
-    subgraph downstream_section ["Optional downstream"]
-        %%metro direction: TB
-        %%metro entry: left | ms_search
-        %%metro exit: right | ms_search
-        immuno["IMMUNOINFORMATICS<br/>HLA binding + motifs + quant"]
-        report_node["CRYPTIC REPORT<br/>per-sample HTML"]
-        report[" "]
+    %% ─────────────── single cross-step handoff (S1 → S2) ───────────────
+    CF ==>|per-sample search db| PF
 
-        immuno -->|ms_search| report_node
-        report_node -->|ms_search| report
-    end
-
-    %% Cross-section handoffs
-    samplesheet -->|db_construct| align
-    cryptic_fasta -->|ms_search| prepare_fasta
-    cryptic_fasta -->|ms_search| denovo
-    samplesheet -->|ms_search| denovo
-    peptides_out -->|ms_search| immuno
+    %% Layout-only: a hidden link (no arrowhead, transparent stroke) ranks the
+    %% deprecated post_ms lane at the bottom. Standard syntax; carries no meaning.
+    PEP --- P3
+    linkStyle 22 stroke:transparent,stroke-width:0px;
