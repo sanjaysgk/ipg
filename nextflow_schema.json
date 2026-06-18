@@ -188,6 +188,14 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Include alt-reference variant-derived peptides in the cryptic peptide DB.",
                     "help_text": "When true (default), the db_construct subworkflow runs the unmasked + indel branches (FastaAlternateReferenceMaker -> revert_headers -> alt_liftover -> gffread -> triple_translate) in addition to the reference-only branch, and squishes all three peptide sets together into the final cryptic.fasta. When false only the reference branch runs and squish receives one input — matching the legacy Scull et al. 2021 behaviour as observed in D122_Lung. This is a pipeline-level flag (one run = one intent); to mix modes for a heterogeneous cohort, run the pipeline twice. NOTE: Variant calling is ALWAYS performed in tumour-only Mutect2 mode against a gnomAD-style germline allele-frequency database; this pipeline does NOT support matched tumour-normal calling. Set to true only when the sample is expected to harbour biologically meaningful somatic variants worth incorporating into the MS/MS search space (e.g. tumour tissue, hypermutated cell lines, MMR-deficient samples). For normal tissue, cell lines, or any sample where variant peptides would mostly add noise, leave at false."
+                },
+                "strandedness_threshold": {
+                    "type": "number",
+                    "default": 0.8,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "When a sample's strandedness is 'auto', the minimum RSeQC infer_experiment fraction to call the library forward or reverse; below this it is treated as unstranded. Explicit forward/reverse/unstranded values in the samplesheet are always honoured (a mismatch with the inferred value is logged as a warning).",
+                    "fa_icon": "fas fa-compass"
                 }
             }
         },

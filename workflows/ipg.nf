@@ -343,11 +343,46 @@ workflow IPG {
         ch_versions = ch_versions.mix(BAM_PREP.out.versions)
 
         //
+        // Resolve strandedness from RSeQC infer_experiment when the samplesheet
+        // value is 'auto' (explicit forward/reverse/unstranded are honoured, with
+        // a warning on disagreement). Reps share a library, so reduce to one call
+        // per sample, then re-stamp BOTH merged BAMs — the one feeding StringTie
+        // and the one feeding the variant branch — so they carry identical meta:
+        // db_construct keys its cross-branch joins on the full meta.
+        //
+        def strand_thr = (params.strandedness_threshold ?: 0.8) as double
+        ch_sample_strand = ALIGN_QC.out.strandedness_txt
+            .map { meta, txt ->
+                def fr = (txt.text =~ /Fraction of reads explained by "[^"]*":\s*([0-9.]+)/).collect { (it[1] as double) }
+                def fwd = fr ? fr[0] : 0.0
+                def rev = fr.size() > 1 ? fr[1] : 0.0
+                def inferred = fwd >= strand_thr ? 'forward' : (rev >= strand_thr ? 'reverse' : 'unstranded')
+                def declared = meta.strandedness
+                if (declared == 'auto')
+                    log.info("strandedness[${meta.id}]: auto -> ${inferred} (forward=${fwd}, reverse=${rev}, threshold=${strand_thr})")
+                else if (declared != inferred)
+                    log.warn("strandedness[${meta.id}]: declared '${declared}' disagrees with inferred '${inferred}' (forward=${fwd}, reverse=${rev})")
+                [ (meta.sample ?: meta.id), (declared == 'auto' ? inferred : declared) ]
+            }
+            .groupTuple()
+            .map { sample, vals -> [ sample, vals[0] ] }
+
+        ch_markdup_strand = BAM_PREP.out.markdup_bam
+            .map { meta, bam -> [ meta.id, meta, bam ] }
+            .join(ch_sample_strand)
+            .map { _id, meta, bam, s -> [ meta + [strandedness: s], bam ] }
+
+        ch_splitncigar_strand = BAM_PREP.out.splitncigar_bam
+            .map { meta, bam -> [ meta.id, meta, bam ] }
+            .join(ch_sample_strand)
+            .map { _id, meta, bam, s -> [ meta + [strandedness: s], bam ] }
+
+        //
         // SUBWORKFLOW: transcript_assembly — steps 4-5, on the merged
         // (coord-sorted, dup-marked) MarkDuplicates BAM.
         //
         TRANSCRIPT_ASSEMBLY(
-            BAM_PREP.out.markdup_bam,
+            ch_markdup_strand,
             ch_gtf,
             ch_fasta_fai
         )
@@ -357,7 +392,7 @@ workflow IPG {
         // SUBWORKFLOW: bqsr — steps 13-16
         //
         BQSR(
-            BAM_PREP.out.splitncigar_bam,
+            ch_splitncigar_strand,
             ch_fasta,
             ch_fai,
             ch_dict,
