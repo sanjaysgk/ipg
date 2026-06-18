@@ -1,0 +1,59 @@
+name: "picked_group_fdr"
+description: Protein/ORF-group FDR via PickedGroupFDR on MS2Rescore/mokapot output (global by default; optional cryptic class)
+keywords:
+  - proteomics
+  - fdr
+  - protein group
+  - picked target-decoy
+  - proteogenomics
+tools:
+  - "picked_group_fdr":
+      description: "Scalable, accurate and sensitive protein group FDRs for large-scale mass spectrometry experiments"
+      homepage: "https://picked-group-fdr.readthedocs.io"
+      documentation: "https://picked-group-fdr.readthedocs.io"
+      tool_dev_url: "https://github.com/kusterlab/picked_group_fdr"
+      licence: ["Apache-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information, e.g. `[ id:'sample1' ]`
+    - engine:
+        type: string
+        description: Search engine the mokapot PSMs came from (msfragger/comet/sage/peaks)
+    - mokapot_psms:
+        type: file
+        description: MS2Rescore mokapot target PSMs (ms2rescore format, `*.mokapot.psms.txt`)
+        pattern: "*.mokapot.psms.txt"
+    - mokapot_decoy:
+        type: file
+        description: MS2Rescore mokapot decoy PSMs (`*.mokapot.decoy.psms.txt`)
+        pattern: "*.mokapot.decoy.psms.txt"
+    - cryptic_fasta:
+        type: file
+        description: Per-sample search-database FASTA passed to PickedGroupFDR --fasta (target sequences)
+        pattern: "*.{fasta,fa}"
+
+output:
+  - protein_groups:
+      - - meta:
+            type: map
+            description: Groovy Map containing sample information
+        - engine:
+            type: string
+            description: Search engine the result came from
+        - "*_protein_groups.tsv":
+            type: file
+            description: Picked protein-group FDR table (FragPipe combined_protein format); global list, or cryptic class when fdr_class=cryptic
+            pattern: "*_protein_groups.tsv"
+  - versions:
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

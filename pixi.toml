@@ -87,10 +87,21 @@ pip = "*"
 [feature.dev.pypi-dependencies]
 marker-pdf = "*"
 
+# Tier-2 protein/ORF-group FDR (PickedGroupFDR). PyPI-only, isolated env to keep
+# its pins off the main env. Nextflow module runs under -profile pixi or conda;
+# no biocontainer exists, so -profile singularity needs a built image (follow-up).
+[feature.picked.dependencies]
+python = ">=3.10,<3.12"
+pip = "*"
+
+[feature.picked.pypi-dependencies]
+picked_group_fdr = "==0.9.0"
+
 [environments]
 ms2rescore = { features = ["ms2rescore"], no-default-feature = true, solve-group = "ms2rescore" }
 dev = { features = ["dev"], no-default-feature = true, solve-group = "dev" }
 denovo = { features = ["denovo"], no-default-feature = true, solve-group = "denovo" }
+picked = { features = ["picked"], no-default-feature = true, solve-group = "picked" }
 
 [pypi-dependencies]
 nf-metro = ">=0.7.1, <0.8"

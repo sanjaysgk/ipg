@@ -1,0 +1,9 @@
+name: picked_group_fdr
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - picked_group_fdr==0.9.0
