@@ -16,6 +16,8 @@ process MS2RESCORE {
 
     output:
     tuple val(meta), path("${engine}.psms.tsv"),   emit: psms, optional: true
+    tuple val(meta), path("*.mokapot.psms.txt"),       emit: mokapot_psms,  optional: true
+    tuple val(meta), path("*.mokapot.decoy.psms.txt"), emit: mokapot_decoy, optional: true
     tuple val(meta), path("${engine}_rescore_input.tsv"), emit: input_tsv
     tuple val(meta), path("${engine}.report.html"), emit: report, optional: true
     path("${engine}_pipeline_log.txt"),            emit: log
@@ -72,6 +74,7 @@ process MS2RESCORE {
     stub:
     """
     touch ${engine}.psms.tsv ${engine}_rescore_input.tsv ${engine}_pipeline_log.txt
+    touch ${engine}.mokapot.psms.txt ${engine}.mokapot.decoy.psms.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

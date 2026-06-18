@@ -35,6 +35,7 @@ include { MS2RESCORE as MS2RESCORE_COMET     } from '../../../modules/local/ms2r
 include { MS2RESCORE as MS2RESCORE_SAGE      } from '../../../modules/local/ms2rescore/main'
 include { MS2RESCORE as MS2RESCORE_PEAKS     } from '../../../modules/local/ms2rescore/main'
 include { INTEGRATE_ENGINES            } from '../../../modules/local/integrate_engines/main'
+include { PICKED_GROUP_FDR             } from '../../../modules/local/picked_group_fdr/main'
 
 workflow MS_SEARCH {
 
@@ -273,6 +274,8 @@ workflow MS_SEARCH {
     // STEP 4: MS2Rescore per engine.
     //
     ch_rescored = Channel.empty()
+    // [meta, engine, mokapot_psms.txt, mokapot_decoy.txt] for tier-2 protein-group FDR.
+    ch_mokapot  = Channel.empty()
 
     // Rescoring needs scans covering every PSM in the mokapot output.
     // Rather than trust per-sample meta.join (which is flaky when
@@ -288,22 +291,43 @@ workflow MS_SEARCH {
             MS2RESCORE_MSFRAGGER(ch_pin_msfragger, 'msfragger', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_MSFRAGGER.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_MSFRAGGER.out.psms.map { meta, f -> [meta, 'msfragger', f] })
+            ch_mokapot  = ch_mokapot.mix(MS2RESCORE_MSFRAGGER.out.mokapot_psms.join(MS2RESCORE_MSFRAGGER.out.mokapot_decoy).map { meta, p, d -> [meta, 'msfragger', p, d] })
         }
         if (engines.contains('comet')) {
             MS2RESCORE_COMET(ch_pin_comet, 'comet', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_COMET.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_COMET.out.psms.map { meta, f -> [meta, 'comet', f] })
+            ch_mokapot  = ch_mokapot.mix(MS2RESCORE_COMET.out.mokapot_psms.join(MS2RESCORE_COMET.out.mokapot_decoy).map { meta, p, d -> [meta, 'comet', p, d] })
         }
         if (engines.contains('sage')) {
             MS2RESCORE_SAGE(ch_pin_sage, 'sage', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_SAGE.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_SAGE.out.psms.map { meta, f -> [meta, 'sage', f] })
+            ch_mokapot  = ch_mokapot.mix(MS2RESCORE_SAGE.out.mokapot_psms.join(MS2RESCORE_SAGE.out.mokapot_decoy).map { meta, p, d -> [meta, 'sage', p, d] })
         }
         if (engines.contains('peaks')) {
             MS2RESCORE_PEAKS(ch_pin_peaks, 'peaks', ch_all_scans, ch_all_mgfs, ch_ms2rescore_cfg)
             ch_versions = ch_versions.mix(MS2RESCORE_PEAKS.out.versions)
             ch_rescored = ch_rescored.mix(MS2RESCORE_PEAKS.out.psms.map { meta, f -> [meta, 'peaks', f] })
+            ch_mokapot  = ch_mokapot.mix(MS2RESCORE_PEAKS.out.mokapot_psms.join(MS2RESCORE_PEAKS.out.mokapot_decoy).map { meta, p, d -> [meta, 'peaks', p, d] })
         }
+    }
+
+    //
+    // STEP 5b: optional tier-2 protein/ORF-group FDR (picked) on the cryptic class.
+    // Per engine, restrict the mokapot target+decoy PSMs to cryptic and run
+    // PickedGroupFDR against the per-sample cryptic ORF FASTA (= the search db).
+    //
+    ch_protein_groups = Channel.empty()
+    if (params.run_protein_group_fdr && !params.skip_ms2rescore) {
+        ch_db_by_id = ch_ms_db.map { meta, _files, db -> [ meta.id, db ] }
+        ch_pgfdr_in = ch_mokapot
+            .map { meta, eng, p, d -> [ meta.id, meta, eng, p, d ] }
+            .combine(ch_db_by_id, by: 0)
+            .map { _id, meta, eng, p, d, db -> [ meta, eng, p, d, db ] }
+        PICKED_GROUP_FDR(ch_pgfdr_in)
+        ch_versions       = ch_versions.mix(PICKED_GROUP_FDR.out.versions)
+        ch_protein_groups = PICKED_GROUP_FDR.out.protein_groups
     }
 
     //
@@ -339,6 +363,7 @@ workflow MS_SEARCH {
     calibrated_mzml   = ch_calibrated_mzml
     mgf               = ch_mgf_per_sample
     rescored_per_eng  = ch_rescored
+    protein_groups    = ch_protein_groups   // [meta, engine, *_protein_groups.tsv] — cryptic picked group FDR
     search_db         = ch_search.map { meta, _files, tda -> [ meta, tda ] }   // [meta, tda] per sample
     versions          = ch_versions
 }

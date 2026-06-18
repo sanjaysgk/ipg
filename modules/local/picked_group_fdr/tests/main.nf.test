@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process PICKED_GROUP_FDR"
+    script "../main.nf"
+    process "PICKED_GROUP_FDR"
+
+    tag "modules"
+    tag "modules_local"
+    tag "picked_group_fdr"
+    tag "stub"
+
+    test("picked_group_fdr - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                def psms  = file("\${workDir}/sage.mokapot.psms.txt");      psms.text  = "protein_list\\n"
+                def decoy = file("\${workDir}/sage.mokapot.decoy.psms.txt"); decoy.text = "protein_list\\n"
+                def fa    = file("\${workDir}/db.fasta");                    fa.text    = ">TCONS_00000001\\nMACGT\\n"
+                input[0] = [ [ id:'test' ], 'sage', psms, decoy, fa ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

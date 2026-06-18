@@ -396,6 +396,25 @@
                     "description": "Comma-separated accession prefixes marking canonical proteins. Peptides mapping only to non-canonical proteins are classed 'cryptic' by INTEGRATE_ENGINES.",
                     "fa_icon": "fas fa-tags"
                 },
+                "run_protein_group_fdr": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Tier-2 cryptic protein/ORF-group FDR via PickedGroupFDR on the MS2Rescore/mokapot output (picked target-decoy, cryptic class only). Complements the peptide-level class FDR in INTEGRATE_ENGINES.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "protein_group_fdr": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "Protein-group FDR threshold passed to PickedGroupFDR (--protein_group_fdr_threshold). Sets the rescue cutoff and reported group count.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "protein_group_fdr_class": {
+                    "type": "string",
+                    "default": "global",
+                    "enum": ["global", "cryptic"],
+                    "description": "Scope of the PickedGroupFDR protein-group FDR: 'global' runs the overall target+decoy list (default); 'cryptic' restricts to the cryptic class for a class-specific FDR.",
+                    "fa_icon": "fas fa-layer-group"
+                },
                 "run_pepquery": {
                     "type": "boolean",
                     "default": false,
