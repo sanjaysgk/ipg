@@ -68,6 +68,19 @@ process CURATE_VCF {
         # 'unmasked' VCF.
         curate_vcf -d "\${input_vcf}" >> ${prefix}_curate_unmasked.log 2>&1
         mv "\${stem}_unmasked.vcf" ${prefix}_unmasked.vcf
+
+        # Fail loud if curation zeroed a non-trivial input. A real sample with
+        # hundreds of PASS variants never curates down to 0 records; an empty
+        # output here is the signature of a broken curate_vcf binary (header
+        # written but the record write-loop missing). Catch it instead of
+        # letting the reseed below mask it as a header-only VCF.
+        for out in ${prefix}_indel.vcf ${prefix}_unmasked.vcf; do
+            rec=\$(grep -vc '^#' "\${out}" || true)
+            if [ "\${n_variants}" -ge 100 ] && [ "\${rec}" -eq 0 ]; then
+                echo "curate_vcf: FATAL — \${n_variants} input variants but 0 curated records in \${out} (broken curate_vcf binary?)" >&2
+                exit 1
+            fi
+        done
     fi
 
     # curate_vcf can emit a header-less/empty VCF when its curation drops every
