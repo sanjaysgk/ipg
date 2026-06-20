@@ -318,6 +318,8 @@ char **make_translation(char *na, seq_info *info)
 		//for each frame, work out which codon type (x in start, middle, or end) and codon position.
 		//work out codon translations, and see if change. if so, save in aa_muts for that frame - type SUB 
 				for (frame = 0; frame < 3; frame++) {
+					old[0] = old[1] = old[2] = old[3] = '\0';
+					new[0] = new[1] = new[2] = new[3] = '\0';
 					pos = 0;
 					shift = (index - frame)%3;
 					codon = (index - frame)/3;

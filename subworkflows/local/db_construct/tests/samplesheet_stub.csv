@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,strandedness
+test,reads_1.fastq.gz,reads_2.fastq.gz,auto

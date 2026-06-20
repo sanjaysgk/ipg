@@ -77,4 +77,57 @@ nextflow_workflow {
             )
         }
     }
+
+    // Real-data positive control (NOT a stub): searches the committed synthetic
+    // spectra (tests/data/spike/synth.mzML) against synth_db.fasta — which
+    // carries the single planted cryptic peptide CRYPTICALLY — with comet+sage
+    // -> MS2Rescore/mokapot -> INTEGRATE_ENGINES, appended to a tiny canonical.
+    // A green run recovers CRYPTICALLY in the integrated peptide table at
+    // <=1% FDR, classed cryptic. Needs the engines: run under -profile pixi
+    // (comet/sage/mokapot main env; ms2rescore feature env) on a compute node.
+    test("ms_search - spike comet+sage recovers planted CRYPTICALLY at <=1% FDR") {
+        tag "real_data"
+        when {
+            params {
+                ms_engines             = 'comet,sage'
+                instrument             = 'orbitrap'
+                mod_type               = 'mod'
+                peptide_length         = '9'
+                db_search_mode         = 'appended'
+                skip_ms2rescore        = false
+                skip_integrate_engines = false
+            }
+            workflow {
+                """
+                input[0] = Channel.of([
+                    [ id:'SPIKE', db:'synth_db.fasta' ],
+                    [ file("${projectDir}/tests/data/spike/synth.mzML") ],
+                    file("${projectDir}/tests/data/spike/synth_db.fasta")
+                ])
+                input[1] = Channel.value(file("${projectDir}/tests/data/spike/canonical_tiny.fasta"))
+                input[2] = [ 'comet', 'sage' ]
+                input[3] = file("${projectDir}/assets/NO_FILE")
+                """
+            }
+        }
+        then {
+            def pep = path(workflow.out.peptides[0][1]).readLines()
+            def hdr = pep[0].split('\t') as List
+            def pi  = hdr.indexOf('peptide')
+            def ci  = hdr.indexOf('class')
+            def qi  = hdr.indexOf('peptide_qval_lowest')
+            def rows = pep.drop(1).collect { it.split('\t') }
+            def hit  = rows.find { it[pi] == 'CRYPTICALLY' }
+            assertAll(
+                { assert workflow.success },
+                // the planted cryptic peptide is recovered ...
+                { assert hit != null : 'planted peptide CRYPTICALLY not recovered' },
+                // ... classed cryptic, at <=1% FDR ...
+                { assert hit[ci] == 'cryptic' },
+                { assert (hit[qi] as double) <= 0.01 },
+                // ... and it is the only cryptic call (no cryptic FDR blowout)
+                { assert rows.count { it[ci] == 'cryptic' } == 1 }
+            )
+        }
+    }
 }

@@ -15,6 +15,11 @@ nextflow_workflow {
         when {
             params {
                 include_variant_peptides = false
+                // The completeness guard derives expected sample ids from
+                // params.input; point it at a fixture whose sample column
+                // matches the id:'test' fed on the input channels (the global
+                // tests/nextflow.config samplesheet uses CRYPTIC_TEST).
+                input = "${projectDir}/subworkflows/local/db_construct/tests/samplesheet_stub.csv"
             }
             workflow {
                 """
