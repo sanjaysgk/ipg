@@ -13,16 +13,16 @@
 # both here and in the upstream repo, so they are verified against the same commit.
 
 UPSTREAM_REPO    https://github.com/sanjaysgk/immunopeptidogenomics
-UPSTREAM_COMMIT  c0f3a8f95ec7d147e7bada328170ede0280f7a31
-# NOTE: immunopeptidogenomics main after PR #2 (origins tracking col1 trim) and
-# PR #1 (curate_vcf write-loop + portable cJSON include).
+UPSTREAM_COMMIT  4fb98ef7234ccded224c97b2ba592d0b5dbbffc3
+# NOTE: immunopeptidogenomics fix/triple-translate-segfault (PR #3) = main
+# (c0f3a8f, after PRs #1/#2) + triple_translate make_translation segfault fix.
 
 # file                role                       sha256
 curate_vcf.c          kescull-modified           e4744090dbf6ba6b4cca85e78994d288de5895382d7aed4976df8fbdadb548f4
 revert_headers.c      kescull-modified           08c1149e622b6b6a849b251ed63d14b21e2b47ea6390d47adfca8ff6d8cade8c
 origins.c             kescull-modified           35ba7f73a2689f5fbdff2a8e8237fade990ead191a1f97c3c236097a8985d6f3
 alt_liftover.c        kescull-unmodified         e556a5de1b92a2e28fa2bb3147b2338e1ea0cd003a7948c25bc4c12ad5c3a000
-triple_translate.c    kescull-unmodified         5333886fb9fcffd4c336163ee58b709a77be1e3d6e017b41bd0264a84d0969c7
+triple_translate.c    kescull-modified           10939ac8c8c3847d4683903e2275979fec6ec490298494fe9c417a728a84de5b
 squish.c              kescull-unmodified         1829beba861b4743d31e45161a1755b1682f37c911b2b4c7fde24c2a6056851e
 cJSON.c               vendored:DaveGamble/cJSON  de63e951ce3bc9b6938c7635575a6c90c3b364595b0b0f4c5ae8f9c83a43c17d
 cJSON.h               vendored:DaveGamble/cJSON  c01a8ca5609bb2c956dd1ae836d5d926ec68153ecebc5a75ea0febc2e076da8d
