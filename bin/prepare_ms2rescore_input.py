@@ -110,10 +110,30 @@ def prepare_tsv(psms: pd.DataFrame, scans: dict, engine: str) -> pd.DataFrame:
     return tsv
 
 
+def read_pin(path: str) -> pd.DataFrame:
+    # Percolator PIN: the trailing Proteins column is unquoted and may hold
+    # extra tab-separated protein IDs when a peptide maps to several proteins
+    # (routine for a redundant cryptic ORF DB). pandas' fixed-width parser
+    # raises on the resulting variable column count, so split each row with a
+    # capped maxsplit (header width - 1) to keep Proteins as one field, then
+    # normalise its internal tabs to ';' so protein_list splitting stays uniform.
+    with open(path) as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        n = len(header)
+        rows = []
+        for line in fh:
+            if not line.strip():
+                continue
+            parts = line.rstrip("\n").split("\t", n - 1)
+            parts[-1] = ";".join(g for g in parts[-1].replace("\t", ";").split(";") if g)
+            rows.append(parts)
+    return pd.DataFrame(rows, columns=header, dtype=str)
+
+
 def build_features(pin_paths: list, engine: str, scans: dict) -> pd.DataFrame:
     # A pooled multi-rep sample passes one PIN per spectrum file — concatenate
     # (identical percolator columns) so features cover every rep's PSMs.
-    f = pd.concat([pd.read_csv(p, sep="\t", dtype=str) for p in pin_paths],
+    f = pd.concat([read_pin(p) for p in pin_paths],
                   ignore_index=True)
     f = _extract_run_specid(f, engine)
     # _extract_run_specid already stripped flanking residues for
@@ -167,7 +187,7 @@ def main() -> int:
     # Read all PSMs straight from the PIN(s) (target+decoy, percolator labels).
     # Pooled multi-rep sample -> one PIN per spectrum file; concatenate (run-qualified
     # specid keeps reps distinct, so the per-spectrum dedup below stays per (run, scan)).
-    psms = pd.concat([pd.read_csv(pin, sep="\t", dtype=str) for pin in args.pin],
+    psms = pd.concat([read_pin(pin) for pin in args.pin],
                      ignore_index=True)
     psms = _extract_run_specid(psms, args.engine)
 
