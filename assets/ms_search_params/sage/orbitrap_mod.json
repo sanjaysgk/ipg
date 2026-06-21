@@ -3,8 +3,8 @@
     "bucket_size": 8192,
     "enzyme": {
       "missed_cleavages": 1,
-      "min_len": 7,
-      "max_len": 20,
+      "min_len": 8,
+      "max_len": 12,
       "cleave_at": "",
       "restrict": null,
       "c_terminal": true
