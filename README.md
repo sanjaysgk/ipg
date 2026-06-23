@@ -26,7 +26,7 @@ The pipeline runs in independent steps selected with `--step`:
 **`--step ms_search` — MS/MS → identified cryptic peptides**
 
 6. Search each sample's spectra against its cryptic database with [MSFragger](https://msfragger.nesvilab.org/), [Comet](https://uwpr.github.io/Comet/) and [Sage](https://github.com/lazear/sage).
-7. Rescore PSMs with [MS2Rescore](https://github.com/compomics/ms2rescore) + [mokapot](https://github.com/wfondrie/mokapot) FDR and integrate engines at 1% peptide-level FDR.
+7. Rescore PSMs with [MS2Rescore](https://github.com/compomics/ms2rescore) + [mokapot](https://github.com/wfondrie/mokapot) FDR and integrate engines at a configurable peptide-level FDR (default 1%).
 8. _Optional_ **de novo** discovery lane (`--run_denovo`, [InstaNovo](https://github.com/instadeepai/InstaNovo)) — predicts peptides directly from spectra and classifies them canonical / cryptic / novel.
 9. _Optional_ immunoinformatics (HLA binding, motif clustering, quantification) and a cryptic-discovery report.
 

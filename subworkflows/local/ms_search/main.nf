@@ -9,7 +9,7 @@
     5. CONVERT_PEAKS           PEAKS db.psms.csv → PIN (uses index2scan)
     6. MS2RESCORE (per engine) rescore PINs with spectrum predictions; runs
         mokapot internally (no standalone mokapot pass)
-    7. INTEGRATE_ENGINES       merge across engines at 1% peptide-level FDR
+    7. INTEGRATE_ENGINES       merge across engines at the configured peptide-level FDR (default 1%)
 
     Per-sample DB routing: each input carries [meta, [ms_files], db]. All of a
     sample's MS files (fractions + replicates) are pooled into ONE search against
