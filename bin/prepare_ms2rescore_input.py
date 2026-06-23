@@ -7,8 +7,6 @@ mokapot/percolator internally on the full target+decoy set, so a pre-rescoring
 mokapot pass added nothing but a dependency.
 
 Engine-specific SpecId parsing is encapsulated in `_extract_run_specid()`.
-Originally adapted from immunopeptidomics/core.py (prepare_tsv L809,
-rescore_* L951-1117); the mokapot-input coupling has been removed.
 """
 from __future__ import annotations
 

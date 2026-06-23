@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Convert mzML file(s) to MGF + build scans / index2scan pickles.
 
-Extracted from immunopeptidomics/core.py read_mzML() + write_MGF().
 One mzML per invocation; the MS_SEARCH subworkflow fans out over files and
 merges pickles downstream.
 

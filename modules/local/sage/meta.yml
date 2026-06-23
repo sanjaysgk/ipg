@@ -35,8 +35,7 @@ input:
         description: |
           Optional MSFragger search_log.txt. When present, Sage is
           re-configured with the calibrated fragment tolerance + topN
-          peaks parsed out of the log (matches immunopeptidomics core.py
-          run_Sage behaviour). Pass file('NO_FILE') when absent.
+          peaks parsed out of the log. Pass file('NO_FILE') when absent.
         pattern: "search_log.txt"
 output:
   - pin:

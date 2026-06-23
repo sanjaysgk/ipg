@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Convert a PEAKS Studio db.psms.csv export into a Percolator input (PIN).
 
-Extracted from immunopeptidomics/core.py run_PEAKS(). PEAKS reports
-spectrum *indices*, not raw scan numbers — so one or more index2scan.pkl
-pickles from CONVERT_MZML are required to resolve true ScanNr values.
+PEAKS reports spectrum *indices*, not raw scan numbers — so one or more
+index2scan.pkl pickles from CONVERT_MZML are required to resolve true ScanNr values.
 
 Invoked as a Nextflow template from modules/local/convert_peaks/main.nf.
 PEAKS_CSV / INDEX2SCAN_PKLS / MIN_MATCH / PROCESS_NAME are interpolated by Nextflow.

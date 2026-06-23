@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Pick the winning GibbsCluster-2.0 cluster by max KLD sum and dump peptide→cluster.
-
-Extracted from immunopeptidomics/core.py run_Gibbs() (L2021 — post-run parsing).
-"""
+"""Pick the winning GibbsCluster-2.0 cluster by max KLD sum and dump peptide→cluster."""
 from __future__ import annotations
 
 import argparse

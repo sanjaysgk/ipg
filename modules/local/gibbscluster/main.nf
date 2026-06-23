@@ -20,7 +20,7 @@ process GIBBSCLUSTER {
     script:
     def clusters = (params.gibbs_clusters == 'auto') ? '[2-5]' : params.gibbs_clusters
     """
-    # Filter to immunopeptides only — mirrors core.py run_Gibbs L2028.
+    # Filter to immunopeptides only before clustering.
     python3 - <<PY
 import pandas as pd
 df = pd.read_csv("${peptides_tsv}", sep="\\t")
