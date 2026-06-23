@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Build a FlashLFQ input TSV from the integrated peptides table.
 
-Extracted from immunopeptidomics/core.py run_FlashLFQ() (L1119). The
-upstream implementation reads the post-rescore mokapot peptide files
-directly; after INTEGRATE_ENGINES we already have a per-peptide table
-with run, charge, retention_time and protein_list — this script reshapes
-it into FlashLFQ's expected column set.
+After INTEGRATE_ENGINES we already have a per-peptide table with run, charge,
+retention_time and protein_list — this script reshapes it into FlashLFQ's
+expected column set.
 """
 from __future__ import annotations
 

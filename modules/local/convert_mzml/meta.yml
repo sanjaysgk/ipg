@@ -11,8 +11,7 @@ tools:
         Python library to read mzML spectra. Used to rewrite each mzML
         as a lightweight MGF and emit two pickles: scans.pkl (per-MS2
         metadata keyed by "run_scan") and index2scan.pkl (spectrum
-        index → scan, needed by PEAKS). Extracted from
-        immunopeptidomics/core.py read_mzML().
+        index → scan, needed by PEAKS).
       homepage: https://pymzml.readthedocs.io/
       documentation: https://pymzml.readthedocs.io/
       licence: ["MIT"]

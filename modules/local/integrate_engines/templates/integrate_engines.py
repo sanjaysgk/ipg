@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-'''Integrate rescored PSMs across MS search engines at 1% peptide-level FDR.
-
-Extracted from immunopeptidomics/core.py:
-  - read_psms() (L1313)
-  - count_chimera() (L1408)
-  - read_results() (L1451) — aggregation + chimeric PSM resolution
-  - pepform2seq() (L1276), sort_protein_list() (L1293)
+'''Integrate rescored PSMs across MS search engines at a configurable peptide-level FDR (default 1%).
 
 Emits:
   integrated_psms.tsv      unique-peptide PSMs (post-chimera removal)
@@ -16,6 +10,7 @@ Emits:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -27,8 +22,8 @@ from Bio import SeqIO
 
 OUT_COLUMNS = [
     "scan_id", "run", "peptide", "length", "immuno", "peptidoform",
-    "protein_list", "class", "class_detail", "gene", "species",
-    "description leftmost",
+    "protein_list", "protein_list_by_engine", "class", "class_detail",
+    "gene", "species", "description leftmost",
     "engine", "psm_qval", "psm_score", "psm_PEP",
     "peptide_qval", "peptide_score", "peptide_PEP",
     "precursor_mz", "retention_time", "ion_mobility",
@@ -37,7 +32,8 @@ OUT_COLUMNS = [
 ]
 
 PEP_COLUMNS = [
-    "peptide", "length", "immuno", "peptidoform", "protein_list", "class",
+    "peptide", "length", "immuno", "peptidoform", "protein_list",
+    "protein_list_by_engine", "class",
     "class_detail", "gene", "species", "description leftmost", "engine",
     "peptide_qval", "peptide_score", "peptide_PEP",
     "rescoring:spec_pearson", "rescoring:rt_diff_best",
@@ -88,6 +84,63 @@ def classify_peptide_detail(protein_list: str, canonical_prefixes: list[str]) ->
     if any(is_canon):
         return "canonical_only"
     return "cryptic"
+
+
+def union_protein_lists(protein_lists) -> str:
+    # Merge the ;-joined accessions from several rows into one sorted,
+    # de-duplicated list. Used when engines (or PSMs of one peptide) report
+    # different protein sets for the same identification, so the class is
+    # derived from every protein any engine assigned rather than one engine's
+    # row. A union only adds proteins, and classify_peptide is canonical-if-ANY,
+    # so re-deriving on the union can move a peptide off the cryptic list but
+    # never onto it. Non-string cells (e.g. a missing list) are skipped so they
+    # never inject a bogus 'nan' accession.
+    proteins = set()
+    for value in protein_lists:
+        if isinstance(value, str):
+            proteins.update(p for p in value.split(";") if p)
+    return ";".join(sorted(proteins))
+
+
+def rederive_protein_fields(df, canonical_prefixes, prot_info) -> None:
+    # Recompute every protein-derived column from protein_list, in place. Run
+    # after protein_list is merged across engines/PSMs so class, class_detail,
+    # gene, species and the leftmost description reflect the merged protein set
+    # rather than one engine's row. Reuses the same expressions as the per-PSM
+    # pass, so only the protein set changes, not the formatting.
+    df["class"] = df["protein_list"].apply(
+        lambda x: classify_peptide(x, canonical_prefixes))
+    df["class_detail"] = df["protein_list"].apply(
+        lambda x: classify_peptide_detail(x, canonical_prefixes))
+    # Drop blank lookups (cryptic ORFs carry no UniProt gene symbol) and
+    # de-duplicate, so isoforms of one gene collapse to a single symbol and the
+    # union-widened join is not padded with empty ';' separators.
+    df["gene"] = df["protein_list"].apply(
+        lambda x: ";".join(sorted({
+            g for g in (prot_info.get(p, {}).get("gene", "") for p in x.split(";")) if g})))
+    df["species"] = df["protein_list"].apply(
+        lambda x: ";".join(sorted({
+            s for s in (prot_info.get(p, {}).get("species", "") for p in x.split(";")) if s})))
+    df["description leftmost"] = df["protein_list"].apply(
+        lambda x: prot_info.get(x.split(";")[0], {}).get("description", "") if x else "")
+
+
+def build_protein_list_by_engine(engines, protein_lists) -> str:
+    # JSON {engine: [sorted proteins]} preserving each engine's own protein list
+    # for a merged identification, so a cross-engine disagreement stays auditable
+    # after the union. An engine contributing several rows is unioned (dict of
+    # sets) so nothing is dropped; keys and lists are sorted for deterministic
+    # output. The engine key is kept even when its list is missing; a non-string
+    # value just contributes no proteins (never a bogus 'nan').
+    by_engine: dict = {}
+    for engine, value in zip(engines, protein_lists):
+        proteins = by_engine.setdefault(str(engine), set())
+        if isinstance(value, str):
+            proteins.update(p for p in value.split(";") if p)
+    return json.dumps(
+        {e: sorted(v) for e, v in sorted(by_engine.items())},
+        separators=(",", ":"),
+    )
 
 
 def _tdc_q(score, is_decoy):
@@ -216,17 +269,20 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
 
     psms = df[[c for c in OUT_COLUMNS if c in df.columns]].copy()
 
+    # Within one engine a peptide can appear in several PSMs that disagree on the
+    # reported protein set; union them so the per-engine protein_list is complete
+    # before engines are merged. Protein-derived fields are recomputed from the
+    # union (rederive_protein_fields), so they are not aggregated here.
     agg = {
         "length": "first", "immuno": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
-        "protein_list": "first", "class": "first", "class_detail": "first",
-        "gene": "first", "species": "first",
-        "description leftmost": "first", "engine": "first",
+        "protein_list": union_protein_lists, "engine": "first",
         "peptide_qval": "min", "peptide_score": "max", "peptide_PEP": "min",
         "rescoring:spec_pearson": "max", "rescoring:rt_diff_best": "min",
     }
     agg = {k: v for k, v in agg.items() if k in psms.columns}
     peptides = psms.groupby("peptide").agg(agg).reset_index()
+    rederive_protein_fields(peptides, canonical_prefixes, prot_info)
     return psms, peptides
 
 
@@ -287,16 +343,17 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
                             index=False)
         return
 
-    # Aggregate PSMs across engines on scan_id.
+    # Aggregate PSMs across engines on scan_id. protein_list is unioned across
+    # engines; _pl_raw keeps each engine's own list (aligned with engine: list)
+    # so protein_list_by_engine can preserve the per-engine breakdown. Protein-
+    # derived fields are recomputed from the union afterwards.
+    psms_all["_pl_raw"] = psms_all["protein_list"]
     agg_psm = {
         "run": "first",
         "peptide": lambda x: ";".join(pd.Series.unique(x)),
         "length": "first", "immuno": "first",
-        "peptidoform": list, "protein_list": "first", "class": "first",
-        "class_detail": "first",
-        "gene": "first", "species": "first",
-        "description leftmost": "first",
-        "engine": list,
+        "peptidoform": list, "protein_list": union_protein_lists,
+        "engine": list, "_pl_raw": list,
         "psm_qval": list, "psm_score": list, "psm_PEP": list,
         "peptide_qval": list, "peptide_score": list, "peptide_PEP": list,
         "precursor_mz": "first", "retention_time": "first",
@@ -307,6 +364,12 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     }
     agg_psm = {k: v for k, v in agg_psm.items() if k in psms_all.columns}
     psm_agg = psms_all.groupby("scan_id").agg(agg_psm).reset_index()
+    rederive_protein_fields(psm_agg, canonical_prefixes, prot_info)
+    psm_agg["protein_list_by_engine"] = [
+        build_protein_list_by_engine(eng, raw)
+        for eng, raw in zip(psm_agg["engine"], psm_agg["_pl_raw"])
+    ]
+    psm_agg = psm_agg.drop(columns="_pl_raw")
 
     chimera = psm_agg[psm_agg["peptide"].str.contains(";")]
     chimera_count, chimera_pep = count_chimera(chimera)
@@ -315,19 +378,27 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     print(f"[integrate_engines] unique PSMs: {len(psms)}  chimeric: {len(chimera)}",
           file=sys.stderr)
 
-    # Aggregate peptides across engines.
+    # Aggregate peptides across engines. protein_list is unioned; _pl_raw keeps
+    # each engine's own list (aligned with engine: list). Protein-derived fields
+    # are recomputed from the union, and protein_list_by_engine preserves the raw
+    # per-engine lists.
+    peptides_all["_pl_raw"] = peptides_all["protein_list"]
     agg_pep = {
         "length": "first", "immuno": "first",
-        "protein_list": "first", "class": "first", "class_detail": "first",
-        "gene": "first", "species": "first",
-        "description leftmost": "first",
+        "protein_list": union_protein_lists,
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
-        "engine": list,
+        "engine": list, "_pl_raw": list,
         "peptide_qval": list, "peptide_score": list, "peptide_PEP": list,
         "rescoring:spec_pearson": "max", "rescoring:rt_diff_best": "min",
     }
     agg_pep = {k: v for k, v in agg_pep.items() if k in peptides_all.columns}
     peptides = peptides_all.groupby("peptide").agg(agg_pep).reset_index()
+    rederive_protein_fields(peptides, canonical_prefixes, prot_info)
+    peptides["protein_list_by_engine"] = [
+        build_protein_list_by_engine(eng, raw)
+        for eng, raw in zip(peptides["engine"], peptides["_pl_raw"])
+    ]
+    peptides = peptides.drop(columns="_pl_raw")
 
     peptides["peptidoform"] = peptides["peptidoform"].apply(
         lambda x: ";".join(set(x.split(";")))

@@ -1,5 +1,5 @@
 name: "integrate_engines"
-description: Merge rescored PSMs across search engines at 1% peptide-level FDR with chimeric-spectrum resolution
+description: Merge rescored PSMs across search engines at a configurable peptide-level FDR (--integrate_fdr, default 1%) with chimeric-spectrum resolution
 keywords:
   - proteomics
   - fdr
@@ -35,13 +35,20 @@ output:
           type: map
       - "integrated_psms.tsv":
           type: file
-          description: Integrated unique-peptide PSMs
+          description: |
+            Integrated unique-peptide PSMs. protein_list is the union of the
+            engines' protein sets; protein_list_by_engine is a JSON map of each
+            engine's own list, preserved for auditing cross-engine disagreement.
   - peptides:
       - meta:
           type: map
       - "integrated_peptides.tsv":
           type: file
-          description: Integrated peptide-level table with per-run PSM counts
+          description: |
+            Integrated peptide-level table with per-run PSM counts. protein_list
+            is the cross-engine union; protein_list_by_engine is a JSON map of
+            each engine's own protein list. class/class_detail are derived from
+            the union (canonical wins if any engine maps a canonical protein).
   - chimeric:
       - meta:
           type: map
@@ -59,3 +66,7 @@ output:
           type: file
           description: File containing software versions
           pattern: "versions.yml"
+authors:
+  - "@sanjaysgk"
+maintainers:
+  - "@sanjaysgk"

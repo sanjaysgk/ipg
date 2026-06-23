@@ -27,7 +27,7 @@ process SAGE {
     def cpus = Math.max(1, (task.cpus ?: 2).intdiv(2))
     """
     # If an MSFragger search_log is present, re-use its calibrated fragment
-    # tolerance and topN peaks (matches core.py run_Sage behaviour).
+    # tolerance and topN peaks.
     ms2_tol=""
     max_peaks=""
     if [ -s "${msfragger_log}" ] && [ "${msfragger_log}" != "NO_FILE" ]; then

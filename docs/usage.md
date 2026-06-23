@@ -92,8 +92,9 @@ should pre-stage them and pass the paths. AlphaMissense data is available from
 ## MS search (`--step ms_search`)
 
 Runs up to four search engines in parallel against a target-decoy FASTA, then
-rescores PSMs with MS2Rescore and merges them at 1% peptide-level FDR. Engine
-selection is a comma-list; each engine is gated independently.
+rescores PSMs with MS2Rescore and merges them at a configurable peptide-level
+FDR (`--integrate_fdr`, default 1%). Engine selection is a comma-list; each
+engine is gated independently.
 
 ```csv title="ms_samplesheet.csv"
 sample,ms_file

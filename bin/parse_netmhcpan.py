@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Parse netMHCpan / netMHCIIpan stdout output into a per-peptide best-binder TSV.
 
-Extracted from immunopeptidomics/core.py netMHCpan() (L1802) and
-get_best_binder() (L1780). Ranks by percentile rank (ascending) and keeps
-the best MHC allele per peptide.
+Ranks by percentile rank (ascending) and keeps the best MHC allele per peptide.
 """
 from __future__ import annotations
 
