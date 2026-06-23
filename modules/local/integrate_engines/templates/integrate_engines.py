@@ -93,10 +93,12 @@ def union_protein_lists(protein_lists) -> str:
     # derived from every protein any engine assigned rather than one engine's
     # row. A union only adds proteins, and classify_peptide is canonical-if-ANY,
     # so re-deriving on the union can move a peptide off the cryptic list but
-    # never onto it.
+    # never onto it. Non-string cells (e.g. a missing list) are skipped so they
+    # never inject a bogus 'nan' accession.
     proteins = set()
     for value in protein_lists:
-        proteins.update(p for p in str(value).split(";") if p)
+        if isinstance(value, str):
+            proteins.update(p for p in value.split(";") if p)
     return ";".join(sorted(proteins))
 
 
@@ -110,11 +112,14 @@ def rederive_protein_fields(df, canonical_prefixes, prot_info) -> None:
         lambda x: classify_peptide(x, canonical_prefixes))
     df["class_detail"] = df["protein_list"].apply(
         lambda x: classify_peptide_detail(x, canonical_prefixes))
+    # Drop blank lookups (cryptic ORFs carry no gene/species) so the joined
+    # fields are not padded with empty ';' separators, which the union widens.
     df["gene"] = df["protein_list"].apply(
-        lambda x: ";".join(prot_info.get(p, {}).get("gene", "") for p in x.split(";")))
+        lambda x: ";".join(
+            g for g in (prot_info.get(p, {}).get("gene", "") for p in x.split(";")) if g))
     df["species"] = df["protein_list"].apply(
-        lambda x: ";".join(sorted(set(
-            prot_info.get(p, {}).get("species", "") for p in x.split(";")))))
+        lambda x: ";".join(sorted({
+            s for s in (prot_info.get(p, {}).get("species", "") for p in x.split(";")) if s})))
     df["description leftmost"] = df["protein_list"].apply(
         lambda x: prot_info.get(x.split(";")[0], {}).get("description", "") if x else "")
 
@@ -124,11 +129,13 @@ def build_protein_list_by_engine(engines, protein_lists) -> str:
     # for a merged identification, so a cross-engine disagreement stays auditable
     # after the union. An engine contributing several rows is unioned (dict of
     # sets) so nothing is dropped; keys and lists are sorted for deterministic
-    # output.
+    # output. The engine key is kept even when its list is missing; a non-string
+    # value just contributes no proteins (never a bogus 'nan').
     by_engine: dict = {}
     for engine, value in zip(engines, protein_lists):
-        by_engine.setdefault(str(engine), set()).update(
-            p for p in str(value).split(";") if p)
+        proteins = by_engine.setdefault(str(engine), set())
+        if isinstance(value, str):
+            proteins.update(p for p in value.split(";") if p)
     return json.dumps(
         {e: sorted(v) for e, v in sorted(by_engine.items())},
         separators=(",", ":"),
