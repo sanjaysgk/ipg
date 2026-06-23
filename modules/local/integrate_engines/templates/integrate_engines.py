@@ -21,7 +21,7 @@ from Bio import SeqIO
 
 
 OUT_COLUMNS = [
-    "scan_id", "run", "peptide", "length", "immuno", "peptidoform",
+    "scan_id", "run", "peptide", "length", "peptidoform",
     "protein_list", "protein_list_by_engine", "class", "class_detail",
     "gene", "species", "description leftmost",
     "engine", "psm_qval", "psm_score", "psm_PEP",
@@ -32,7 +32,7 @@ OUT_COLUMNS = [
 ]
 
 PEP_COLUMNS = [
-    "peptide", "length", "immuno", "peptidoform", "protein_list",
+    "peptide", "length", "peptidoform", "protein_list",
     "protein_list_by_engine", "class",
     "class_detail", "gene", "species", "description leftmost", "engine",
     "peptide_qval", "peptide_score", "peptide_PEP",
@@ -44,6 +44,25 @@ PEP_COLUMNS = [
 # class, not enforced.
 MIN_CLASS_TARGETS = 100
 
+# Header-parsing patterns and options, configurable via params. Compiled once at
+# the entry point (fail-fast) and read by the classify / parse helpers. Defaults
+# reproduce the previous hardcoded behaviour. CRYPTIC_RE keys on the ORF suffix
+# db_construct always appends (<transcript>_f<frame>p<orf>_<copy>), not a TCONS_
+# prefix, so it holds for any input transcriptome. A protein matching neither
+# pattern is class 'other' (contaminants, iRT) rather than silently 'cryptic'.
+CANONICAL_RE = None
+CRYPTIC_RE = None
+GENE_RE = None
+SPECIES_RE = None
+FILTER_OTHER = False
+
+
+def compile_regex(pattern: str, param: str):
+    try:
+        return re.compile(pattern)
+    except re.error as exc:
+        raise SystemExit(f"[integrate_engines] invalid {param} regex '{pattern}': {exc}")
+
 
 def pepform2seq(pepform: str) -> str:
     return re.sub(r"[^A-Z]", "", re.sub(r"\\[.*?\\]", "", pepform))
@@ -54,36 +73,48 @@ def sort_protein_list(protein_list: str) -> str:
     return ";".join(sorted(p for p in s.split(";") if not p.startswith("rev_")))
 
 
-def classify_peptide(protein_list: str, canonical_prefixes: list[str]) -> str:
-    '''canonical if ANY mapped protein is canonical (UniProt-style accession);
-    cryptic only when every protein is non-canonical. A peptide shared with a
-    canonical protein is NOT a cryptic discovery, so the canonical label wins.
-    Strips the rev_ decoy prefix first so a decoy inherits its target's class
-    (rev_sp|.. -> canonical, rev_TCONS.. -> cryptic), which separated-class FDR
-    relies on. Accepts the raw "['sp|..']" repr or a ;-joined accession list.'''
+def _proteins_of(protein_list: str) -> list[str]:
+    # Normalise the raw "['sp|..']" repr or a ;-joined list, drop the rev_ decoy
+    # prefix so a decoy inherits its target's class (separated-class FDR needs it).
     s = str(protein_list).strip("[]").replace("'", "").replace(", ", ";")
-    proteins = [p[4:] if p.startswith("rev_") else p for p in s.split(";") if p]
-    if any(p.startswith(pre) for p in proteins for pre in canonical_prefixes):
+    return [p[4:] if p.startswith("rev_") else p for p in s.split(";") if p]
+
+
+def classify_protein(protein: str) -> str:
+    # canonical if it matches the canonical pattern; else cryptic if it matches
+    # the cryptic pattern; else 'other' (contaminant / iRT / unrecognised).
+    if CANONICAL_RE.search(protein):
         return "canonical"
-    return "cryptic"
+    if CRYPTIC_RE.search(protein):
+        return "cryptic"
+    return "other"
 
 
-def classify_peptide_detail(protein_list: str, canonical_prefixes: list[str]) -> str:
-    '''Three-way REPORT label refining the FDR `class` (which stays canonical):
+def classify_peptide(protein_list: str) -> str:
+    '''FDR class with precedence canonical > cryptic > other. A peptide shared
+    with a canonical protein is NOT a cryptic discovery, so canonical wins; a
+    peptide on a cryptic ORF outranks an 'other' (contaminant) co-assignment.'''
+    classes = {classify_protein(p) for p in _proteins_of(protein_list)}
+    if "canonical" in classes:
+        return "canonical"
+    if "cryptic" in classes:
+        return "cryptic"
+    return "other"
+
+
+def classify_peptide_detail(protein_list: str) -> str:
+    '''REPORT label refining `class`:
       canonical_only  every mapped protein is canonical
-      overlap         maps to a canonical AND a cryptic protein
+      overlap         maps to a canonical AND a non-canonical protein
       cryptic         maps only to cryptic proteins (a true cryptic discovery)
-    A peptide shared with a canonical protein is reported as overlap, never as a
-    cryptic discovery, so the cryptic headline counts only novel sequences.
+      other           maps only to unrecognised proteins (contaminant / iRT)
     Mirrors classify_peptide (rev_-stripped) so it never disagrees on class.'''
-    s = str(protein_list).strip("[]").replace("'", "").replace(", ", ";")
-    proteins = [p[4:] if p.startswith("rev_") else p for p in s.split(";") if p]
-    is_canon = [any(p.startswith(pre) for pre in canonical_prefixes) for p in proteins]
-    if any(is_canon) and not all(is_canon):
-        return "overlap"
-    if any(is_canon):
-        return "canonical_only"
-    return "cryptic"
+    classes = {classify_protein(p) for p in _proteins_of(protein_list)}
+    if "canonical" in classes:
+        return "overlap" if len(classes) > 1 else "canonical_only"
+    if "cryptic" in classes:
+        return "cryptic"
+    return "other"
 
 
 def union_protein_lists(protein_lists) -> str:
@@ -102,16 +133,14 @@ def union_protein_lists(protein_lists) -> str:
     return ";".join(sorted(proteins))
 
 
-def rederive_protein_fields(df, canonical_prefixes, prot_info) -> None:
+def rederive_protein_fields(df, prot_info) -> None:
     # Recompute every protein-derived column from protein_list, in place. Run
     # after protein_list is merged across engines/PSMs so class, class_detail,
     # gene, species and the leftmost description reflect the merged protein set
     # rather than one engine's row. Reuses the same expressions as the per-PSM
     # pass, so only the protein set changes, not the formatting.
-    df["class"] = df["protein_list"].apply(
-        lambda x: classify_peptide(x, canonical_prefixes))
-    df["class_detail"] = df["protein_list"].apply(
-        lambda x: classify_peptide_detail(x, canonical_prefixes))
+    df["class"] = df["protein_list"].apply(classify_peptide)
+    df["class_detail"] = df["protein_list"].apply(classify_peptide_detail)
     # Drop blank lookups (cryptic ORFs carry no UniProt gene symbol) and
     # de-duplicate, so isoforms of one gene collapse to a single symbol and the
     # union-widened join is not padded with empty ';' separators.
@@ -181,28 +210,22 @@ def class_separated_peptide_q(df: pd.DataFrame):
 
 
 def parse_fasta_prot_info(fasta: Path) -> dict:
-    '''Extract per-protein gene/species/description from FASTA headers.'''
+    '''Extract per-protein gene/species/description from FASTA headers using the
+    configurable GENE_RE / SPECIES_RE patterns (capture group 1).'''
     info: dict = {}
     for rec in SeqIO.parse(str(fasta), "fasta"):
         header = rec.description
-        gene = ""
-        species = ""
-        if "GN=" in header:
-            m = re.search(r"GN=(\\S+)", header)
-            gene = m.group(1) if m else ""
-        if "OS=" in header:
-            m = re.search(r"OS=([^=]+?)(?=\\s+[A-Z]{2}=|\$)", header)
-            species = m.group(1).strip() if m else ""
+        gm = GENE_RE.search(header)
+        sm = SPECIES_RE.search(header)
         info[rec.id] = {
-            "gene": gene,
-            "species": species,
+            "gene": gm.group(1) if gm else "",
+            "species": sm.group(1).strip() if sm else "",
             "description": header,
         }
     return info
 
 
 def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
-                     immuno_lengths: list[int], canonical_prefixes: list[str],
                      fdr: float = 0.01) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(tsv, sep="\\t")
     if df.empty:
@@ -211,12 +234,16 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
 
     # Classify EVERY PSM (targets + decoys); a decoy inherits its target's class
     # via rev_-stripping so each class gets its own target-decoy competition.
-    df["class"] = df["protein_list"].apply(
-        lambda x: classify_peptide(x, canonical_prefixes)
-    )
-    df["class_detail"] = df["protein_list"].apply(
-        lambda x: classify_peptide_detail(x, canonical_prefixes)
-    )
+    df["class"] = df["protein_list"].apply(classify_peptide)
+    df["class_detail"] = df["protein_list"].apply(classify_peptide_detail)
+    # 'other' = contaminant / iRT / unrecognised. Dropped before FDR only when
+    # --filter_other is set; default keeps them (annotate-only) so a #CONTAM DB
+    # carrying real hits is never silently removed.
+    if FILTER_OTHER:
+        df = df[df["class"] != "other"].copy()
+        if df.empty:
+            return (pd.DataFrame(columns=OUT_COLUMNS),
+                    pd.DataFrame(columns=PEP_COLUMNS))
     df["_decoy"] = df["is_decoy"].astype(bool)
     df["peptide"] = df["peptidoform"].apply(pepform2seq)
     df = df.rename(columns={
@@ -227,7 +254,7 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
 
     # Warn when a class is too small for a reliable per-class TDC estimate.
     target_class = df.loc[~df["_decoy"], "class"].value_counts()
-    for _cls in ("canonical", "cryptic"):
+    for _cls in ("canonical", "cryptic", "other"):
         _n = int(target_class.get(_cls, 0))
         if 0 < _n < MIN_CLASS_TARGETS:
             print(f"[integrate_engines] WARNING: {engine} {_cls} class has {_n} "
@@ -265,8 +292,6 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     df["description leftmost"] = df["protein_list"].apply(
         lambda x: prot_info.get(x.split(";")[0], {}).get("description", "")
     )
-    df["immuno"] = df["length"].isin(immuno_lengths)
-
     psms = df[[c for c in OUT_COLUMNS if c in df.columns]].copy()
 
     # Within one engine a peptide can appear in several PSMs that disagree on the
@@ -274,7 +299,7 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     # before engines are merged. Protein-derived fields are recomputed from the
     # union (rederive_protein_fields), so they are not aggregated here.
     agg = {
-        "length": "first", "immuno": "first",
+        "length": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
         "protein_list": union_protein_lists, "engine": "first",
         "peptide_qval": "min", "peptide_score": "max", "peptide_PEP": "min",
@@ -282,7 +307,7 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     }
     agg = {k: v for k, v in agg.items() if k in psms.columns}
     peptides = psms.groupby("peptide").agg(agg).reset_index()
-    rederive_protein_fields(peptides, canonical_prefixes, prot_info)
+    rederive_protein_fields(peptides, prot_info)
     return psms, peptides
 
 
@@ -322,7 +347,6 @@ def cryptic_spectral_status(row, min_spec_pearson, max_rt_diff) -> str:
 
 
 def integrate(engine_tsvs: dict[str, Path], fasta: Path,
-              immuno_lengths: list[int], canonical_prefixes: list[str],
               outdir: Path, fdr: float = 0.01,
               min_spec_pearson=None, max_rt_diff=None) -> None:
     prot_info = parse_fasta_prot_info(fasta)
@@ -330,8 +354,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     peptides_all = pd.DataFrame(columns=PEP_COLUMNS)
 
     for engine, tsv in engine_tsvs.items():
-        psms, peps = read_engine_psms(tsv, engine, prot_info, immuno_lengths,
-                                      canonical_prefixes, fdr=fdr)
+        psms, peps = read_engine_psms(tsv, engine, prot_info, fdr=fdr)
         psms_all = pd.concat([psms_all, psms], ignore_index=True)
         peptides_all = pd.concat([peptides_all, peps], ignore_index=True)
 
@@ -351,7 +374,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     agg_psm = {
         "run": "first",
         "peptide": lambda x: ";".join(pd.Series.unique(x)),
-        "length": "first", "immuno": "first",
+        "length": "first",
         "peptidoform": list, "protein_list": union_protein_lists,
         "engine": list, "_pl_raw": list,
         "psm_qval": list, "psm_score": list, "psm_PEP": list,
@@ -364,7 +387,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     }
     agg_psm = {k: v for k, v in agg_psm.items() if k in psms_all.columns}
     psm_agg = psms_all.groupby("scan_id").agg(agg_psm).reset_index()
-    rederive_protein_fields(psm_agg, canonical_prefixes, prot_info)
+    rederive_protein_fields(psm_agg, prot_info)
     psm_agg["protein_list_by_engine"] = [
         build_protein_list_by_engine(eng, raw)
         for eng, raw in zip(psm_agg["engine"], psm_agg["_pl_raw"])
@@ -384,7 +407,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     # per-engine lists.
     peptides_all["_pl_raw"] = peptides_all["protein_list"]
     agg_pep = {
-        "length": "first", "immuno": "first",
+        "length": "first",
         "protein_list": union_protein_lists,
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
         "engine": list, "_pl_raw": list,
@@ -393,7 +416,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     }
     agg_pep = {k: v for k, v in agg_pep.items() if k in peptides_all.columns}
     peptides = peptides_all.groupby("peptide").agg(agg_pep).reset_index()
-    rederive_protein_fields(peptides, canonical_prefixes, prot_info)
+    rederive_protein_fields(peptides, prot_info)
     peptides["protein_list_by_engine"] = [
         build_protein_list_by_engine(eng, raw)
         for eng, raw in zip(peptides["engine"], peptides["_pl_raw"])
@@ -457,22 +480,29 @@ import Bio
 
 ENGINE_TSV_PAIRS = "${pairs}"   # space-separated "name=path" tokens
 FASTA = "${fasta}"
-PEPTIDE_LENGTH = "${len_arg}"
 FDR = float("${fdr_arg}")
-CANONICAL_PREFIXES = [p for p in "${canonical_prefixes}".split(",") if p]
 MIN_SPEC_PEARSON = float("${min_spec_pearson}") if "${min_spec_pearson}" else None
 MAX_RT_DIFF = float("${max_rt_diff}") if "${max_rt_diff}" else None
+FILTER_OTHER = "${filter_other}" == "true"
 PROCESS_NAME = "${task.process}"
 
-if "-" in PEPTIDE_LENGTH:
-    _a, _b = PEPTIDE_LENGTH.split("-")
-    immuno_lengths = list(range(int(_a), int(_b) + 1))
+# Header-parsing patterns. An explicit param value (interpolated) wins; otherwise
+# the default raw-string regex is used. Defaults are written with doubled
+# backslashes / escaped '\$' so the Nextflow template engine yields the intended
+# pattern. Canonical: explicit regex wins, else compile the prefix list (sugar).
+_canon_regex = "${canonical_id_regex}"
+if _canon_regex:
+    CANONICAL_RE = compile_regex(_canon_regex, "canonical_id_regex")
 else:
-    immuno_lengths = [int(PEPTIDE_LENGTH)]
+    _prefixes = [re.escape(p) for p in "${canonical_prefixes}".split(",") if p]
+    _canon_default = ("^(?:" + "|".join(_prefixes) + ")") if _prefixes else r"(?!x)x"
+    CANONICAL_RE = compile_regex(_canon_default, "canonical_protein_prefixes")
+CRYPTIC_RE = compile_regex("${cryptic_id_regex}" or r"_f\\d+p\\d+_\\d+\$", "cryptic_id_regex")
+GENE_RE = compile_regex("${gene_regex}" or r"GN=(\\S+)", "gene_regex")
+SPECIES_RE = compile_regex("${species_regex}" or r"OS=([^=]+?)(?=\\s+[A-Z]{2}=|\$)", "species_regex")
 
 engine_tsvs = parse_engine_tsv_arg(ENGINE_TSV_PAIRS.split())
-integrate(engine_tsvs, Path(FASTA), immuno_lengths, CANONICAL_PREFIXES,
-          Path("."), fdr=FDR,
+integrate(engine_tsvs, Path(FASTA), Path("."), fdr=FDR,
           min_spec_pearson=MIN_SPEC_PEARSON, max_rt_diff=MAX_RT_DIFF)
 
 with open("versions.yml", "w") as _f:

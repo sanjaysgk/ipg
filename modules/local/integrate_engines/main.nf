@@ -23,9 +23,13 @@ process INTEGRATE_ENGINES {
     task.ext.when == null || task.ext.when
 
     script:
-    len_arg = params.peptide_length ?: '9'
     fdr_arg = params.integrate_fdr ?: '0.01'
     canonical_prefixes = params.canonical_protein_prefixes ?: 'sp|,tr|'
+    canonical_id_regex = params.canonical_id_regex ?: ''
+    cryptic_id_regex   = params.cryptic_id_regex   ?: ''
+    gene_regex         = params.gene_regex         ?: ''
+    species_regex      = params.species_regex      ?: ''
+    filter_other       = params.filter_other ? 'true' : 'false'
     min_spec_pearson = params.cryptic_min_spec_pearson != null ? params.cryptic_min_spec_pearson : ''
     max_rt_diff      = params.cryptic_max_rt_diff       != null ? params.cryptic_max_rt_diff       : ''
     // Pair staged files with engine names; order is preserved. Coerce to lists first:
