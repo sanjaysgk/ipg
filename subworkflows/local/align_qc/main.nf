@@ -46,10 +46,10 @@ workflow ALIGN_QC {
     )
 
     //
-    // Step 03: sort by coordinate and index
-    // (out of order with the legacy script, which does infer_experiment
-    //  on the unsorted SAM — RSeQC actually wants a coordinate-sorted,
-    //  indexed BAM, so we sort first.)
+    // Step 03: coordinate-sort and index.
+    // The sorted+indexed BAM is needed downstream for transcript assembly;
+    // we run infer_experiment on it too (it works on unsorted input as well,
+    // this just reuses the BAM we already produce).
     //
     SAMTOOLS_SORT(
         STAR_ALIGN.out.bam,
