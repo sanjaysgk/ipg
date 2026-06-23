@@ -19,12 +19,14 @@ process GIBBSCLUSTER {
 
     script:
     def clusters = (params.gibbs_clusters == 'auto') ? '[2-5]' : params.gibbs_clusters
+    def pep_len = params.peptide_length ?: '9'
     """
-    # Filter to immunopeptides only before clustering.
+    # Filter to immunopeptides (lengths within --peptide_length) before clustering.
     python3 - <<PY
 import pandas as pd
 df = pd.read_csv("${peptides_tsv}", sep="\\t")
-immuno = df[df.get("immuno", False).astype(bool)]
+_pl = "${pep_len}".split("-")
+immuno = df[df["length"].between(int(_pl[0]), int(_pl[-1]))]
 if "peptide" not in immuno.columns or len(immuno) == 0:
     raise SystemExit("no immunopeptides in input")
 immuno["peptide"].to_csv("peptide_input.txt", header=False, index=False)

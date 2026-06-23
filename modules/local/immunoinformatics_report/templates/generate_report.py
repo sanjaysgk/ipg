@@ -211,6 +211,7 @@ GIBBS_RAW = "${gibbs}"
 FLASHLFQ_RAW = "${flashlfq}"
 BLASTP_RAW = "${blastp}"
 OUT = "${meta.id}_immunoinformatics_report.html"
+PEPTIDE_LENGTH = "${pep_len}"
 PROCESS_NAME = "${task.process}"
 
 
@@ -221,6 +222,12 @@ def _opt(p: str) -> Optional[Path]:
 peptides = read_tsv(_opt(BLASTP_RAW)) if _opt(BLASTP_RAW) else read_tsv(Path(PEPTIDES))
 if peptides.empty:
     peptides = read_tsv(Path(PEPTIDES))
+
+# Immunopeptide membership = peptide length within --peptide_length (replaces the
+# former 'immuno' column INTEGRATE_ENGINES used to emit).
+if "length" in peptides.columns and not peptides.empty:
+    _pl = PEPTIDE_LENGTH.split("-")
+    peptides["immuno"] = peptides["length"].between(int(_pl[0]), int(_pl[-1]))
 
 netmhcpan = read_tsv(_opt(NETMHCPAN_RAW))
 if not netmhcpan.empty and "peptide" in netmhcpan.columns:

@@ -401,8 +401,34 @@
                 "canonical_protein_prefixes": {
                     "type": "string",
                     "default": "sp|,tr|",
-                    "description": "Comma-separated accession prefixes marking canonical proteins. Peptides mapping only to non-canonical proteins are classed 'cryptic' by INTEGRATE_ENGINES.",
+                    "description": "Comma-separated accession prefixes marking canonical proteins (sugar for canonical_id_regex). Peptides mapping only to non-canonical proteins are classed 'cryptic' or 'other' by INTEGRATE_ENGINES.",
                     "fa_icon": "fas fa-tags"
+                },
+                "canonical_id_regex": {
+                    "type": "string",
+                    "description": "Regex marking canonical protein accessions; overrides canonical_protein_prefixes when set. Default (unset) compiles the prefix list. Custom regexes must be Nextflow-template-safe (double-escape backslashes).",
+                    "fa_icon": "fas fa-tags"
+                },
+                "cryptic_id_regex": {
+                    "type": "string",
+                    "description": "Regex marking cryptic ORF accessions. Default (unset) matches the ORF suffix '_f<frame>p<orf>_<copy>' that db_construct appends, so it holds for any input transcriptome (not just TCONS_).",
+                    "fa_icon": "fas fa-tags"
+                },
+                "gene_regex": {
+                    "type": "string",
+                    "description": "Regex (capture group 1) extracting the gene symbol from a FASTA header. Default (unset) = 'GN=(\\\\S+)'.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "species_regex": {
+                    "type": "string",
+                    "description": "Regex (capture group 1) extracting the species from a FASTA header. Default (unset) = the UniProt 'OS=' field.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "filter_other": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Drop 'other' proteins (contaminants / iRT matching neither the canonical nor cryptic pattern) before FDR. Default false keeps them (annotate-only), so a #CONTAM DB carrying real hits is never silently removed.",
+                    "fa_icon": "fas fa-filter"
                 },
                 "run_protein_group_fdr": {
                     "type": "boolean",
