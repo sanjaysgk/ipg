@@ -26,6 +26,7 @@ process IMMUNOINFORMATICS_REPORT {
     script:
     // Optional inputs arrive as the NO_FILE sentinel when the upstream
     // module did not run. The template handles that check internally.
+    pep_len = params.peptide_length ?: '9'
     template 'generate_report.py'
 
     stub:
