@@ -112,11 +112,12 @@ def rederive_protein_fields(df, canonical_prefixes, prot_info) -> None:
         lambda x: classify_peptide(x, canonical_prefixes))
     df["class_detail"] = df["protein_list"].apply(
         lambda x: classify_peptide_detail(x, canonical_prefixes))
-    # Drop blank lookups (cryptic ORFs carry no gene/species) so the joined
-    # fields are not padded with empty ';' separators, which the union widens.
+    # Drop blank lookups (cryptic ORFs carry no UniProt gene symbol) and
+    # de-duplicate, so isoforms of one gene collapse to a single symbol and the
+    # union-widened join is not padded with empty ';' separators.
     df["gene"] = df["protein_list"].apply(
-        lambda x: ";".join(
-            g for g in (prot_info.get(p, {}).get("gene", "") for p in x.split(";")) if g))
+        lambda x: ";".join(sorted({
+            g for g in (prot_info.get(p, {}).get("gene", "") for p in x.split(";")) if g})))
     df["species"] = df["protein_list"].apply(
         lambda x: ";".join(sorted({
             s for s in (prot_info.get(p, {}).get("species", "") for p in x.split(";")) if s})))
