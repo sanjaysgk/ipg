@@ -22,7 +22,7 @@ from Bio import SeqIO
 
 OUT_COLUMNS = [
     "scan_id", "run", "peptide", "length", "peptidoform",
-    "protein_list", "protein_list_by_engine", "class", "class_detail",
+    "protein_list", "protein_list_remap", "protein_list_by_engine", "class", "class_detail",
     "gene", "species", "description leftmost",
     "engine", "psm_qval", "psm_score", "psm_PEP",
     "peptide_qval", "peptide_score", "peptide_PEP",
@@ -32,7 +32,7 @@ OUT_COLUMNS = [
 ]
 
 PEP_COLUMNS = [
-    "peptide", "length", "peptidoform", "protein_list",
+    "peptide", "length", "peptidoform", "protein_list", "protein_list_remap",
     "protein_list_by_engine", "class",
     "class_detail", "gene", "species", "description leftmost", "engine",
     "peptide_qval", "peptide_score", "peptide_PEP",
@@ -55,6 +55,11 @@ CRYPTIC_RE = None
 GENE_RE = None
 SPECIES_RE = None
 FILTER_OTHER = False
+# KS-03: remap each accepted peptide to the COMPLETE set of DB proteins containing
+# it (full-FASTA Aho-Corasick), so class no longer depends on which engine reported
+# which proteins (MSFragger split-DB under-reports). Off by default.
+REMAP_PEPTIDES = False
+REMAP_IL_EQUIVALENT = True
 
 
 def compile_regex(pattern: str, param: str):
@@ -134,23 +139,25 @@ def union_protein_lists(protein_lists) -> str:
 
 
 def rederive_protein_fields(df, prot_info) -> None:
-    # Recompute every protein-derived column from protein_list, in place. Run
-    # after protein_list is merged across engines/PSMs so class, class_detail,
-    # gene, species and the leftmost description reflect the merged protein set
-    # rather than one engine's row. Reuses the same expressions as the per-PSM
-    # pass, so only the protein set changes, not the formatting.
-    df["class"] = df["protein_list"].apply(classify_peptide)
-    df["class_detail"] = df["protein_list"].apply(classify_peptide_detail)
+    # Recompute every protein-derived column in place from the authoritative protein
+    # set: protein_list_remap when the full-DB remap ran (KS-03), else the cross-
+    # engine protein_list union. Run after the set is merged so class, class_detail,
+    # gene, species and the leftmost description reflect it rather than one engine's
+    # row. Reuses the same expressions as the per-PSM pass, so only the protein set
+    # changes, not the formatting.
+    src = df["protein_list_remap"] if "protein_list_remap" in df.columns else df["protein_list"]
+    df["class"] = src.apply(classify_peptide)
+    df["class_detail"] = src.apply(classify_peptide_detail)
     # Drop blank lookups (cryptic ORFs carry no UniProt gene symbol) and
     # de-duplicate, so isoforms of one gene collapse to a single symbol and the
     # union-widened join is not padded with empty ';' separators.
-    df["gene"] = df["protein_list"].apply(
+    df["gene"] = src.apply(
         lambda x: ";".join(sorted({
             g for g in (prot_info.get(p, {}).get("gene", "") for p in x.split(";")) if g})))
-    df["species"] = df["protein_list"].apply(
+    df["species"] = src.apply(
         lambda x: ";".join(sorted({
             s for s in (prot_info.get(p, {}).get("species", "") for p in x.split(";")) if s})))
-    df["description leftmost"] = df["protein_list"].apply(
+    df["description leftmost"] = src.apply(
         lambda x: prot_info.get(x.split(";")[0], {}).get("description", "") if x else "")
 
 
@@ -170,6 +177,53 @@ def build_protein_list_by_engine(engines, protein_lists) -> str:
         {e: sorted(v) for e, v in sorted(by_engine.items())},
         separators=(",", ":"),
     )
+
+
+def _il(seq: str) -> str:
+    # Collapse isoleucine to leucine when --remap_il_equivalent so an I<->L-only
+    # match to a canonical protein is not called a novel cryptic peptide.
+    return seq.replace("I", "L") if REMAP_IL_EQUIVALENT else seq
+
+
+def build_peptide_remap(fasta: Path, peptides) -> dict:
+    '''Map each peptide sequence to the COMPLETE set of DB proteins containing it,
+    by exhaustive substring match against the full target-decoy FASTA. This is
+    engine-independent: it fixes MSFragger split-DB protein under-reporting and any
+    cross-engine disagreement (KS-03). Decoy (rev_) proteins are indexed too, so a
+    decoy peptide inherits the class of the target it shadows (classify_peptide/
+    _proteins_of strip rev_). A remap only ADDS proteins and classify is
+    canonical-if-ANY, so it can move a peptide off the cryptic list but never onto
+    it — strictly reducing false cryptics. Uses pyahocorasick (C, O(text+matches))
+    when available; otherwise a correct pure-Python fallback that is fine for small/
+    test data but too slow for a full proteome (install pyahocorasick).'''
+    pats = {}                                   # il-collapsed key -> original peptide
+    for p in peptides:
+        if p:
+            pats.setdefault(_il(p), p)
+    if not pats:
+        return {}
+    hits: dict = {orig: set() for orig in pats.values()}
+    try:
+        import ahocorasick
+        automaton = ahocorasick.Automaton()
+        for key in pats:
+            automaton.add_word(key, key)
+        automaton.make_automaton()
+        for rec in SeqIO.parse(str(fasta), "fasta"):
+            seq = _il(str(rec.seq))
+            for _end, key in automaton.iter(seq):
+                hits[pats[key]].add(rec.id)
+    except ImportError:
+        print("[integrate_engines] WARNING: pyahocorasick not installed; using the "
+              "slow pure-Python remap fallback (fine for tests, not a full proteome).",
+              file=sys.stderr)
+        keys = list(pats)
+        for rec in SeqIO.parse(str(fasta), "fasta"):
+            seq = _il(str(rec.seq))
+            for key in keys:
+                if key in seq:
+                    hits[pats[key]].add(rec.id)
+    return {pep: ";".join(sorted(prots)) for pep, prots in hits.items() if prots}
 
 
 def _tdc_q(score, is_decoy):
@@ -226,16 +280,30 @@ def parse_fasta_prot_info(fasta: Path) -> dict:
 
 
 def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
-                     fdr: float = 0.01) -> tuple[pd.DataFrame, pd.DataFrame]:
+                     fdr: float = 0.01, remap: dict | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(tsv, sep="\\t")
     if df.empty:
         return (pd.DataFrame(columns=OUT_COLUMNS),
                 pd.DataFrame(columns=PEP_COLUMNS))
 
+    df["_decoy"] = df["is_decoy"].astype(bool)
+    df["peptide"] = df["peptidoform"].apply(pepform2seq)
+
     # Classify EVERY PSM (targets + decoys); a decoy inherits its target's class
     # via rev_-stripping so each class gets its own target-decoy competition.
-    df["class"] = df["protein_list"].apply(classify_peptide)
-    df["class_detail"] = df["protein_list"].apply(classify_peptide_detail)
+    # With the full-DB remap (KS-03), class + the class-separated FDR below derive
+    # from protein_list_remap — the complete, engine-independent protein set — so a
+    # peptide is not called cryptic merely because one engine under-reported its
+    # canonical assignment. Peptides absent from the map fall back to the engine list.
+    if remap is not None:
+        df["protein_list_remap"] = [
+            remap.get(pep) or pl for pep, pl in zip(df["peptide"], df["protein_list"])
+        ]
+        _class_src = "protein_list_remap"
+    else:
+        _class_src = "protein_list"
+    df["class"] = df[_class_src].apply(classify_peptide)
+    df["class_detail"] = df[_class_src].apply(classify_peptide_detail)
     # 'other' = contaminant / iRT / unrecognised. Dropped before FDR only when
     # --filter_other is set; default keeps them (annotate-only) so a #CONTAM DB
     # carrying real hits is never silently removed.
@@ -244,8 +312,6 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
         if df.empty:
             return (pd.DataFrame(columns=OUT_COLUMNS),
                     pd.DataFrame(columns=PEP_COLUMNS))
-    df["_decoy"] = df["is_decoy"].astype(bool)
-    df["peptide"] = df["peptidoform"].apply(pepform2seq)
     df = df.rename(columns={
         "score": "psm_score", "pep": "psm_PEP",
         "meta:peptide_score": "peptide_score",
@@ -301,7 +367,8 @@ def read_engine_psms(tsv: Path, engine: str, prot_info: dict,
     agg = {
         "length": "first",
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
-        "protein_list": union_protein_lists, "engine": "first",
+        "protein_list": union_protein_lists,
+        "protein_list_remap": union_protein_lists, "engine": "first",
         "peptide_qval": "min", "peptide_score": "max", "peptide_PEP": "min",
         "rescoring:spec_pearson": "max", "rescoring:rt_diff_best": "min",
     }
@@ -350,11 +417,29 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
               outdir: Path, fdr: float = 0.01,
               min_spec_pearson=None, max_rt_diff=None) -> None:
     prot_info = parse_fasta_prot_info(fasta)
+
+    # KS-03: build the authoritative peptide -> full-DB protein map once (over the
+    # whole target-decoy FASTA), from every peptide any engine reported (targets +
+    # decoys). Shared by all engines so class + class-separated FDR are engine-
+    # independent. Off unless --remap_peptides.
+    remap = None
+    if REMAP_PEPTIDES:
+        peptides_seen = set()
+        for tsv in engine_tsvs.values():
+            try:
+                col = pd.read_csv(tsv, sep="\\t", usecols=["peptidoform"])["peptidoform"]
+            except (ValueError, pd.errors.EmptyDataError):
+                continue
+            peptides_seen.update(pepform2seq(x) for x in col.dropna())
+        remap = build_peptide_remap(fasta, peptides_seen)
+        print(f"[integrate_engines] full-DB remap: {len(remap)} peptides mapped "
+              f"(il_equivalent={REMAP_IL_EQUIVALENT})", file=sys.stderr)
+
     psms_all = pd.DataFrame(columns=OUT_COLUMNS)
     peptides_all = pd.DataFrame(columns=PEP_COLUMNS)
 
     for engine, tsv in engine_tsvs.items():
-        psms, peps = read_engine_psms(tsv, engine, prot_info, fdr=fdr)
+        psms, peps = read_engine_psms(tsv, engine, prot_info, fdr=fdr, remap=remap)
         psms_all = pd.concat([psms_all, psms], ignore_index=True)
         peptides_all = pd.concat([peptides_all, peps], ignore_index=True)
 
@@ -376,6 +461,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
         "peptide": lambda x: ";".join(pd.Series.unique(x)),
         "length": "first",
         "peptidoform": list, "protein_list": union_protein_lists,
+        "protein_list_remap": union_protein_lists,
         "engine": list, "_pl_raw": list,
         "psm_qval": list, "psm_score": list, "psm_PEP": list,
         "peptide_qval": list, "peptide_score": list, "peptide_PEP": list,
@@ -409,6 +495,7 @@ def integrate(engine_tsvs: dict[str, Path], fasta: Path,
     agg_pep = {
         "length": "first",
         "protein_list": union_protein_lists,
+        "protein_list_remap": union_protein_lists,
         "peptidoform": lambda x: ";".join(pd.Series.unique(x)),
         "engine": list, "_pl_raw": list,
         "peptide_qval": list, "peptide_score": list, "peptide_PEP": list,
@@ -484,6 +571,8 @@ FDR = float("${fdr_arg}")
 MIN_SPEC_PEARSON = float("${min_spec_pearson}") if "${min_spec_pearson}" else None
 MAX_RT_DIFF = float("${max_rt_diff}") if "${max_rt_diff}" else None
 FILTER_OTHER = "${filter_other}" == "true"
+REMAP_PEPTIDES = "${remap_peptides}" == "true"
+REMAP_IL_EQUIVALENT = "${remap_il_equivalent}" == "true"
 PROCESS_NAME = "${task.process}"
 
 # Header-parsing patterns. An explicit param value (interpolated) wins; otherwise

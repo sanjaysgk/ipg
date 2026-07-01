@@ -430,6 +430,18 @@
                     "description": "Drop 'other' proteins (contaminants / iRT matching neither the canonical nor cryptic pattern) before FDR. Default false keeps them (annotate-only), so a #CONTAM DB carrying real hits is never silently removed.",
                     "fa_icon": "fas fa-filter"
                 },
+                "remap_peptides": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Remap each accepted peptide to the COMPLETE set of database proteins containing it via exhaustive full-FASTA matching (Aho-Corasick), before the class-separated FDR. Makes the canonical/cryptic/other class engine-independent (fixes MSFragger split-DB protein under-reporting and cross-engine disagreement) and adds a protein_list_remap column. A remap only adds proteins, so it can move a peptide off the cryptic list but never onto it.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "remap_il_equivalent": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "When remapping peptides, treat isoleucine and leucine as equivalent (collapse I to L in both peptides and protein sequences), so a peptide differing from a canonical protein only by I/L is not called a novel cryptic. Only meaningful with remap_peptides.",
+                    "fa_icon": "fas fa-equals"
+                },
                 "run_protein_group_fdr": {
                     "type": "boolean",
                     "default": false,

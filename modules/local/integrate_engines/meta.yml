@@ -39,6 +39,8 @@ output:
             Integrated unique-peptide PSMs. protein_list is the union of the
             engines' protein sets; protein_list_by_engine is a JSON map of each
             engine's own list, preserved for auditing cross-engine disagreement.
+            With --remap_peptides, protein_list_remap holds the complete full-DB
+            protein set (Aho-Corasick) and class/class_detail derive from it.
   - peptides:
       - meta:
           type: map
@@ -48,7 +50,9 @@ output:
             Integrated peptide-level table with per-run PSM counts. protein_list
             is the cross-engine union; protein_list_by_engine is a JSON map of
             each engine's own protein list. class/class_detail are derived from
-            the union (canonical wins if any engine maps a canonical protein).
+            the union (canonical wins if any engine maps a canonical protein), or
+            from protein_list_remap (the complete full-DB set) when --remap_peptides
+            is set.
   - chimeric:
       - meta:
           type: map
