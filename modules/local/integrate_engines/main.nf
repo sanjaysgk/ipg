@@ -30,6 +30,8 @@ process INTEGRATE_ENGINES {
     gene_regex         = params.gene_regex         ?: ''
     species_regex      = params.species_regex      ?: ''
     filter_other       = params.filter_other ? 'true' : 'false'
+    remap_peptides      = params.remap_peptides ? 'true' : 'false'
+    remap_il_equivalent = params.remap_il_equivalent ? 'true' : 'false'
     min_spec_pearson = params.cryptic_min_spec_pearson != null ? params.cryptic_min_spec_pearson : ''
     max_rt_diff      = params.cryptic_max_rt_diff       != null ? params.cryptic_max_rt_diff       : ''
     // Pair staged files with engine names; order is preserved. Coerce to lists first:
